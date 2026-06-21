@@ -5,6 +5,7 @@ import { FlatList, Modal, Pressable, Text, View } from 'react-native';
 import { useAppColors } from '@/hooks/useAppColors';
 import type { Tag } from '@/types';
 import { flattenTags, getTagPath } from '@/utils/tagTree';
+import { formatTagName } from '@/utils/formatDuration';
 
 interface TagDropdownProps {
   tags: Tag[];
@@ -41,7 +42,7 @@ export function TagDropdown({ tags, selectedId, onSelect, disabled }: TagDropdow
                 style={{ backgroundColor: selectedTag.color }}
               />
               <Text className="text-base font-medium" style={{ color: colors.text }}>
-                #{selectedLabel}
+                {formatTagName(selectedLabel ?? '')}
               </Text>
             </>
           ) : (
@@ -95,7 +96,7 @@ export function TagDropdown({ tags, selectedId, onSelect, disabled }: TagDropdow
                         style={{ backgroundColor: item.tag.color }}
                       />
                       <Text className="text-base font-medium" style={{ color: colors.text }}>
-                        #{item.path}
+                        {formatTagName(item.path)}
                       </Text>
                     </View>
                     {isSelected ? (

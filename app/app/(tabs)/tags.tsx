@@ -11,6 +11,7 @@ import { useTags } from '@/hooks/useTags';
 import { TAG_COLOR_OPTIONS } from '@/theme/colors';
 import type { Tag } from '@/types';
 import { flattenTags, getEligibleParents } from '@/utils/tagTree';
+import { formatTagName } from '@/utils/formatDuration';
 
 export default function TagsScreen() {
   const { tags, addTag, editTag, removeTag } = useTags();
@@ -29,7 +30,7 @@ export default function TagsScreen() {
   const selectedParentLabel =
     parentId === null
       ? 'None (top level)'
-      : (parentOptions.find((item) => item.tag.id === parentId)?.path ?? 'Unknown');
+      : formatTagName(parentOptions.find((item) => item.tag.id === parentId)?.path ?? 'Unknown');
 
   const resetForm = () => {
     setName('');
@@ -59,7 +60,7 @@ export default function TagsScreen() {
   };
 
   const handleDelete = (tag: Tag) => {
-    Alert.alert('Delete tag', `Remove #${tag.name}?`, [
+    Alert.alert('Delete tag', `Remove ${formatTagName(tag.name)}?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
@@ -187,7 +188,7 @@ export default function TagsScreen() {
                 }}
               >
                 <Text className="text-base" style={{ color: colors.text }}>
-                  {item.path}
+                  {formatTagName(item.path)}
                 </Text>
               </Pressable>
             ))}

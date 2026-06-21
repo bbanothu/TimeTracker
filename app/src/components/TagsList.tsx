@@ -81,7 +81,7 @@ export function TagsList({
                 </View>
                 {!expanded && item.depth > 0 ? (
                   <Text className="ml-3.5 text-xs" style={{ color: colors.textMuted }} numberOfLines={1}>
-                    {item.path}
+                    {formatTagName(item.path)}
                   </Text>
                 ) : null}
               </View>
@@ -93,7 +93,7 @@ export function TagsList({
                   <TagChip tag={item.tag} />
                   {item.depth > 0 ? (
                     <Text className="mt-2 text-sm" style={{ color: colors.textSecondary }}>
-                      {item.path}
+                      {formatTagName(item.path)}
                     </Text>
                   ) : null}
                   <View className="mt-2 flex-row items-center gap-2">

@@ -22,5 +22,15 @@ export function formatDurationLong(ms: number): string {
 }
 
 export function formatTagName(name: string): string {
-  return name.startsWith('#') ? name : `#${name}`;
+  const stripped = name.replace(/^#+/, '').trim();
+  if (!stripped) return stripped;
+
+  const spaceIndex = stripped.search(/\s/);
+  if (spaceIndex === -1) {
+    return stripped.charAt(0).toUpperCase() + stripped.slice(1);
+  }
+
+  const firstWord = stripped.slice(0, spaceIndex);
+  const rest = stripped.slice(spaceIndex);
+  return firstWord.charAt(0).toUpperCase() + firstWord.slice(1) + rest;
 }

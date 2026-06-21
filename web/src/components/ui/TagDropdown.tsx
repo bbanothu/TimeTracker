@@ -4,6 +4,7 @@ import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAppColors } from '@/contexts/ThemeContext';
 import type { Tag } from '@/types';
 import { flattenTags, getTagPath } from '@/utils/tagTree';
+import { formatTagName } from '@/utils/formatDuration';
 
 interface TagDropdownProps {
   tags: Tag[];
@@ -27,7 +28,7 @@ export function TagDropdown({ tags, selectedId, onSelect }: TagDropdownProps) {
         style={{ backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }}
       >
         <span>
-          {selectedTag ? `#${getTagPath(selectedTag.id, tags)}` : tags.length === 0 ? 'Add tags first' : 'Select activity'}
+          {selectedTag ? formatTagName(getTagPath(selectedTag.id, tags)) : tags.length === 0 ? 'Add tags first' : 'Select activity'}
         </span>
         <span style={{ color: colors.textMuted }}>▾</span>
       </button>
@@ -63,7 +64,7 @@ export function TagDropdown({ tags, selectedId, onSelect }: TagDropdownProps) {
                   >
                     <span className="flex items-center gap-3">
                       <span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.tag.color }} />
-                      #{item.path}
+                      {formatTagName(item.path)}
                     </span>
                     {selected ? '✓' : null}
                   </button>

@@ -251,7 +251,7 @@ export default function MapScreen() {
                   }}
                 >
                   <Text style={{ color: selected ? colors.textOnPrimary : colors.secondaryText }}>
-                    #{item.path}
+                    {formatTagName(item.path)}
                   </Text>
                 </Pressable>
               );

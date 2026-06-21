@@ -10,7 +10,7 @@ interface ChartTypeSelectorProps {
 
 const OPTIONS: { value: StatsVisualization; label: string }[] = [
   { value: 'overview', label: 'Overview' },
-  { value: 'bars', label: 'Bars' },
+  // { value: 'bars', label: 'Bars' },
   { value: 'list', label: 'List' },
   { value: 'stacked', label: 'Stacked' },
   { value: 'trend', label: 'Trend' },

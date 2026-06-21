@@ -75,7 +75,7 @@ export function TagsList({
                 </div>
                 {!expanded && item.depth > 0 ? (
                   <p className="ml-3.5 text-xs" style={{ color: colors.textMuted }}>
-                    {item.path}
+                    {formatTagName(item.path)}
                   </p>
                 ) : null}
               </div>
@@ -96,7 +96,7 @@ export function TagsList({
                     </span>
                     {item.depth > 0 ? (
                       <p className="mt-2 text-sm" style={{ color: colors.textSecondary }}>
-                        {item.path}
+                        {formatTagName(item.path)}
                       </p>
                     ) : null}
                     <div className="mt-2 flex items-center gap-2">

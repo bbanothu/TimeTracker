@@ -8,6 +8,7 @@ import { useAppColors } from '@/contexts/ThemeContext';
 import { useTags } from '@/contexts/TagsContext';
 import type { Tag } from '@/types';
 import { flattenTags, getEligibleParents, wouldCreateCycle } from '@/utils/tagTree';
+import { formatTagName } from '@/utils/formatDuration';
 
 export function TagsPage() {
   const colors = useAppColors();
@@ -94,7 +95,7 @@ export function TagsPage() {
             <option value="">None (top level)</option>
             {parentOptions.map((item) => (
               <option key={item.tag.id} value={item.tag.id}>
-                {item.path}
+                {formatTagName(item.path)}
               </option>
             ))}
           </select>

@@ -83,8 +83,26 @@ export function OverviewView({ summary }: ChartViewProps) {
 
 export function BarsView({ summary }: ChartViewProps) {
   const colors = useAppColors();
-  const tagBarData = buildTagBarData(summary);
+  const tagBarData = buildTagBarData(summary).map((item) => ({
+    value: item.value,
+    frontColor: item.frontColor,
+    label: '',
+    topLabelComponent: () => (
+      <Text
+        numberOfLines={2}
+        style={{
+          color: colors.chartText,
+          fontSize: 10,
+          textAlign: 'center',
+          width: 64,
+        }}
+      >
+        {item.label}
+      </Text>
+    ),
+  }));
   const lineData = buildBucketLineData(summary);
+  const tagBarMax = Math.max(...tagBarData.map((item) => item.value), 60);
 
   return (
     <>
@@ -97,19 +115,24 @@ export function BarsView({ summary }: ChartViewProps) {
             No data for this period
           </Text>
         ) : (
-          <BarChart
-            horizontal
-            data={tagBarData}
-            barWidth={18}
-            spacing={14}
-            hideRules
-            xAxisThickness={0}
-            yAxisThickness={0}
-            noOfSections={4}
-            maxValue={Math.max(...tagBarData.map((item) => item.value), 60)}
-            yAxisTextStyle={{ color: colors.chartText, fontSize: 10 }}
-            xAxisLabelTextStyle={{ color: colors.chartText, fontSize: 10 }}
-          />
+          <View className="items-center">
+            <BarChart
+              data={tagBarData}
+              barWidth={22}
+              spacing={18}
+              roundedTop
+              hideRules
+              xAxisThickness={0}
+              yAxisThickness={0}
+              noOfSections={4}
+              maxValue={tagBarMax}
+              overflowTop={8}
+              yAxisExtraHeight={40}
+              topLabelContainerStyle={{ width: 64, marginBottom: 6 }}
+              yAxisTextStyle={{ color: colors.chartText, fontSize: 10 }}
+              xAxisLabelTextStyle={{ height: 0, opacity: 0 }}
+            />
+          </View>
         )}
       </ThemedSurface>
 
