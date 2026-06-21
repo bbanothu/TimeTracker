@@ -1,5 +1,6 @@
 import { initDatabase, isDatabaseReady, seedLocalDefaultTagsIfEmpty } from '@/db/client';
 import { syncGeofencingTask } from '@/services/geofenceService';
+import { syncProfilePhotoFromCloud } from '@/services/profilePhotoService';
 import { setupNotifications } from '@/services/notificationService';
 import { syncService, waitForNetwork } from '@/services/syncService';
 
@@ -26,6 +27,7 @@ export async function initializeAppData(userId: string): Promise<void> {
     if (await waitForNetwork()) {
       try {
         await syncService.pull(userId, { fullPull: true });
+        await syncProfilePhotoFromCloud(userId);
       } catch (error) {
         console.warn('Cloud download on login failed:', error);
       }

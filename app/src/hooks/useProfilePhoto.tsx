@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import { subscribeDataRefresh } from '@/lib/dataRefresh';
 import { getProfilePhotoUri } from '@/services/profilePhotoService';
 
 export function useProfilePhoto(userId: string | undefined) {
@@ -19,6 +20,11 @@ export function useProfilePhoto(userId: string | undefined) {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    if (!userId) return;
+    return subscribeDataRefresh(refresh);
+  }, [userId, refresh]);
 
   return { photoUri, setPhotoUri, refresh };
 }

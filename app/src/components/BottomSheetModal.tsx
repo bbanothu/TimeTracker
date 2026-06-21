@@ -5,8 +5,11 @@ import {
   Modal,
   PanResponder,
   Pressable,
+  ScrollView,
   Text,
+  useWindowDimensions,
   View,
+  type ScrollViewProps,
   type ViewProps,
 } from 'react-native';
 
@@ -18,19 +21,61 @@ interface BottomSheetModalProps {
   onClose: () => void;
   children: React.ReactNode;
   sheetClassName?: ViewProps['className'];
+  maxHeightFraction?: number;
 }
 
 const DISMISS_DISTANCE = 64;
 const DISMISS_VELOCITY = 0.45;
+const SHEET_HEADER_HEIGHT = 96;
+const SHEET_BOTTOM_PADDING = 32;
+
+export function getBottomSheetScrollHeight(
+  windowHeight: number,
+  maxHeightFraction = 0.6,
+): number {
+  const maxSheetHeight = Math.round(windowHeight * maxHeightFraction);
+  return maxSheetHeight - SHEET_HEADER_HEIGHT - SHEET_BOTTOM_PADDING;
+}
+
+type BottomSheetScrollViewProps = ScrollViewProps & {
+  maxHeightFraction?: number;
+};
+
+export function BottomSheetScrollView({
+  maxHeightFraction = 0.6,
+  contentContainerStyle,
+  children,
+  ...props
+}: BottomSheetScrollViewProps) {
+  const { height: windowHeight } = useWindowDimensions();
+  const scrollMaxHeight = getBottomSheetScrollHeight(windowHeight, maxHeightFraction);
+
+  return (
+    <ScrollView
+      style={{ maxHeight: scrollMaxHeight }}
+      nestedScrollEnabled
+      showsVerticalScrollIndicator
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={contentContainerStyle}
+      {...props}
+    >
+      {children}
+    </ScrollView>
+  );
+}
 
 export function BottomSheetModal({
   visible,
   title,
   onClose,
   children,
-  sheetClassName = 'max-h-[60%]',
+  sheetClassName,
+  maxHeightFraction = 0.6,
 }: BottomSheetModalProps) {
   const colors = useAppColors();
+  const { height: windowHeight } = useWindowDimensions();
+  const maxSheetHeight = Math.round(windowHeight * maxHeightFraction);
+  const maxContentHeight = maxSheetHeight - SHEET_HEADER_HEIGHT - SHEET_BOTTOM_PADDING;
   const translateY = useRef(new Animated.Value(0)).current;
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
@@ -103,6 +148,7 @@ export function BottomSheetModal({
           style={{
             backgroundColor: colors.surfaceSolid,
             transform: [{ translateY }],
+            maxHeight: maxSheetHeight,
           }}
         >
           <View {...panResponder.panHandlers} className="px-4 pb-2 pt-3">
@@ -129,7 +175,9 @@ export function BottomSheetModal({
             </View>
           </View>
 
-          <View className="px-4">{children}</View>
+          <View className="px-4" style={{ maxHeight: maxContentHeight, minHeight: 0 }}>
+            {children}
+          </View>
         </Animated.View>
       </View>
     </Modal>

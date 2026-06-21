@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { BottomSheetModal } from '@/components/BottomSheetModal';
+import { BottomSheetModal, BottomSheetScrollView } from '@/components/BottomSheetModal';
 import { useAppColors } from '@/hooks/useAppColors';
 import type { Tag } from '@/types';
 import { flattenTags, getTagPath } from '@/utils/tagTree';
@@ -59,40 +59,40 @@ export function TagDropdown({ tags, selectedId, onSelect, disabled }: TagDropdow
       </Pressable>
 
       <BottomSheetModal visible={open} title="Select activity" onClose={() => setOpen(false)}>
-        <FlatList
-          data={flatTags}
-          keyExtractor={(item) => item.tag.id}
-          ListEmptyComponent={
+        <BottomSheetScrollView contentContainerStyle={{ paddingBottom: 8 }}>
+          {flatTags.length === 0 ? (
             <Text className="py-6 text-center" style={{ color: colors.textMuted }}>
               No tags yet. Add some on the Tags tab.
             </Text>
-          }
-          renderItem={({ item }) => {
-            const isSelected = item.tag.id === selectedId;
+          ) : (
+            flatTags.map((item) => {
+              const isSelected = item.tag.id === selectedId;
 
-            return (
-              <Pressable
-                onPress={() => handleSelect(item.tag.id)}
-                className="mb-2 flex-row items-center justify-between rounded-xl px-4 py-3"
-                style={{
-                  marginLeft: item.depth * 12,
-                  backgroundColor: isSelected ? colors.selectedBgSolid : colors.secondaryBgSolid,
-                }}
-              >
-                <View className="flex-1 flex-row items-center">
-                  <View
-                    className="mr-3 h-3 w-3 rounded-full"
-                    style={{ backgroundColor: item.tag.color }}
-                  />
-                  <Text className="text-base font-medium" style={{ color: colors.text }}>
-                    {formatTagName(item.path)}
-                  </Text>
-                </View>
-                {isSelected ? <Ionicons name="checkmark" size={20} color={colors.primary} /> : null}
-              </Pressable>
-            );
-          }}
-        />
+              return (
+                <Pressable
+                  key={item.tag.id}
+                  onPress={() => handleSelect(item.tag.id)}
+                  className="mb-2 flex-row items-center justify-between rounded-xl px-4 py-3"
+                  style={{
+                    marginLeft: item.depth * 12,
+                    backgroundColor: isSelected ? colors.selectedBgSolid : colors.secondaryBgSolid,
+                  }}
+                >
+                  <View className="flex-1 flex-row items-center">
+                    <View
+                      className="mr-3 h-3 w-3 rounded-full"
+                      style={{ backgroundColor: item.tag.color }}
+                    />
+                    <Text className="text-base font-medium" style={{ color: colors.text }}>
+                      {formatTagName(item.path)}
+                    </Text>
+                  </View>
+                  {isSelected ? <Ionicons name="checkmark" size={20} color={colors.primary} /> : null}
+                </Pressable>
+              );
+            })
+          )}
+        </BottomSheetScrollView>
       </BottomSheetModal>
     </>
   );

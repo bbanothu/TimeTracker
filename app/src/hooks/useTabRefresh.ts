@@ -5,6 +5,7 @@ import { isDatabaseReady } from '@/db/client';
 import { useAppColors } from '@/hooks/useAppColors';
 import { useAuth } from '@/hooks/useAuth';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
+import { syncProfilePhotoFromCloud } from '@/services/profilePhotoService';
 import { syncService } from '@/services/syncService';
 
 export function useTabRefresh(onRefreshExtra?: () => void | Promise<void>) {
@@ -18,6 +19,7 @@ export function useTabRefresh(onRefreshExtra?: () => void | Promise<void>) {
       if (user?.id && isDatabaseReady()) {
         try {
           await syncService.pull(user.id, { fullPull: true });
+          await syncProfilePhotoFromCloud(user.id);
         } catch (error) {
           console.warn('Cloud pull failed:', error);
         }

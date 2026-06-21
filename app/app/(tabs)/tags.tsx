@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { Alert, Pressable, Text, TextInput, View } from 'react-native';
 
 import { ActionButton } from '@/components/ActionButton';
-import { BottomSheetModal } from '@/components/BottomSheetModal';
+import { BottomSheetModal, BottomSheetScrollView } from '@/components/BottomSheetModal';
 import { TabScrollView } from '@/components/TabScrollView';
 import { TabScreenContainer } from '@/components/TabScreenContainer';
 import { TagsList } from '@/components/TagsList';
@@ -150,41 +150,43 @@ export default function TagsScreen() {
         visible={parentPickerOpen}
         title="Select parent"
         onClose={() => setParentPickerOpen(false)}
-        sheetClassName="max-h-[50%]"
+        maxHeightFraction={0.5}
       >
-        <Pressable
-          onPress={() => {
-            setParentId(null);
-            setParentPickerOpen(false);
-          }}
-          className="mb-2 rounded-xl px-4 py-3"
-          style={{
-            backgroundColor: parentId === null ? colors.selectedBgSolid : colors.secondaryBgSolid,
-          }}
-        >
-          <Text className="text-base" style={{ color: colors.text }}>
-            None (top level)
-          </Text>
-        </Pressable>
-        {parentOptions.map((item) => (
+        <BottomSheetScrollView maxHeightFraction={0.5} contentContainerStyle={{ paddingBottom: 8 }}>
           <Pressable
-            key={item.tag.id}
             onPress={() => {
-              setParentId(item.tag.id);
+              setParentId(null);
               setParentPickerOpen(false);
             }}
             className="mb-2 rounded-xl px-4 py-3"
             style={{
-              marginLeft: item.depth * 12,
-              backgroundColor:
-                parentId === item.tag.id ? colors.selectedBgSolid : colors.secondaryBgSolid,
+              backgroundColor: parentId === null ? colors.selectedBgSolid : colors.secondaryBgSolid,
             }}
           >
             <Text className="text-base" style={{ color: colors.text }}>
-              {formatTagName(item.path)}
+              None (top level)
             </Text>
           </Pressable>
-        ))}
+          {parentOptions.map((item) => (
+            <Pressable
+              key={item.tag.id}
+              onPress={() => {
+                setParentId(item.tag.id);
+                setParentPickerOpen(false);
+              }}
+              className="mb-2 rounded-xl px-4 py-3"
+              style={{
+                marginLeft: item.depth * 12,
+                backgroundColor:
+                  parentId === item.tag.id ? colors.selectedBgSolid : colors.secondaryBgSolid,
+              }}
+            >
+              <Text className="text-base" style={{ color: colors.text }}>
+                {formatTagName(item.path)}
+              </Text>
+            </Pressable>
+          ))}
+        </BottomSheetScrollView>
       </BottomSheetModal>
     </TabScreenContainer>
   );

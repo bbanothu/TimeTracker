@@ -6,7 +6,7 @@ import { ActivityIndicator, Alert, Pressable, View } from 'react-native';
 import { UserAvatar } from '@/components/UserAvatar';
 import { useAppColors } from '@/hooks/useAppColors';
 import { useProfilePhoto } from '@/hooks/useProfilePhoto';
-import { saveProfilePhoto } from '@/services/profilePhotoService';
+import { saveAndSyncProfilePhoto } from '@/services/profilePhotoService';
 
 interface ProfileAvatarProps {
   userId: string | undefined;
@@ -40,7 +40,7 @@ export function ProfileAvatar({ userId, fallbackLabel, compact = false }: Profil
 
     try {
       setLoading(true);
-      const savedUri = await saveProfilePhoto(userId, result.assets[0].uri);
+      const savedUri = await saveAndSyncProfilePhoto(userId, result.assets[0].uri);
       setPhotoUri(savedUri);
     } catch (error) {
       Alert.alert('Upload failed', error instanceof Error ? error.message : 'Could not save photo');
