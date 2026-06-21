@@ -32,7 +32,10 @@ export function TagDropdown({ tags, selectedId, onSelect, disabled }: TagDropdow
         disabled={disabled || tags.length === 0}
         onPress={() => setOpen(true)}
         className="flex-row items-center justify-between rounded-xl border px-4 py-3"
-        style={{ backgroundColor: colors.inputBg, borderColor: colors.inputBorder }}
+        style={{
+          backgroundColor: colors.inputBgSolid,
+          borderColor: colors.inputBorder,
+        }}
       >
         <View className="flex-1 flex-row items-center">
           {selectedTag ? (
@@ -46,12 +49,12 @@ export function TagDropdown({ tags, selectedId, onSelect, disabled }: TagDropdow
               </Text>
             </>
           ) : (
-            <Text className="text-base" style={{ color: colors.textMuted }}>
+            <Text className="text-base font-medium" style={{ color: colors.text }}>
               {tags.length === 0 ? 'Add tags first' : 'Select activity'}
             </Text>
           )}
         </View>
-        <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
+        <Ionicons name="chevron-down" size={18} color={colors.textSecondary} />
       </Pressable>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>

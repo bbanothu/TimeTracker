@@ -1,4 +1,4 @@
-import { formatTagName } from '@/utils/formatDuration';
+import { formatDurationLong, formatTagName } from '@/utils/formatDuration';
 import type { StatsSummary } from '@/types';
 
 export function toChartMinutes(durationMs: number): number {
@@ -25,6 +25,7 @@ export function buildBucketLineData(summary: StatsSummary) {
   return summary.buckets.map((bucket) => ({
     value: toChartMinutes(bucket.durationMs),
     label: bucket.label,
+    dataPointText: formatDurationLong(bucket.durationMs),
   }));
 }
 

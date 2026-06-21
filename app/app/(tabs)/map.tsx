@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
-  FlatList,
   Pressable,
-  Switch,
+  ScrollView,
   Text,
   TextInput,
   View,
@@ -12,7 +11,9 @@ import MapView, { Circle, Marker, type MapPressEvent } from 'react-native-maps';
 import * as Location from 'expo-location';
 
 import { ActionButton } from '@/components/ActionButton';
+import { GeofencesList } from '@/components/GeofencesList';
 import { TabScreenContainer } from '@/components/TabScreenContainer';
+import { TagDropdown } from '@/components/TagDropdown';
 import { ThemedSurface } from '@/components/ThemedSurface';
 import {
   createGeofence,
@@ -32,8 +33,6 @@ import {
 } from '@/services/geofenceService';
 import { requestNotificationPermissions } from '@/services/notificationService';
 import { syncService } from '@/services/syncService';
-import { formatTagName } from '@/utils/formatDuration';
-import { flattenTags } from '@/utils/tagTree';
 import type { Geofence } from '@/types';
 
 const DEFAULT_REGION = {
@@ -54,7 +53,6 @@ function StepLabel({ step, label, colors }: { step: number; label: string; color
 export default function MapScreen() {
   const { tags } = useTags();
   const colors = useAppColors();
-  const flatTags = useMemo(() => flattenTags(tags), [tags]);
   const { user } = useAuth();
   const { ready, refresh } = useActiveSession();
   const [geofences, setGeofences] = useState<Geofence[]>([]);
@@ -233,31 +231,12 @@ export default function MapScreen() {
         </Text>
 
         <StepLabel step={1} label="Choose tag" colors={colors} />
-        <View className="flex-row flex-wrap">
-          {flatTags.length === 0 ? (
-            <Text className="text-sm" style={{ color: colors.textMuted }}>
-              Add tags on the Tags tab first.
-            </Text>
-          ) : (
-            flatTags.map((item) => {
-              const selected = selectedTagId === item.tag.id;
-              return (
-                <Pressable
-                  key={item.tag.id}
-                  onPress={() => setSelectedTagId(item.tag.id)}
-                  className="mr-2 mb-2 rounded-full px-3 py-2"
-                  style={{
-                    backgroundColor: selected ? colors.primary : colors.secondaryBg,
-                  }}
-                >
-                  <Text style={{ color: selected ? colors.textOnPrimary : colors.secondaryText }}>
-                    {formatTagName(item.path)}
-                  </Text>
-                </Pressable>
-              );
-            })
-          )}
-        </View>
+        <TagDropdown tags={tags} selectedId={selectedTagId} onSelect={setSelectedTagId} />
+        {tags.length === 0 ? (
+          <Text className="mt-2 text-sm" style={{ color: colors.textMuted }}>
+            Add tags on the Tags tab first.
+          </Text>
+        ) : null}
       </ThemedSurface>
 
       <ThemedSurface className="mx-4 mt-3 overflow-hidden p-4">
@@ -356,49 +335,24 @@ export default function MapScreen() {
         />
       </ThemedSurface>
 
-      <Text className="mx-4 mb-3 mt-1 text-base font-semibold" style={{ color: colors.textOnBg }}>
-        Saved places
+      <Text className="mx-4 mb-2 mt-1 text-sm font-medium" style={{ color: colors.textMuted }}>
+        Saved places ({geofences.length})
       </Text>
+      <View className="mx-4 mb-6">
+        <GeofencesList
+          geofences={geofences}
+          onToggle={handleToggle}
+          onDelete={handleDelete}
+        />
+      </View>
     </>
   );
 
   return (
     <TabScreenContainer>
-      <FlatList
-        data={geofences}
-        keyExtractor={(item) => item.id}
-        contentContainerClassName="pb-6"
-        ListHeaderComponent={setupHeader}
-        ListEmptyComponent={
-          <Text className="mx-4" style={{ color: colors.textMuted }}>
-            No saved places yet.
-          </Text>
-        }
-        renderItem={({ item }) => (
-          <ThemedSurface className="mx-4 mb-3 p-4">
-            <View className="flex-row items-center justify-between">
-              <View className="flex-1 pr-3">
-                <Text className="text-base font-semibold" style={{ color: colors.text }}>
-                  {item.name}
-                </Text>
-                <Text className="text-sm" style={{ color: colors.textMuted }}>
-                  {formatTagName(item.tag?.name ?? 'tag')} · {item.radiusMeters}m
-                </Text>
-              </View>
-              <Switch value={item.enabled} onValueChange={(value) => handleToggle(item, value)} />
-            </View>
-            <Pressable
-              onPress={() => handleDelete(item)}
-              className="mt-3 self-start rounded-lg px-3 py-2"
-              style={{ backgroundColor: colors.destructiveBg }}
-            >
-              <Text className="text-sm font-medium" style={{ color: colors.destructiveText }}>
-                Delete
-              </Text>
-            </Pressable>
-          </ThemedSurface>
-        )}
-      />
+      <ScrollView className="flex-1" contentContainerClassName="pb-6">
+        {setupHeader}
+      </ScrollView>
     </TabScreenContainer>
   );
 }

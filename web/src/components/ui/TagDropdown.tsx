@@ -24,8 +24,8 @@ export function TagDropdown({ tags, selectedId, onSelect }: TagDropdownProps) {
         type="button"
         onClick={() => setOpen(true)}
         disabled={tags.length === 0}
-        className="flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left"
-        style={{ backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }}
+        className="flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left disabled:opacity-100"
+        style={{ backgroundColor: colors.inputBgSolid, borderColor: colors.inputBorder, color: colors.text }}
       >
         <span>
           {selectedTag ? formatTagName(getTagPath(selectedTag.id, tags)) : tags.length === 0 ? 'Add tags first' : 'Select activity'}

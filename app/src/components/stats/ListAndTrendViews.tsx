@@ -157,10 +157,14 @@ export function TrendView({ summary }: ChartViewProps) {
             yAxisThickness={0}
             noOfSections={4}
             maxValue={Math.max(...lineData.map((item) => item.value), 60)}
+            overflowTop={28}
+            textColor={colors.chartText}
+            textFontSize={10}
+            textShiftY={-8}
             yAxisTextStyle={{ color: colors.chartText, fontSize: 10 }}
             xAxisLabelTextStyle={{ color: colors.chartText, fontSize: 10 }}
           />
-          <TagLegend items={summary.byTag} compact />
+          <TagLegend items={summary.byTag} />
         </>
       )}
     </ThemedSurface>

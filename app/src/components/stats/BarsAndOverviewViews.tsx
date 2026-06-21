@@ -44,9 +44,6 @@ export function OverviewView({ summary }: ChartViewProps) {
               donut
               radius={90}
               innerRadius={55}
-              showText
-              textColor={colors.text}
-              textSize={11}
             />
             <TagLegend items={summary.byTag} />
           </View>

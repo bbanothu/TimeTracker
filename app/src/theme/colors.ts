@@ -21,6 +21,7 @@ export interface AppColors {
   tabBarBorder: string;
   headerText: string;
   inputBg: string;
+  inputBgSolid: string;
   inputBorder: string;
   inputPlaceholder: string;
   selectedBg: string;
@@ -64,6 +65,7 @@ export const lightColors: AppColors = {
   tabBarBorder: 'rgba(68, 64, 60, 0.08)',
   headerText: '#1C1917',
   inputBg: 'rgba(255, 255, 255, 0.75)',
+  inputBgSolid: '#FFFFFF',
   inputBorder: 'rgba(68, 64, 60, 0.12)',
   inputPlaceholder: 'rgba(68, 64, 60, 0.45)',
   selectedBg: 'rgba(5, 150, 105, 0.16)',
@@ -111,6 +113,7 @@ export const darkColors: AppColors = {
   tabBarBorder: 'rgba(255, 255, 255, 0.1)',
   headerText: '#FAFAF9',
   inputBg: 'rgba(255, 255, 255, 0.08)',
+  inputBgSolid: '#292524',
   inputBorder: 'rgba(255, 255, 255, 0.18)',
   inputPlaceholder: 'rgba(255, 255, 255, 0.45)',
   selectedBg: 'rgba(251, 146, 60, 0.2)',
