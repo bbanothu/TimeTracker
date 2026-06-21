@@ -11,9 +11,9 @@ import {
   Text,
   View,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 
 import { AuthBackground } from '@/components/auth/AuthBackground';
+import { AuthCard } from '@/components/auth/AuthCard';
 import { authScreenStyles as styles } from '@/components/auth/authScreenStyles';
 import { GlassInput } from '@/components/auth/GlassInput';
 import { useAuth } from '@/hooks/useAuth';
@@ -65,49 +65,47 @@ export default function LoginScreen() {
             <Text style={styles.subtitle}>Sign in and pick up where you left off</Text>
           </View>
 
-          <BlurView intensity={40} tint="light" style={styles.card}>
-            <View style={styles.cardInner}>
-              <Text style={styles.cardTitle}>Sign in</Text>
-              <Text style={styles.cardHint}>Your stats, tags, and sessions are waiting.</Text>
+          <AuthCard>
+            <Text style={styles.cardTitle}>Sign in</Text>
+            <Text style={styles.cardHint}>Your stats, tags, and sessions are waiting.</Text>
 
-              <GlassInput
-                value={email}
-                onChangeText={setEmail}
-                placeholder="Email"
-                autoCapitalize="none"
-                keyboardType="email-address"
-                autoComplete="email"
-              />
-              <GlassInput
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Password"
-                secureTextEntry
-                autoComplete="password"
-              />
+            <GlassInput
+              value={email}
+              onChangeText={setEmail}
+              placeholder="Email"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              autoComplete="email"
+            />
+            <GlassInput
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Password"
+              secureTextEntry
+              autoComplete="password"
+            />
 
-              <Pressable onPress={handleLogin} disabled={submitting} style={styles.buttonWrap}>
-                <LinearGradient
-                  colors={colors.authGradient}
-                  start={{ x: 0, y: 0.5 }}
-                  end={{ x: 1, y: 0.5 }}
-                  style={styles.button}
-                >
-                  {submitting ? (
-                    <ActivityIndicator color="#FFFFFF" />
-                  ) : (
-                    <Text style={styles.buttonText}>Sign in</Text>
-                  )}
-                </LinearGradient>
+            <Pressable onPress={handleLogin} disabled={submitting} style={styles.buttonWrap}>
+              <LinearGradient
+                colors={colors.authGradient}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                style={styles.button}
+              >
+                {submitting ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.buttonText}>Sign in</Text>
+                )}
+              </LinearGradient>
+            </Pressable>
+
+            <Link href="/(auth)/register" asChild>
+              <Pressable style={styles.linkWrap}>
+                <Text style={styles.linkText}>New here? Create an account</Text>
               </Pressable>
-
-              <Link href="/(auth)/register" asChild>
-                <Pressable style={styles.linkWrap}>
-                  <Text style={styles.linkText}>New here? Create an account</Text>
-                </Pressable>
-              </Link>
-            </View>
-          </BlurView>
+            </Link>
+          </AuthCard>
         </ScrollView>
       </KeyboardAvoidingView>
     </AuthBackground>

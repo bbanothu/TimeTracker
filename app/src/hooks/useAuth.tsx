@@ -3,6 +3,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 
 import { resetDatabase } from '@/db/client';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
+import { clearPendingAppInit } from '@/services/appInitService';
 
 interface AuthContextValue {
   user: User | null;
@@ -51,6 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    clearPendingAppInit();
     resetDatabase();
     const { error } = await supabase.auth.signOut();
     if (error) throw error;

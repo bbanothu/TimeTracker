@@ -7,10 +7,8 @@ import { TabScreenContainer } from '@/components/TabScreenContainer';
 import { deleteEntry, getAllEntries, getAllGeofences, getGeofenceById } from '@/db/client';
 import { useActiveSession } from '@/hooks/useActiveSession';
 import { useAppColors } from '@/hooks/useAppColors';
-import { useAuth } from '@/hooks/useAuth';
 import { useTags } from '@/hooks/useTags';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
-import { syncService } from '@/services/syncService';
 import type { TimeEntry } from '@/types';
 import {
   defaultHistoryFilters,
@@ -21,12 +19,11 @@ import {
 
 export default function HistoryScreen() {
   const colors = useAppColors();
-  const { user } = useAuth();
   const { tags } = useTags();
   const { ready, entriesRevision } = useActiveSession();
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [filters, setFilters] = useState<HistoryFilterState>(defaultHistoryFilters);
-  const geofences = useMemo(() => getAllGeofences(), [entriesRevision]);
+  const geofences = useMemo(() => (ready ? getAllGeofences() : []), [ready, entriesRevision]);
 
   useEffect(() => {
     if (!ready) return;
@@ -39,6 +36,8 @@ export default function HistoryScreen() {
   );
 
   const geofenceNames = useMemo(() => {
+    if (!ready) return new Map<string, string>();
+
     const map = new Map<string, string>();
     for (const entry of entries) {
       if (!entry.geofenceId || map.has(entry.geofenceId)) continue;
@@ -46,7 +45,7 @@ export default function HistoryScreen() {
       if (geofence) map.set(entry.geofenceId, geofence.name);
     }
     return map;
-  }, [entries]);
+  }, [ready, entries]);
 
   const handleDelete = (entryId: string) => {
     Alert.alert('Delete entry', 'Remove this tracked session permanently?', [
@@ -58,9 +57,6 @@ export default function HistoryScreen() {
           try {
             deleteEntry(entryId);
             notifyDataRefresh();
-            if (user) {
-              syncService.push(user.id).catch(console.warn);
-            }
           } catch (error) {
             Alert.alert('Delete failed', error instanceof Error ? error.message : 'Unknown error');
           }

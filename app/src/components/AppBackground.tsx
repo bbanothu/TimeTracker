@@ -1,7 +1,7 @@
 import { BlurView } from 'expo-blur';
 import { Image, type ImageSource } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { useAppColors } from '@/hooks/useAppColors';
 
@@ -18,11 +18,15 @@ export function AppBackground({ children, source = defaultSource }: AppBackgroun
   return (
     <View style={styles.root}>
       <Image source={source} style={StyleSheet.absoluteFillObject} contentFit="cover" />
-      <BlurView
-        intensity={colors.blurIntensity}
-        tint={colors.blurTint}
-        style={StyleSheet.absoluteFillObject}
-      />
+      {Platform.OS === 'ios' ? (
+        <BlurView
+          intensity={colors.blurIntensity}
+          tint={colors.blurTint}
+          style={StyleSheet.absoluteFillObject}
+        />
+      ) : (
+        <View style={[StyleSheet.absoluteFillObject, styles.androidOverlay]} />
+      )}
       <LinearGradient
         colors={colors.backgroundGradient}
         locations={[0, 0.45, 1]}
@@ -36,5 +40,8 @@ export function AppBackground({ children, source = defaultSource }: AppBackgroun
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+  },
+  androidOverlay: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
 });

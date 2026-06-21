@@ -1,8 +1,7 @@
 import NetInfo from '@react-native-community/netinfo';
+import { Platform } from 'react-native';
 
 import {
-  deleteGeofenceLocally,
-  deleteTagLocally,
   getLastPulledAt,
   getSyncQueue,
   removeSyncQueueItem,
@@ -16,12 +15,50 @@ import type { EntrySource } from '@/types';
 
 async function isOnline(): Promise<boolean> {
   const state = await NetInfo.fetch();
-  return state.isConnected === true && state.isInternetReachable !== false;
+  if (state.isConnected !== true) return false;
+  if (Platform.OS === 'android') {
+    // Android often reports isInternetReachable=false while the device is online.
+    return true;
+  }
+  return state.isInternetReachable !== false;
 }
 
-export async function push(userId: string): Promise<void> {
-  if (!isSupabaseConfigured) return;
-  if (!(await isOnline())) return;
+export async function waitForNetwork(maxAttempts = 8, delayMs = 500): Promise<boolean> {
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    if (await isOnline()) return true;
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+  }
+  return isOnline();
+}
+
+export type SyncOptions = {
+  fullPull?: boolean;
+};
+
+export type SyncResult = {
+  pushed: boolean;
+  pulled: boolean;
+  skippedReason?: 'offline' | 'not_configured';
+};
+
+function remoteUpdatedAtMs(value: string): number {
+  return new Date(value).getTime();
+}
+
+let operationChain: Promise<unknown> = Promise.resolve();
+
+async function withSyncLock<T>(operation: () => Promise<T>): Promise<T> {
+  const next = operationChain.then(operation, operation);
+  operationChain = next.then(
+    () => undefined,
+    () => undefined,
+  );
+  return next;
+}
+
+async function pushInternal(userId: string): Promise<boolean> {
+  if (!isSupabaseConfigured) return false;
+  if (!(await isOnline())) return false;
 
   const queue = getSyncQueue();
 
@@ -97,14 +134,18 @@ export async function push(userId: string): Promise<void> {
       break;
     }
   }
+
+  return true;
 }
 
-export async function pull(userId: string): Promise<void> {
-  if (!isSupabaseConfigured) return;
-  if (!(await isOnline())) return;
+async function pullInternal(userId: string, options: SyncOptions = {}): Promise<boolean> {
+  if (!isSupabaseConfigured) return false;
+  if (!(await isOnline())) return false;
 
   const lastPulledAt = getLastPulledAt();
-  const sinceIso = new Date(lastPulledAt).toISOString();
+  const sinceIso = options.fullPull
+    ? new Date(0).toISOString()
+    : new Date(Math.max(0, lastPulledAt - 5000)).toISOString();
 
   const [tagsResult, entriesResult, geofencesResult] = await Promise.all([
     supabase
@@ -131,6 +172,11 @@ export async function pull(userId: string): Promise<void> {
   if (entriesResult.error) throw entriesResult.error;
   if (geofencesResult.error) throw geofencesResult.error;
 
+  let maxRemoteUpdatedAt = lastPulledAt;
+  const bumpCursor = (updatedAt: string) => {
+    maxRemoteUpdatedAt = Math.max(maxRemoteUpdatedAt, remoteUpdatedAtMs(updatedAt));
+  };
+
   const pendingTags = [...(tagsResult.data ?? [])];
   const upsertedTagIds = new Set<string>();
   while (pendingTags.length > 0) {
@@ -139,11 +185,13 @@ export async function pull(userId: string): Promise<void> {
     );
     if (batch.length === 0) {
       for (const tag of pendingTags) {
+        bumpCursor(tag.updated_at);
         upsertTagFromRemote(tag);
       }
       break;
     }
     for (const tag of batch) {
+      bumpCursor(tag.updated_at);
       upsertTagFromRemote(tag);
       upsertedTagIds.add(tag.id);
     }
@@ -152,6 +200,7 @@ export async function pull(userId: string): Promise<void> {
   }
 
   for (const entry of entriesResult.data ?? []) {
+    bumpCursor(entry.updated_at);
     const { data: tagLinks } = await supabase
       .from('time_entry_tags')
       .select('tag_id')
@@ -164,33 +213,60 @@ export async function pull(userId: string): Promise<void> {
   }
 
   for (const geofence of geofencesResult.data ?? []) {
+    bumpCursor(geofence.updated_at);
     upsertGeofenceFromRemote({
       ...geofence,
       enabled: Boolean(geofence.enabled),
     });
   }
 
-  setLastPulledAt(Date.now());
+  const pulledCount =
+    (tagsResult.data?.length ?? 0) +
+    (entriesResult.data?.length ?? 0) +
+    (geofencesResult.data?.length ?? 0);
+
+  if (pulledCount > 0 || options.fullPull) {
+    setLastPulledAt(maxRemoteUpdatedAt);
+  }
+
+  return true;
 }
 
-export async function sync(userId: string): Promise<void> {
-  await push(userId);
-  await pull(userId);
+export async function push(userId: string): Promise<boolean> {
+  return withSyncLock(() => pushInternal(userId));
 }
 
-export async function seedRemoteDefaultsIfEmpty(userId: string): Promise<void> {
-  if (!isSupabaseConfigured) return;
-  if (!(await isOnline())) return;
-
-  const { count, error } = await supabase
-    .from('tags')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId);
-
-  if (error) throw error;
-  if ((count ?? 0) > 0) return;
-
-  await push(userId);
+export async function pull(userId: string, options: SyncOptions = {}): Promise<boolean> {
+  return withSyncLock(() => pullInternal(userId, options));
 }
 
-export const syncService = { push, pull, sync, seedRemoteDefaultsIfEmpty };
+export async function sync(userId: string, options: SyncOptions = {}): Promise<SyncResult> {
+  return withSyncLock(async () => {
+    if (!isSupabaseConfigured) {
+      return { pushed: false, pulled: false, skippedReason: 'not_configured' };
+    }
+    if (!(await isOnline())) {
+      return { pushed: false, pulled: false, skippedReason: 'offline' };
+    }
+
+    const pushed = await pushInternal(userId);
+    const pulled = await pullInternal(userId, options);
+    return { pushed, pulled };
+  });
+}
+
+export async function uploadToCloud(userId: string): Promise<SyncResult> {
+  return withSyncLock(async () => {
+    if (!isSupabaseConfigured) {
+      return { pushed: false, pulled: false, skippedReason: 'not_configured' };
+    }
+    if (!(await isOnline())) {
+      return { pushed: false, pulled: false, skippedReason: 'offline' };
+    }
+
+    const pushed = await pushInternal(userId);
+    return { pushed, pulled: false };
+  });
+}
+
+export const syncService = { push, pull, sync, uploadToCloud };

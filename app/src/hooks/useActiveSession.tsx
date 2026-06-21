@@ -1,12 +1,9 @@
-import { AppState } from 'react-native';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
-import { initDatabase } from '@/db/client';
 import { useAuth } from '@/hooks/useAuth';
 import { subscribeDataRefresh } from '@/lib/dataRefresh';
-import { syncGeofencingTask } from '@/services/geofenceService';
-import { dismissGeofenceNotification, setupNotifications } from '@/services/notificationService';
-import { syncService } from '@/services/syncService';
+import { initializeAppData, isDatabaseReady } from '@/services/appInitService';
+import { dismissGeofenceNotification } from '@/services/notificationService';
 import { timerService } from '@/services/timerService';
 import type { ActiveSession, TimeEntry } from '@/types';
 
@@ -32,7 +29,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
   const [tick, setTick] = useState(0);
 
   const refresh = useCallback(() => {
-    if (!user) return;
+    if (!user || !isDatabaseReady()) return;
     setSessions(timerService.getActiveSessions());
     setTodayEntries(timerService.getTodayEntries());
     setEntriesRevision((value) => value + 1);
@@ -48,18 +45,14 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
 
     (async () => {
       try {
-        initDatabase(user.id);
-        await setupNotifications();
-        await syncService.seedRemoteDefaultsIfEmpty(user.id);
-        await syncService.sync(user.id);
-        await syncGeofencingTask();
+        await initializeAppData(user.id);
         if (!cancelled) {
           setReady(true);
           refresh();
         }
       } catch (error) {
         console.error('Database init failed:', error);
-        if (!cancelled) {
+        if (!cancelled && isDatabaseReady()) {
           setReady(true);
           refresh();
         }
@@ -72,26 +65,9 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
   }, [user?.id, refresh]);
 
   useEffect(() => {
-    if (!user) return;
-
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') {
-        syncService
-          .sync(user.id)
-          .then(async () => {
-            await syncGeofencingTask();
-            refresh();
-          })
-          .catch(console.warn);
-      }
-    });
-
-    return () => subscription.remove();
-  }, [user?.id, refresh]);
-
-  useEffect(() => {
+    if (!ready) return;
     return subscribeDataRefresh(refresh);
-  }, [refresh]);
+  }, [ready, refresh]);
 
   useEffect(() => {
     if (sessions.length === 0) return;
@@ -115,11 +91,8 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
       if (session?.geofenceId) {
         dismissGeofenceNotification(session.geofenceId).catch(console.warn);
       }
-      if (user) {
-        syncService.push(user.id).catch(console.warn);
-      }
     },
-    [refresh, user],
+    [refresh],
   );
 
   const value = useMemo(

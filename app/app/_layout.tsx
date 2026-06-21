@@ -4,12 +4,12 @@ import '@/tasks/geofenceTask';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { ActivityIndicator, Platform, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 
-import { TabHeaderBackground } from '@/components/TabHeaderBackground';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
 import { useAppColors } from '@/hooks/useAppColors';
 import { ThemeProvider, useTheme } from '@/hooks/useTheme';
+import { getAppHeaderOptions } from '@/navigation/headerOptions';
 import {
   registerNotificationResponseHandler,
   setupNotifications,
@@ -69,20 +69,7 @@ function RootNavigator() {
             title: 'Account',
             headerBackTitle: '',
             headerBackButtonDisplayMode: 'minimal',
-            headerTransparent: true,
-            headerBackground: () => <TabHeaderBackground />,
-            headerStyle: Platform.select({
-              ios: { height: 108 },
-              android: { height: 72 },
-              default: { height: 72 },
-            }) as { backgroundColor?: string },
-            headerTintColor: colors.headerText,
-            headerTitleStyle: {
-              fontWeight: '700',
-              fontSize: 20,
-              color: colors.headerText,
-            },
-            headerShadowVisible: false,
+            ...getAppHeaderOptions(colors),
           }}
         />
       </Stack>

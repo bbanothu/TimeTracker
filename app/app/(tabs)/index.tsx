@@ -21,6 +21,8 @@ export default function TrackScreen() {
   void tick;
 
   const geofenceNames = useMemo(() => {
+    if (!ready) return new Map<string, string>();
+
     const map = new Map<string, string>();
     const ids = new Set<string>();
 
@@ -37,7 +39,7 @@ export default function TrackScreen() {
     }
 
     return map;
-  }, [sessions, todayEntries]);
+  }, [ready, sessions, todayEntries]);
 
   useEffect(() => {
     if (tags.length === 0) {

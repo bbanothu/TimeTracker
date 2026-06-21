@@ -1,5 +1,4 @@
 import { useRouter } from 'expo-router';
-import { useHeaderHeight } from '@react-navigation/elements';
 import { useEffect, useState } from 'react';
 import {
   Alert,
@@ -18,11 +17,14 @@ import { ProfileAvatar } from '@/components/ProfileAvatar';
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppColors } from '@/hooks/useAppColors';
+import { useScreenTopPadding } from '@/hooks/useScreenTopPadding';
+import { notifyDataRefresh } from '@/lib/dataRefresh';
 import { clearTrackedData, exportTrackedDataCsv } from '@/services/dataService';
+import { getLastAutoSyncAt, performManualSync } from '@/services/syncScheduler';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const headerHeight = useHeaderHeight();
+  const topPadding = useScreenTopPadding(8);
   const colors = useAppColors();
   const { user, signOut, updateEmail, updatePassword } = useAuth();
   const [email, setEmail] = useState('');
@@ -32,10 +34,16 @@ export default function ProfileScreen() {
   const [savingPassword, setSavingPassword] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [clearing, setClearing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
 
   useEffect(() => {
     setEmail(user?.email ?? '');
   }, [user?.email]);
+
+  useEffect(() => {
+    getLastAutoSyncAt().then(setLastSyncedAt).catch(() => undefined);
+  }, []);
 
   const handleUpdateEmail = async () => {
     const trimmed = email.trim();
@@ -76,6 +84,31 @@ export default function ProfileScreen() {
       Alert.alert('Update failed', error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setSavingPassword(false);
+    }
+  };
+
+  const handleSync = async () => {
+    if (!user?.id) return;
+
+    try {
+      setSyncing(true);
+      const result = await performManualSync(user.id);
+      if (result.skippedReason === 'offline') {
+        Alert.alert('Sync unavailable', 'Connect to the internet and try again.');
+        return;
+      }
+      if (result.skippedReason === 'not_configured') {
+        Alert.alert('Sync unavailable', 'Cloud sync is not configured for this app.');
+        return;
+      }
+      const syncedAt = Date.now();
+      setLastSyncedAt(syncedAt);
+      notifyDataRefresh();
+      Alert.alert('Sync complete', 'Your local changes have been uploaded to the cloud.');
+    } catch (error) {
+      Alert.alert('Sync failed', error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -150,6 +183,16 @@ export default function ProfileScreen() {
       })
     : null;
 
+  const lastSyncedLabel = lastSyncedAt
+    ? new Date(lastSyncedAt).toLocaleString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      })
+    : null;
+
   const inputStyle = {
     backgroundColor: colors.inputBg,
     borderColor: colors.inputBorder,
@@ -164,7 +207,7 @@ export default function ProfileScreen() {
       >
         <ScrollView
           className="flex-1 px-4 pb-8"
-          style={{ paddingTop: headerHeight + 8 }}
+          style={{ paddingTop: topPadding }}
           keyboardShouldPersistTaps="handled"
         >
           <ThemedSurface className="mb-4 px-3 py-3">
@@ -252,14 +295,28 @@ export default function ProfileScreen() {
               Data
             </Text>
             <Text className="mb-4 text-sm" style={{ color: colors.textMuted }}>
-              Export your tracked time or permanently remove all time entries. Tags and geofences are
-              not affected.
+              Your data downloads from the cloud when you sign in. Use Sync now to upload local
+              changes to Supabase. You can also export tracked time or permanently remove all time
+              entries. Tags and geofences are not affected.
             </Text>
+            {lastSyncedLabel ? (
+              <Text className="mb-3 text-xs" style={{ color: colors.textMuted }}>
+                Last synced {lastSyncedLabel}
+              </Text>
+            ) : null}
+            <ActionButton
+              label="Upload to cloud"
+              onPress={handleSync}
+              variant="secondary"
+              loading={syncing}
+              disabled={syncing || exporting || clearing}
+              className="mb-4"
+            />
             <View className="flex-row gap-3">
               <ActionButton
                 label="Export to CSV"
                 onPress={handleExportCsv}
-                disabled={exporting || clearing}
+                disabled={exporting || clearing || syncing}
                 loading={exporting}
                 className="flex-1"
               />
@@ -267,7 +324,7 @@ export default function ProfileScreen() {
                 label="Clear all data"
                 onPress={handleClearAllData}
                 variant="destructiveOutline"
-                disabled={exporting || clearing}
+                disabled={exporting || clearing || syncing}
                 loading={clearing}
                 className="flex-1"
               />

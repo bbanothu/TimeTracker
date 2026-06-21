@@ -1,10 +1,25 @@
 import { BlurView } from 'expo-blur';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { useAppColors } from '@/hooks/useAppColors';
 
 export function TabHeaderBackground() {
   const colors = useAppColors();
+
+  if (Platform.OS === 'android') {
+    return (
+      <View
+        style={[
+          StyleSheet.absoluteFillObject,
+          {
+            backgroundColor: colors.surfaceSolid,
+            borderBottomWidth: StyleSheet.hairlineWidth,
+            borderBottomColor: colors.tabBarBorder,
+          },
+        ]}
+      />
+    );
+  }
 
   return (
     <BlurView

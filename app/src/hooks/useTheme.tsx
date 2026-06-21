@@ -20,11 +20,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    setColorScheme('dark');
+
     AsyncStorage.getItem(THEME_STORAGE_KEY)
       .then((stored) => {
         if (stored === 'light' || stored === 'dark') {
           setColorScheme(stored);
+          return;
         }
+        AsyncStorage.setItem(THEME_STORAGE_KEY, 'dark').catch(() => undefined);
       })
       .finally(() => setReady(true));
   }, [setColorScheme]);

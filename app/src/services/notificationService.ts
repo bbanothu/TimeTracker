@@ -1,9 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
-import { getCurrentUserId } from '@/db/client';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
-import { syncService } from '@/services/syncService';
 import { timerService } from '@/services/timerService';
 import { formatTagName } from '@/utils/formatDuration';
 
@@ -94,10 +92,6 @@ function handleStopTracking(geofenceId?: string): void {
 
     timerService.stop(session.id);
     notifyDataRefresh();
-    const userId = getCurrentUserId();
-    if (userId) {
-      syncService.push(userId).catch(console.warn);
-    }
     if (geofenceId) {
       dismissGeofenceNotification(geofenceId).catch(console.warn);
     }

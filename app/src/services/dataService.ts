@@ -1,4 +1,5 @@
 import NetInfo from '@react-native-community/netinfo';
+import { Platform } from 'react-native';
 
 import { clearAllTrackedData, getAllEntries, initDatabase } from '@/db/client';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
@@ -8,7 +9,11 @@ import { exportEntriesToCsv } from './exportService';
 
 async function isOnline(): Promise<boolean> {
   const state = await NetInfo.fetch();
-  return state.isConnected === true && state.isInternetReachable !== false;
+  if (state.isConnected !== true) return false;
+  if (Platform.OS === 'android') {
+    return true;
+  }
+  return state.isInternetReachable !== false;
 }
 
 export async function clearTrackedData(userId: string): Promise<number> {

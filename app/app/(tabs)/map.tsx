@@ -22,7 +22,6 @@ import {
   updateGeofence,
 } from '@/db/client';
 import { useActiveSession } from '@/hooks/useActiveSession';
-import { useAuth } from '@/hooks/useAuth';
 import { useAppColors } from '@/hooks/useAppColors';
 import { useTags } from '@/hooks/useTags';
 import {
@@ -32,7 +31,6 @@ import {
   syncGeofencingTask,
 } from '@/services/geofenceService';
 import { requestNotificationPermissions } from '@/services/notificationService';
-import { syncService } from '@/services/syncService';
 import type { Geofence } from '@/types';
 
 const DEFAULT_REGION = {
@@ -53,7 +51,6 @@ function StepLabel({ step, label, colors }: { step: number; label: string; color
 export default function MapScreen() {
   const { tags } = useTags();
   const colors = useAppColors();
-  const { user } = useAuth();
   const { ready, refresh } = useActiveSession();
   const [geofences, setGeofences] = useState<Geofence[]>([]);
   const [draftLat, setDraftLat] = useState<number | null>(null);
@@ -72,12 +69,6 @@ export default function MapScreen() {
   const loadGeofences = useCallback(() => {
     setGeofences(getAllGeofences());
   }, []);
-
-  const pushSync = useCallback(async () => {
-    if (user) {
-      await syncService.push(user.id);
-    }
-  }, [user]);
 
   useEffect(() => {
     if (!ready) return;
@@ -162,8 +153,11 @@ export default function MapScreen() {
       setDraftLat(null);
       setDraftLng(null);
       loadGeofences();
-      await syncGeofencingTask();
-      await pushSync();
+      try {
+        await syncGeofencingTask();
+      } catch (error) {
+        console.warn('Geofence sync unavailable:', error);
+      }
 
       const backgroundGranted = await requestBackgroundPermissions();
       if (backgroundGranted) {
@@ -188,8 +182,11 @@ export default function MapScreen() {
   const handleToggle = async (geofence: Geofence, enabled: boolean) => {
     updateGeofence(geofence.id, { enabled });
     loadGeofences();
-    await syncGeofencingTask();
-    await pushSync();
+    try {
+      await syncGeofencingTask();
+    } catch (error) {
+      console.warn('Geofence sync unavailable:', error);
+    }
   };
 
   const handleDelete = async (geofence: Geofence) => {
@@ -201,8 +198,11 @@ export default function MapScreen() {
         onPress: async () => {
           deleteGeofence(geofence.id);
           loadGeofences();
-          await syncGeofencingTask();
-          await pushSync();
+          try {
+            await syncGeofencingTask();
+          } catch (error) {
+            console.warn('Geofence sync unavailable:', error);
+          }
         },
       },
     ]);

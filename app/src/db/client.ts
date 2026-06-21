@@ -202,18 +202,44 @@ export function getCurrentUserId(): string | null {
   return currentUserId;
 }
 
+export function isDatabaseReady(): boolean {
+  return db !== null && currentUserId !== null && initialized;
+}
+
 export function resetDatabase(): void {
+  if (db) {
+    try {
+      db.closeSync();
+    } catch {
+      // Ignore close errors during reset.
+    }
+  }
   db = null;
   currentUserId = null;
   initialized = false;
 }
 
+let initializingUserId: string | null = null;
+
 export function initDatabase(userId: string): void {
   if (initialized && currentUserId === userId) return;
+  if (initializingUserId === userId) return;
 
-  db = SQLite.openDatabaseSync(`timetracker-${userId}.db`);
-  currentUserId = userId;
-  initialized = false;
+  initializingUserId = userId;
+
+  try {
+    if (db) {
+      try {
+        db.closeSync();
+      } catch {
+        // Ignore close errors when switching users.
+      }
+      db = null;
+    }
+
+    db = SQLite.openDatabaseSync(`timetracker-${userId}.db`);
+    currentUserId = userId;
+    initialized = false;
 
   const database = getDb();
   database.execSync(MIGRATION_SQL);
@@ -236,30 +262,6 @@ export function initDatabase(userId: string): void {
       'INSERT INTO sync_state (user_id, last_pulled_at) VALUES (?, ?)',
       [userId, 0],
     );
-
-    const tagCount = database.getFirstSync<{ count: number }>(
-      'SELECT COUNT(*) as count FROM tags WHERE user_id = ?',
-      [userId],
-    );
-
-    if (!tagCount || tagCount.count === 0) {
-      const ts = nowMs();
-      for (const tag of DEFAULT_TAGS) {
-        const id = createId();
-        database.runSync(
-          'INSERT INTO tags (id, user_id, name, color, parent_id, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
-          [id, userId, tag.name, tag.color, null, ts],
-        );
-        enqueueSync('tag', id, 'upsert', {
-          id,
-          user_id: userId,
-          name: tag.name,
-          color: tag.color,
-          parent_id: null,
-          updated_at: new Date(ts).toISOString(),
-        });
-      }
-    }
   } else {
     database.runSync(
       `INSERT INTO sync_state (user_id, last_pulled_at) VALUES (?, ?)
@@ -280,6 +282,38 @@ export function initDatabase(userId: string): void {
   }
 
   initialized = true;
+  } finally {
+    if (initializingUserId === userId) {
+      initializingUserId = null;
+    }
+  }
+}
+
+export function seedLocalDefaultTagsIfEmpty(): void {
+  const userId = requireUserId();
+  const tagCount = getDb().getFirstSync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM tags WHERE user_id = ?',
+    [userId],
+  );
+
+  if (tagCount && tagCount.count > 0) return;
+
+  const ts = nowMs();
+  for (const tag of DEFAULT_TAGS) {
+    const id = createId();
+    getDb().runSync(
+      'INSERT INTO tags (id, user_id, name, color, parent_id, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [id, userId, tag.name, tag.color, null, ts],
+    );
+    enqueueSync('tag', id, 'upsert', {
+      id,
+      user_id: userId,
+      name: tag.name,
+      color: tag.color,
+      parent_id: null,
+      updated_at: new Date(ts).toISOString(),
+    });
+  }
 }
 
 export function upsertTagFromRemote(tag: {
@@ -291,7 +325,30 @@ export function upsertTagFromRemote(tag: {
   updated_at: string;
 }): void {
   const updatedAt = new Date(tag.updated_at).getTime();
-  getDb().runSync(
+  const userId = tag.user_id;
+  const parentId = tag.parent_id ?? null;
+  const database = getDb();
+
+  const duplicate = database.getFirstSync<{ id: string }>(
+    `SELECT id FROM tags
+     WHERE user_id = ? AND name = ? AND COALESCE(parent_id, '') = COALESCE(?, '') AND id != ?`,
+    [userId, tag.name, parentId ?? '', tag.id],
+  );
+
+  if (duplicate) {
+    database.execSync('PRAGMA foreign_keys = OFF');
+    database.runSync('UPDATE time_entry_tags SET tag_id = ? WHERE tag_id = ?', [tag.id, duplicate.id]);
+    database.runSync('UPDATE active_session_tags SET tag_id = ? WHERE tag_id = ?', [
+      tag.id,
+      duplicate.id,
+    ]);
+    database.runSync('UPDATE geofences SET tag_id = ? WHERE tag_id = ?', [tag.id, duplicate.id]);
+    database.runSync('UPDATE tags SET parent_id = ? WHERE parent_id = ?', [tag.id, duplicate.id]);
+    database.runSync('DELETE FROM tags WHERE id = ?', [duplicate.id]);
+    database.execSync('PRAGMA foreign_keys = ON');
+  }
+
+  database.runSync(
     `INSERT INTO tags (id, user_id, name, color, parent_id, updated_at) VALUES (?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
        name = excluded.name,
