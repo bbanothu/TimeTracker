@@ -1,0 +1,792 @@
+import * as Crypto from 'expo-crypto';
+import * as SQLite from 'expo-sqlite';
+
+import {
+  DEFAULT_TAGS,
+  MIGRATION_SQL,
+  SCHEMA_VERSION,
+  TAGS_V3_INDEX_SQL,
+  type SyncEntityType,
+  type SyncOperation,
+} from './schema';
+import type {
+  ActiveSession,
+  EntrySource,
+  Geofence,
+  Tag,
+  TimeEntry,
+} from '@/types';
+import { wouldCreateCycle } from '@/utils/tagTree';
+
+let db: SQLite.SQLiteDatabase | null = null;
+let currentUserId: string | null = null;
+let initialized = false;
+
+function createId(): string {
+  return Crypto.randomUUID();
+}
+
+function nowMs(): number {
+  return Date.now();
+}
+
+function getDb(): SQLite.SQLiteDatabase {
+  if (!db || !currentUserId) {
+    throw new Error('Database not initialized');
+  }
+  return db;
+}
+
+function requireUserId(): string {
+  if (!currentUserId) throw new Error('User not authenticated');
+  return currentUserId;
+}
+
+function rowToTag(row: {
+  id: string;
+  name: string;
+  color: string;
+  parent_id?: string | null;
+}): Tag {
+  return {
+    id: row.id,
+    name: row.name,
+    color: row.color,
+    parentId: row.parent_id ?? null,
+  };
+}
+
+function migrateTagsToV3(database: SQLite.SQLiteDatabase): void {
+  const hasParentId = database.getFirstSync<{ name: string }>(
+    "SELECT name FROM pragma_table_info('tags') WHERE name = 'parent_id'",
+  );
+  if (hasParentId) return;
+
+  database.execSync('PRAGMA foreign_keys = OFF');
+  database.execSync(`
+    CREATE TABLE tags_v3 (
+      id TEXT PRIMARY KEY NOT NULL,
+      user_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      color TEXT NOT NULL,
+      parent_id TEXT,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (parent_id) REFERENCES tags_v3(id) ON DELETE CASCADE
+    );
+    CREATE UNIQUE INDEX idx_tags_user_parent_name ON tags_v3(user_id, COALESCE(parent_id, ''), name);
+    INSERT INTO tags_v3 (id, user_id, name, color, parent_id, updated_at)
+      SELECT id, user_id, name, color, NULL, updated_at FROM tags;
+    DROP TABLE tags;
+    ALTER TABLE tags_v3 RENAME TO tags;
+  `);
+  database.execSync('PRAGMA foreign_keys = ON');
+}
+
+function validateSiblingName(
+  userId: string,
+  name: string,
+  parentId: string | null,
+  excludeId?: string,
+): void {
+  const row = getDb().getFirstSync<{ id: string }>(
+    `SELECT id FROM tags
+     WHERE user_id = ? AND name = ? AND COALESCE(parent_id, '') = COALESCE(?, '')
+       AND id != COALESCE(?, '')`,
+    [userId, name, parentId ?? '', excludeId ?? ''],
+  );
+  if (row) throw new Error('A tag with this name already exists under the same parent');
+}
+
+function validateParentId(userId: string, parentId: string | null, tagId?: string): void {
+  if (!parentId) return;
+
+  const parent = getDb().getFirstSync<{ id: string }>(
+    'SELECT id FROM tags WHERE id = ? AND user_id = ?',
+    [parentId, userId],
+  );
+  if (!parent) throw new Error('Parent tag not found');
+
+  if (tagId) {
+    const allTags = getAllTags();
+    if (wouldCreateCycle(tagId, parentId, allTags)) {
+      throw new Error('Cannot nest a tag under itself or its descendants');
+    }
+  }
+}
+
+function loadTagsForEntry(entryId: string): Tag[] {
+  const userId = requireUserId();
+  return getDb()
+    .getAllSync<{ id: string; name: string; color: string; parent_id: string | null }>(
+      `SELECT t.id, t.name, t.color, t.parent_id
+       FROM tags t
+       INNER JOIN time_entry_tags tet ON tet.tag_id = t.id
+       WHERE tet.entry_id = ? AND tet.user_id = ?`,
+      [entryId, userId],
+    )
+    .map(rowToTag);
+}
+
+function loadTagsForSession(sessionId: string): Tag[] {
+  return getDb()
+    .getAllSync<{ id: string; name: string; color: string; parent_id: string | null }>(
+      `SELECT t.id, t.name, t.color, t.parent_id
+       FROM tags t
+       INNER JOIN active_session_tags ast ON ast.tag_id = t.id
+       WHERE ast.session_id = ?`,
+      [sessionId],
+    )
+    .map(rowToTag);
+}
+
+export function enqueueSync(
+  entityType: SyncEntityType,
+  entityId: string,
+  operation: SyncOperation,
+  payload: Record<string, unknown>,
+): void {
+  getDb().runSync(
+    `INSERT INTO sync_queue (id, entity_type, entity_id, operation, payload, created_at)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [createId(), entityType, entityId, operation, JSON.stringify(payload), nowMs()],
+  );
+}
+
+export function getSyncQueue(): Array<{
+  id: string;
+  entityType: SyncEntityType;
+  entityId: string;
+  operation: SyncOperation;
+  payload: Record<string, unknown>;
+}> {
+  return getDb()
+    .getAllSync<{
+      id: string;
+      entity_type: SyncEntityType;
+      entity_id: string;
+      operation: SyncOperation;
+      payload: string;
+    }>('SELECT id, entity_type, entity_id, operation, payload FROM sync_queue ORDER BY created_at ASC')
+    .map((row) => ({
+      id: row.id,
+      entityType: row.entity_type,
+      entityId: row.entity_id,
+      operation: row.operation,
+      payload: JSON.parse(row.payload) as Record<string, unknown>,
+    }));
+}
+
+export function removeSyncQueueItem(id: string): void {
+  getDb().runSync('DELETE FROM sync_queue WHERE id = ?', [id]);
+}
+
+export function getLastPulledAt(): number {
+  const userId = requireUserId();
+  const row = getDb().getFirstSync<{ last_pulled_at: number }>(
+    'SELECT last_pulled_at FROM sync_state WHERE user_id = ?',
+    [userId],
+  );
+  return row?.last_pulled_at ?? 0;
+}
+
+export function setLastPulledAt(timestamp: number): void {
+  const userId = requireUserId();
+  getDb().runSync(
+    `INSERT INTO sync_state (user_id, last_pulled_at) VALUES (?, ?)
+     ON CONFLICT(user_id) DO UPDATE SET last_pulled_at = excluded.last_pulled_at`,
+    [userId, timestamp],
+  );
+}
+
+export function getCurrentUserId(): string | null {
+  return currentUserId;
+}
+
+export function resetDatabase(): void {
+  db = null;
+  currentUserId = null;
+  initialized = false;
+}
+
+export function initDatabase(userId: string): void {
+  if (initialized && currentUserId === userId) return;
+
+  db = SQLite.openDatabaseSync(`timetracker-${userId}.db`);
+  currentUserId = userId;
+  initialized = false;
+
+  const database = getDb();
+  database.execSync(MIGRATION_SQL);
+
+  // Existing v2 databases have a tags table without parent_id; migrate before index creation.
+  migrateTagsToV3(database);
+  database.execSync(TAGS_V3_INDEX_SQL);
+
+  const versionRow = database.getFirstSync<{ value: string }>(
+    'SELECT value FROM meta WHERE key = ?',
+    ['schema_version'],
+  );
+
+  if (!versionRow) {
+    database.runSync('INSERT INTO meta (key, value) VALUES (?, ?)', [
+      'schema_version',
+      String(SCHEMA_VERSION),
+    ]);
+    database.runSync(
+      'INSERT INTO sync_state (user_id, last_pulled_at) VALUES (?, ?)',
+      [userId, 0],
+    );
+
+    const tagCount = database.getFirstSync<{ count: number }>(
+      'SELECT COUNT(*) as count FROM tags WHERE user_id = ?',
+      [userId],
+    );
+
+    if (!tagCount || tagCount.count === 0) {
+      const ts = nowMs();
+      for (const tag of DEFAULT_TAGS) {
+        const id = createId();
+        database.runSync(
+          'INSERT INTO tags (id, user_id, name, color, parent_id, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+          [id, userId, tag.name, tag.color, null, ts],
+        );
+        enqueueSync('tag', id, 'upsert', {
+          id,
+          user_id: userId,
+          name: tag.name,
+          color: tag.color,
+          parent_id: null,
+          updated_at: new Date(ts).toISOString(),
+        });
+      }
+    }
+  } else {
+    database.runSync(
+      `INSERT INTO sync_state (user_id, last_pulled_at) VALUES (?, ?)
+       ON CONFLICT(user_id) DO NOTHING`,
+      [userId, 0],
+    );
+
+    const storedVersion = parseInt(versionRow.value, 10);
+    if (storedVersion < SCHEMA_VERSION) {
+      if (storedVersion < 3) {
+        migrateTagsToV3(database);
+      }
+      database.runSync('UPDATE meta SET value = ? WHERE key = ?', [
+        String(SCHEMA_VERSION),
+        'schema_version',
+      ]);
+    }
+  }
+
+  initialized = true;
+}
+
+export function upsertTagFromRemote(tag: {
+  id: string;
+  user_id: string;
+  name: string;
+  color: string;
+  parent_id?: string | null;
+  updated_at: string;
+}): void {
+  const updatedAt = new Date(tag.updated_at).getTime();
+  getDb().runSync(
+    `INSERT INTO tags (id, user_id, name, color, parent_id, updated_at) VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       name = excluded.name,
+       color = excluded.color,
+       parent_id = excluded.parent_id,
+       updated_at = excluded.updated_at
+     WHERE excluded.updated_at >= tags.updated_at`,
+    [tag.id, tag.user_id, tag.name, tag.color, tag.parent_id ?? null, updatedAt],
+  );
+}
+
+export function deleteTagLocally(id: string): void {
+  getDb().runSync('DELETE FROM tags WHERE id = ? AND user_id = ?', [id, requireUserId()]);
+}
+
+export function upsertEntryFromRemote(entry: {
+  id: string;
+  user_id: string;
+  started_at: number;
+  ended_at: number;
+  source: EntrySource;
+  geofence_id: string | null;
+  updated_at: string;
+  tag_ids: string[];
+}): void {
+  const updatedAt = new Date(entry.updated_at).getTime();
+  const userId = requireUserId();
+  const database = getDb();
+
+  database.runSync(
+    `INSERT INTO time_entries (id, user_id, started_at, ended_at, source, geofence_id, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       started_at = excluded.started_at,
+       ended_at = excluded.ended_at,
+       source = excluded.source,
+       geofence_id = excluded.geofence_id,
+       updated_at = excluded.updated_at
+     WHERE excluded.updated_at >= time_entries.updated_at`,
+    [
+      entry.id,
+      entry.user_id,
+      entry.started_at,
+      entry.ended_at,
+      entry.source,
+      entry.geofence_id,
+      updatedAt,
+    ],
+  );
+
+  database.runSync('DELETE FROM time_entry_tags WHERE entry_id = ?', [entry.id]);
+  for (const tagId of entry.tag_ids) {
+    database.runSync(
+      'INSERT INTO time_entry_tags (entry_id, tag_id, user_id) VALUES (?, ?, ?)',
+      [entry.id, tagId, userId],
+    );
+  }
+}
+
+export function upsertGeofenceFromRemote(geofence: {
+  id: string;
+  user_id: string;
+  tag_id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  radius_meters: number;
+  enabled: boolean;
+  updated_at: string;
+}): void {
+  const updatedAt = new Date(geofence.updated_at).getTime();
+  getDb().runSync(
+    `INSERT INTO geofences (id, user_id, tag_id, name, latitude, longitude, radius_meters, enabled, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       tag_id = excluded.tag_id,
+       name = excluded.name,
+       latitude = excluded.latitude,
+       longitude = excluded.longitude,
+       radius_meters = excluded.radius_meters,
+       enabled = excluded.enabled,
+       updated_at = excluded.updated_at
+     WHERE excluded.updated_at >= geofences.updated_at`,
+    [
+      geofence.id,
+      geofence.user_id,
+      geofence.tag_id,
+      geofence.name,
+      geofence.latitude,
+      geofence.longitude,
+      geofence.radius_meters,
+      geofence.enabled ? 1 : 0,
+      updatedAt,
+    ],
+  );
+}
+
+export function deleteGeofenceLocally(id: string): void {
+  getDb().runSync('DELETE FROM geofences WHERE id = ? AND user_id = ?', [id, requireUserId()]);
+}
+
+export function getAllTags(): Tag[] {
+  const userId = requireUserId();
+  return getDb()
+    .getAllSync<{ id: string; name: string; color: string; parent_id: string | null }>(
+      'SELECT id, name, color, parent_id FROM tags WHERE user_id = ? ORDER BY name ASC',
+      [userId],
+    )
+    .map(rowToTag);
+}
+
+export function createTag(name: string, color: string, parentId: string | null = null): Tag {
+  const userId = requireUserId();
+  const normalized = name.replace(/^#/, '').trim().toLowerCase();
+  if (!normalized) throw new Error('Tag name is required');
+
+  validateParentId(userId, parentId);
+  validateSiblingName(userId, normalized, parentId);
+
+  const ts = nowMs();
+  const tag: Tag = { id: createId(), name: normalized, color, parentId };
+  getDb().runSync(
+    'INSERT INTO tags (id, user_id, name, color, parent_id, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+    [tag.id, userId, tag.name, tag.color, parentId, ts],
+  );
+  enqueueSync('tag', tag.id, 'upsert', {
+    id: tag.id,
+    user_id: userId,
+    name: tag.name,
+    color: tag.color,
+    parent_id: parentId,
+    updated_at: new Date(ts).toISOString(),
+  });
+  return tag;
+}
+
+export function updateTag(
+  id: string,
+  name: string,
+  color: string,
+  parentId?: string | null,
+): Tag {
+  const userId = requireUserId();
+  const existing = getDb().getFirstSync<{
+    id: string;
+    name: string;
+    color: string;
+    parent_id: string | null;
+  }>('SELECT id, name, color, parent_id FROM tags WHERE id = ? AND user_id = ?', [id, userId]);
+  if (!existing) throw new Error('Tag not found');
+
+  const resolvedParentId = parentId !== undefined ? parentId : existing.parent_id;
+  const normalized = name.replace(/^#/, '').trim().toLowerCase();
+  if (!normalized) throw new Error('Tag name is required');
+
+  validateParentId(userId, resolvedParentId, id);
+  validateSiblingName(userId, normalized, resolvedParentId, id);
+
+  const ts = nowMs();
+  getDb().runSync(
+    'UPDATE tags SET name = ?, color = ?, parent_id = ?, updated_at = ? WHERE id = ? AND user_id = ?',
+    [normalized, color, resolvedParentId, ts, id, userId],
+  );
+  enqueueSync('tag', id, 'upsert', {
+    id,
+    user_id: userId,
+    name: normalized,
+    color,
+    parent_id: resolvedParentId,
+    updated_at: new Date(ts).toISOString(),
+  });
+  return { id, name: normalized, color, parentId: resolvedParentId };
+}
+
+export function deleteTag(id: string): void {
+  const userId = requireUserId();
+  const linked = getDb().getFirstSync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM geofences WHERE tag_id = ? AND user_id = ?',
+    [id, userId],
+  );
+  if (linked && linked.count > 0) {
+    throw new Error('Remove geofences linked to this tag first');
+  }
+
+  const childCount = getDb().getFirstSync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM tags WHERE parent_id = ? AND user_id = ?',
+    [id, userId],
+  );
+  if (childCount && childCount.count > 0) {
+    throw new Error('Delete child tags first');
+  }
+
+  getDb().runSync('DELETE FROM tags WHERE id = ? AND user_id = ?', [id, userId]);
+  enqueueSync('tag', id, 'delete', { id, user_id: userId });
+}
+
+export function getActiveSession(): ActiveSession | null {
+  const userId = requireUserId();
+  const row = getDb().getFirstSync<{
+    id: string;
+    started_at: number;
+    source: EntrySource;
+    geofence_id: string | null;
+  }>('SELECT id, started_at, source, geofence_id FROM active_session WHERE user_id = ? LIMIT 1', [
+    userId,
+  ]);
+
+  if (!row) return null;
+
+  return {
+    id: row.id,
+    startedAt: row.started_at,
+    source: row.source,
+    geofenceId: row.geofence_id,
+    tags: loadTagsForSession(row.id),
+  };
+}
+
+export function startSession(
+  tagIds: string[],
+  source: EntrySource,
+  geofenceId: string | null = null,
+): ActiveSession {
+  const userId = requireUserId();
+  const database = getDb();
+  const existing = getActiveSession();
+  if (existing) stopSession(Date.now());
+
+  const session: ActiveSession = {
+    id: createId(),
+    startedAt: nowMs(),
+    source,
+    geofenceId,
+    tags: [],
+  };
+
+  database.runSync(
+    'INSERT INTO active_session (id, user_id, started_at, source, geofence_id) VALUES (?, ?, ?, ?, ?)',
+    [session.id, userId, session.startedAt, source, geofenceId],
+  );
+
+  for (const tagId of tagIds) {
+    database.runSync(
+      'INSERT INTO active_session_tags (session_id, tag_id) VALUES (?, ?)',
+      [session.id, tagId],
+    );
+  }
+
+  session.tags = loadTagsForSession(session.id);
+  return session;
+}
+
+export function stopSession(endedAt: number = Date.now()): TimeEntry | null {
+  const session = getActiveSession();
+  if (!session) return null;
+
+  const userId = requireUserId();
+  const database = getDb();
+  const ts = nowMs();
+  const entry: TimeEntry = {
+    id: createId(),
+    startedAt: session.startedAt,
+    endedAt: endedAt,
+    source: session.source,
+    geofenceId: session.geofenceId,
+    tags: session.tags,
+  };
+
+  database.runSync(
+    `INSERT INTO time_entries (id, user_id, started_at, ended_at, source, geofence_id, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [entry.id, userId, entry.startedAt, entry.endedAt, entry.source, entry.geofenceId, ts],
+  );
+
+  for (const tag of session.tags) {
+    database.runSync(
+      'INSERT INTO time_entry_tags (entry_id, tag_id, user_id) VALUES (?, ?, ?)',
+      [entry.id, tag.id, userId],
+    );
+  }
+
+  database.runSync('DELETE FROM active_session_tags WHERE session_id = ?', [session.id]);
+  database.runSync('DELETE FROM active_session WHERE id = ?', [session.id]);
+
+  enqueueSync('entry', entry.id, 'upsert', {
+    id: entry.id,
+    user_id: userId,
+    started_at: entry.startedAt,
+    ended_at: entry.endedAt,
+    source: entry.source,
+    geofence_id: entry.geofenceId,
+    updated_at: new Date(ts).toISOString(),
+    tag_ids: entry.tags.map((t) => t.id),
+  });
+
+  return entry;
+}
+
+export function getEntriesBetween(startMs: number, endMs: number): TimeEntry[] {
+  const userId = requireUserId();
+  const rows = getDb().getAllSync<{
+    id: string;
+    started_at: number;
+    ended_at: number;
+    source: EntrySource;
+    geofence_id: string | null;
+  }>(
+    `SELECT id, started_at, ended_at, source, geofence_id
+     FROM time_entries
+     WHERE user_id = ? AND ended_at > ? AND started_at < ?
+     ORDER BY started_at DESC`,
+    [userId, startMs, endMs],
+  );
+
+  return rows.map((row) => ({
+    id: row.id,
+    startedAt: row.started_at,
+    endedAt: row.ended_at,
+    source: row.source,
+    geofenceId: row.geofence_id,
+    tags: loadTagsForEntry(row.id),
+  }));
+}
+
+export function getTodayEntries(): TimeEntry[] {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const end = new Date();
+  end.setHours(23, 59, 59, 999);
+  return getEntriesBetween(start.getTime(), end.getTime());
+}
+
+export function getAllGeofences(): Geofence[] {
+  const userId = requireUserId();
+  const rows = getDb().getAllSync<{
+    id: string;
+    tag_id: string;
+    name: string;
+    latitude: number;
+    longitude: number;
+    radius_meters: number;
+    enabled: number;
+    tag_name: string;
+    tag_color: string;
+  }>(
+    `SELECT g.id, g.tag_id, g.name, g.latitude, g.longitude, g.radius_meters, g.enabled,
+            t.name as tag_name, t.color as tag_color
+     FROM geofences g
+     INNER JOIN tags t ON t.id = g.tag_id
+     WHERE g.user_id = ?
+     ORDER BY g.name ASC`,
+    [userId],
+  );
+
+  return rows.map((row) => ({
+    id: row.id,
+    tagId: row.tag_id,
+    name: row.name,
+    latitude: row.latitude,
+    longitude: row.longitude,
+    radiusMeters: row.radius_meters,
+    enabled: row.enabled === 1,
+    tag: { id: row.tag_id, name: row.tag_name, color: row.tag_color, parentId: null },
+  }));
+}
+
+export function getGeofenceById(id: string): Geofence | null {
+  const userId = requireUserId();
+  const row = getDb().getFirstSync<{
+    id: string;
+    tag_id: string;
+    name: string;
+    latitude: number;
+    longitude: number;
+    radius_meters: number;
+    enabled: number;
+    tag_name: string;
+    tag_color: string;
+  }>(
+    `SELECT g.id, g.tag_id, g.name, g.latitude, g.longitude, g.radius_meters, g.enabled,
+            t.name as tag_name, t.color as tag_color
+     FROM geofences g
+     INNER JOIN tags t ON t.id = g.tag_id
+     WHERE g.id = ? AND g.user_id = ?`,
+    [id, userId],
+  );
+
+  if (!row) return null;
+
+  return {
+    id: row.id,
+    tagId: row.tag_id,
+    name: row.name,
+    latitude: row.latitude,
+    longitude: row.longitude,
+    radiusMeters: row.radius_meters,
+    enabled: row.enabled === 1,
+    tag: { id: row.tag_id, name: row.tag_name, color: row.tag_color, parentId: null },
+  };
+}
+
+export function createGeofence(input: {
+  tagId: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  radiusMeters: number;
+}): Geofence {
+  const userId = requireUserId();
+  const id = createId();
+  const ts = nowMs();
+  getDb().runSync(
+    `INSERT INTO geofences (id, user_id, tag_id, name, latitude, longitude, radius_meters, enabled, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)`,
+    [id, userId, input.tagId, input.name, input.latitude, input.longitude, input.radiusMeters, ts],
+  );
+  enqueueSync('geofence', id, 'upsert', {
+    id,
+    user_id: userId,
+    tag_id: input.tagId,
+    name: input.name,
+    latitude: input.latitude,
+    longitude: input.longitude,
+    radius_meters: input.radiusMeters,
+    enabled: true,
+    updated_at: new Date(ts).toISOString(),
+  });
+  const geofence = getGeofenceById(id);
+  if (!geofence) throw new Error('Failed to create geofence');
+  return geofence;
+}
+
+export function updateGeofence(
+  id: string,
+  input: Partial<{
+    tagId: string;
+    name: string;
+    latitude: number;
+    longitude: number;
+    radiusMeters: number;
+    enabled: boolean;
+  }>,
+): Geofence {
+  const userId = requireUserId();
+  const existing = getGeofenceById(id);
+  if (!existing) throw new Error('Geofence not found');
+
+  const ts = nowMs();
+  const enabled = input.enabled !== undefined ? input.enabled : existing.enabled;
+
+  getDb().runSync(
+    `UPDATE geofences
+     SET tag_id = ?, name = ?, latitude = ?, longitude = ?, radius_meters = ?, enabled = ?, updated_at = ?
+     WHERE id = ? AND user_id = ?`,
+    [
+      input.tagId ?? existing.tagId,
+      input.name ?? existing.name,
+      input.latitude ?? existing.latitude,
+      input.longitude ?? existing.longitude,
+      input.radiusMeters ?? existing.radiusMeters,
+      enabled ? 1 : 0,
+      ts,
+      id,
+      userId,
+    ],
+  );
+
+  enqueueSync('geofence', id, 'upsert', {
+    id,
+    user_id: userId,
+    tag_id: input.tagId ?? existing.tagId,
+    name: input.name ?? existing.name,
+    latitude: input.latitude ?? existing.latitude,
+    longitude: input.longitude ?? existing.longitude,
+    radius_meters: input.radiusMeters ?? existing.radiusMeters,
+    enabled,
+    updated_at: new Date(ts).toISOString(),
+  });
+
+  const updated = getGeofenceById(id);
+  if (!updated) throw new Error('Failed to update geofence');
+  return updated;
+}
+
+export function deleteGeofence(id: string): void {
+  const userId = requireUserId();
+  getDb().runSync('DELETE FROM geofences WHERE id = ? AND user_id = ?', [id, userId]);
+  enqueueSync('geofence', id, 'delete', { id, user_id: userId });
+}
+
+export function getEnabledGeofences(): Geofence[] {
+  return getAllGeofences().filter((g) => g.enabled);
+}
+
+export function hasPendingSync(): boolean {
+  const row = getDb().getFirstSync<{ count: number }>('SELECT COUNT(*) as count FROM sync_queue');
+  return (row?.count ?? 0) > 0;
+}
