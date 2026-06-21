@@ -27,6 +27,10 @@ import {
   syncGeofencingTask,
 } from '@/services/geofenceService';
 import { syncService } from '@/services/syncService';
+import { ActionButton } from '@/components/ActionButton';
+import { TabScreenContainer } from '@/components/TabScreenContainer';
+import { ThemedSurface } from '@/components/ThemedSurface';
+import { useAppColors } from '@/hooks/useAppColors';
 import { formatTagName } from '@/utils/formatDuration';
 import { flattenTags } from '@/utils/tagTree';
 import type { Geofence } from '@/types';
@@ -40,6 +44,7 @@ const DEFAULT_REGION = {
 
 export default function MapScreen() {
   const { tags } = useTags();
+  const colors = useAppColors();
   const flatTags = useMemo(() => flattenTags(tags), [tags]);
   const { user } = useAuth();
   const { ready, refresh } = useActiveSession();
@@ -200,7 +205,8 @@ export default function MapScreen() {
   };
 
   return (
-    <View className="flex-1 bg-slate-50 dark:bg-slate-950">
+    <TabScreenContainer>
+      <View className="flex-1">
       {showBanner ? (
         <View className="border-b border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-900 dark:bg-amber-950">
           <Text className="text-sm text-amber-900 dark:text-amber-200">
@@ -225,8 +231,8 @@ export default function MapScreen() {
             <Circle
               center={{ latitude: draftLat, longitude: draftLng }}
               radius={Number(radius) || 150}
-              strokeColor="#2563EB"
-              fillColor="rgba(37, 99, 235, 0.15)"
+              strokeColor={colors.primary}
+              fillColor={`${colors.primary}26`}
             />
           </>
         ) : null}
@@ -236,60 +242,66 @@ export default function MapScreen() {
             key={geofence.id}
             center={{ latitude: geofence.latitude, longitude: geofence.longitude }}
             radius={geofence.radiusMeters}
-            strokeColor={geofence.enabled ? geofence.tag?.color ?? '#3B82F6' : '#94A3B8'}
-            fillColor={`${geofence.tag?.color ?? '#3B82F6'}33`}
+            strokeColor={geofence.enabled ? geofence.tag?.color ?? colors.primary : '#94A3B8'}
+            fillColor={`${geofence.tag?.color ?? colors.primary}33`}
           />
         ))}
       </MapView>
 
-      <View className="border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
-        <Text className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+      <View
+        className="border-b px-4 py-3"
+        style={{ borderBottomColor: colors.glassBorder, backgroundColor: colors.glass }}
+      >
+        <Text className="mb-2 text-sm font-medium" style={{ color: colors.textSecondary }}>
           Tap map to drop a pin
         </Text>
         <TextInput
           value={name}
           onChangeText={setName}
           placeholder="Office"
-          placeholderTextColor="#94A3B8"
-          className="mb-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          placeholderTextColor={colors.inputPlaceholder}
+          className="mb-2 rounded-xl border px-4 py-2 text-base"
+          style={{
+            backgroundColor: colors.inputBg,
+            borderColor: colors.inputBorder,
+            color: colors.text,
+          }}
         />
         <TextInput
           value={radius}
           onChangeText={setRadius}
           placeholder="Radius in meters"
-          placeholderTextColor="#94A3B8"
+          placeholderTextColor={colors.inputPlaceholder}
           keyboardType="number-pad"
-          className="mb-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          className="mb-2 rounded-xl border px-4 py-2 text-base"
+          style={{
+            backgroundColor: colors.inputBg,
+            borderColor: colors.inputBorder,
+            color: colors.text,
+          }}
         />
         <View className="mb-3 flex-row flex-wrap">
-          {flatTags.map((item) => (
-            <Pressable
-              key={item.tag.id}
-              onPress={() => setSelectedTagId(item.tag.id)}
-              className={`mr-2 mb-2 rounded-full px-3 py-2 ${
-                selectedTagId === item.tag.id ? 'bg-blue-600' : 'bg-slate-100 dark:bg-slate-800'
-              }`}
-            >
-              <Text
-                className={
-                  selectedTagId === item.tag.id ? 'text-white' : 'text-slate-700 dark:text-slate-200'
-                }
+          {flatTags.map((item) => {
+            const selected = selectedTagId === item.tag.id;
+            return (
+              <Pressable
+                key={item.tag.id}
+                onPress={() => setSelectedTagId(item.tag.id)}
+                className="mr-2 mb-2 rounded-full px-3 py-2"
+                style={{
+                  backgroundColor: selected ? colors.primary : colors.secondaryBg,
+                }}
               >
-                #{item.path}
-              </Text>
-            </Pressable>
-          ))}
+                <Text style={{ color: selected ? colors.textOnPrimary : colors.secondaryText }}>
+                  #{item.path}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
         <View className="flex-row gap-2">
-          <Pressable onPress={handleSaveGeofence} className="flex-1 rounded-xl bg-blue-600 py-3">
-            <Text className="text-center font-semibold text-white">Save geofence</Text>
-          </Pressable>
-          <Pressable
-            onPress={handleEnableBackground}
-            className="rounded-xl bg-slate-200 px-4 py-3 dark:bg-slate-700"
-          >
-            <Text className="font-semibold text-slate-700 dark:text-slate-200">Background</Text>
-          </Pressable>
+          <ActionButton label="Save geofence" onPress={handleSaveGeofence} className="flex-1" />
+          <ActionButton label="Background" onPress={handleEnableBackground} variant="secondary" />
         </View>
       </View>
 
@@ -298,16 +310,16 @@ export default function MapScreen() {
         keyExtractor={(item) => item.id}
         contentContainerClassName="px-4 py-3"
         ListEmptyComponent={
-          <Text className="text-slate-500 dark:text-slate-400">No geofences yet.</Text>
+          <Text style={{ color: colors.textMuted }}>No geofences yet.</Text>
         }
         renderItem={({ item }) => (
-          <View className="mb-3 rounded-2xl bg-white p-4 dark:bg-slate-900">
+          <ThemedSurface className="mb-3 p-4">
             <View className="flex-row items-center justify-between">
               <View>
-                <Text className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                <Text className="text-base font-semibold" style={{ color: colors.text }}>
                   {item.name}
                 </Text>
-                <Text className="text-sm text-slate-500 dark:text-slate-400">
+                <Text className="text-sm" style={{ color: colors.textMuted }}>
                   {formatTagName(item.tag?.name ?? 'tag')} · {item.radiusMeters}m
                 </Text>
               </View>
@@ -315,13 +327,17 @@ export default function MapScreen() {
             </View>
             <Pressable
               onPress={() => handleDelete(item)}
-              className="mt-3 self-start rounded-lg bg-rose-100 px-3 py-2 dark:bg-rose-950"
+              className="mt-3 self-start rounded-lg px-3 py-2"
+              style={{ backgroundColor: colors.destructiveBg }}
             >
-              <Text className="text-sm font-medium text-rose-700 dark:text-rose-300">Delete</Text>
+              <Text className="text-sm font-medium" style={{ color: colors.destructiveText }}>
+                Delete
+              </Text>
             </Pressable>
-          </View>
+          </ThemedSurface>
         )}
       />
-    </View>
+      </View>
+    </TabScreenContainer>
   );
 }

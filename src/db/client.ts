@@ -624,6 +624,54 @@ export function getTodayEntries(): TimeEntry[] {
   return getEntriesBetween(start.getTime(), end.getTime());
 }
 
+export function getAllEntries(): TimeEntry[] {
+  const userId = requireUserId();
+  const rows = getDb().getAllSync<{
+    id: string;
+    started_at: number;
+    ended_at: number;
+    source: EntrySource;
+    geofence_id: string | null;
+  }>(
+    `SELECT id, started_at, ended_at, source, geofence_id
+     FROM time_entries
+     WHERE user_id = ?
+     ORDER BY started_at ASC`,
+    [userId],
+  );
+
+  return rows.map((row) => ({
+    id: row.id,
+    startedAt: row.started_at,
+    endedAt: row.ended_at,
+    source: row.source,
+    geofenceId: row.geofence_id,
+    tags: loadTagsForEntry(row.id),
+  }));
+}
+
+export function clearAllTrackedData(): number {
+  const userId = requireUserId();
+  const database = getDb();
+
+  const countRow = database.getFirstSync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM time_entries WHERE user_id = ?',
+    [userId],
+  );
+  const count = countRow?.count ?? 0;
+
+  database.runSync(
+    'DELETE FROM active_session_tags WHERE session_id IN (SELECT id FROM active_session WHERE user_id = ?)',
+    [userId],
+  );
+  database.runSync('DELETE FROM active_session WHERE user_id = ?', [userId]);
+  database.runSync('DELETE FROM time_entry_tags WHERE user_id = ?', [userId]);
+  database.runSync('DELETE FROM time_entries WHERE user_id = ?', [userId]);
+  database.runSync("DELETE FROM sync_queue WHERE entity_type = 'entry'");
+
+  return count;
+}
+
 export function getAllGeofences(): Geofence[] {
   const userId = requireUserId();
   const rows = getDb().getAllSync<{

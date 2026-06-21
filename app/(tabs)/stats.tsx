@@ -1,9 +1,10 @@
 import { StatsCharts } from '@/components/StatsCharts';
 import { ChartTypeSelector } from '@/components/ChartTypeSelector';
 import { PeriodSelector } from '@/components/PeriodSelector';
+import { TabScreenContainer } from '@/components/TabScreenContainer';
 import { useStats } from '@/hooks/useStats';
 import { useStatsVisualization } from '@/hooks/useStatsVisualization';
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
 
 export default function StatsScreen() {
   const { ready, period, setPeriod, anchorDate, summary, shift } = useStats('week');
@@ -11,14 +12,14 @@ export default function StatsScreen() {
 
   if (!ready || !vizReady) {
     return (
-      <View className="flex-1 items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <Text className="text-slate-500 dark:text-slate-400">Loading...</Text>
-      </View>
+      <TabScreenContainer className="items-center justify-center">
+        <Text className="text-white/70">Loading...</Text>
+      </TabScreenContainer>
     );
   }
 
   return (
-    <View className="flex-1 bg-slate-50 px-4 pt-2 dark:bg-slate-950">
+    <TabScreenContainer className="px-4 pt-2">
       <PeriodSelector
         period={period}
         anchorDate={anchorDate}
@@ -27,6 +28,6 @@ export default function StatsScreen() {
       />
       <ChartTypeSelector visualization={visualization} onChange={setVisualization} />
       <StatsCharts summary={summary} visualization={visualization} />
-    </View>
+    </TabScreenContainer>
   );
 }

@@ -26,7 +26,7 @@ export function ProfileButton() {
       accessibilityLabel="Open account settings"
       className="mr-3"
     >
-      <UserAvatar photoUri={photoUri} fallbackLabel={fallbackLabel} size={36} />
+      <UserAvatar photoUri={photoUri} fallbackLabel={fallbackLabel} size={36} showIconFallback />
     </Pressable>
   );
 }

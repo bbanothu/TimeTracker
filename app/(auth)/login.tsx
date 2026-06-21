@@ -17,10 +17,12 @@ import { AuthBackground } from '@/components/auth/AuthBackground';
 import { authScreenStyles as styles } from '@/components/auth/authScreenStyles';
 import { GlassInput } from '@/components/auth/GlassInput';
 import { useAuth } from '@/hooks/useAuth';
+import { useAppColors } from '@/hooks/useAppColors';
 import { isSupabaseConfigured } from '@/lib/supabase';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const colors = useAppColors();
   const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -86,13 +88,13 @@ export default function LoginScreen() {
 
               <Pressable onPress={handleLogin} disabled={submitting} style={styles.buttonWrap}>
                 <LinearGradient
-                  colors={['#3B82F6', '#6366F1', '#A855F7']}
+                  colors={colors.authGradient}
                   start={{ x: 0, y: 0.5 }}
                   end={{ x: 1, y: 0.5 }}
                   style={styles.button}
                 >
                   {submitting ? (
-                    <ActivityIndicator color="#fff" />
+                    <ActivityIndicator color="#FFFFFF" />
                   ) : (
                     <Text style={styles.buttonText}>Sign in</Text>
                   )}

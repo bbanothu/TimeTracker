@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS meta (
 `;
 
 export const DEFAULT_TAGS = [
-  { name: 'work', color: '#3B82F6' },
+  { name: 'work', color: '#059669' },
   { name: 'personal', color: '#10B981' },
   { name: 'sleep', color: '#8B5CF6' },
 ] as const;

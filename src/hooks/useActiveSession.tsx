@@ -3,6 +3,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 
 import { initDatabase } from '@/db/client';
 import { useAuth } from '@/hooks/useAuth';
+import { subscribeDataRefresh } from '@/lib/dataRefresh';
 import { syncService } from '@/services/syncService';
 import { timerService } from '@/services/timerService';
 import type { ActiveSession, TimeEntry } from '@/types';
@@ -76,6 +77,10 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
 
     return () => subscription.remove();
   }, [user?.id, refresh]);
+
+  useEffect(() => {
+    return subscribeDataRefresh(refresh);
+  }, [refresh]);
 
   useEffect(() => {
     if (!session) return;

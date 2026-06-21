@@ -3,10 +3,12 @@ import { Tabs } from 'expo-router';
 import type { ComponentProps } from 'react';
 import { Platform } from 'react-native';
 
+import { AppBackground } from '@/components/AppBackground';
 import { ProfileButton } from '@/components/ProfileButton';
+import { TabHeaderBackground } from '@/components/TabHeaderBackground';
 import { TimerProvider } from '@/hooks/useActiveSession';
+import { useAppColors } from '@/hooks/useAppColors';
 import { TagsProvider } from '@/hooks/useTags';
-import { useTheme } from '@/hooks/useTheme';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -27,30 +29,33 @@ function TabIcon({
 }
 
 function TabsNavigator() {
-  const { isDark } = useTheme();
-  const headerBackground = isDark ? '#0F172A' : '#FFFFFF';
-  const headerForeground = isDark ? '#F8FAFC' : '#0F172A';
+  const colors = useAppColors();
 
   return (
     <Tabs
       screenOptions={{
         headerShown: true,
-        headerStyle: {
-          backgroundColor: headerBackground,
-          height: Platform.select({ ios: 108, android: 72, default: 72 }),
-        },
+        headerTransparent: true,
+        headerBackground: () => <TabHeaderBackground />,
+        headerStyle: Platform.select({
+          ios: { height: 108 },
+          android: { height: 72 },
+          default: { height: 72 },
+        }) as { backgroundColor?: string },
         headerTitleStyle: {
           fontWeight: '700',
           fontSize: 20,
-          color: headerForeground,
+          color: colors.headerText,
         },
         headerShadowVisible: false,
+        headerTintColor: colors.headerText,
         headerRight: () => <ProfileButton />,
-        tabBarActiveTintColor: '#2563EB',
-        tabBarInactiveTintColor: isDark ? '#64748B' : '#94A3B8',
+        sceneStyle: { backgroundColor: 'transparent' },
+        tabBarActiveTintColor: colors.tabActive,
+        tabBarInactiveTintColor: colors.tabInactive,
         tabBarStyle: {
-          backgroundColor: isDark ? '#0F172A' : '#FFFFFF',
-          borderTopColor: isDark ? '#1E293B' : '#E2E8F0',
+          backgroundColor: colors.tabBarBg,
+          borderTopColor: colors.tabBarBorder,
         },
       }}
     >
@@ -112,10 +117,12 @@ function TabsNavigator() {
 
 export default function TabLayout() {
   return (
-    <TimerProvider>
-      <TagsProvider>
-        <TabsNavigator />
-      </TagsProvider>
-    </TimerProvider>
+    <AppBackground>
+      <TimerProvider>
+        <TagsProvider>
+          <TabsNavigator />
+        </TagsProvider>
+      </TimerProvider>
+    </AppBackground>
   );
 }

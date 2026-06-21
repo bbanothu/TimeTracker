@@ -1,9 +1,12 @@
-import { Pressable, Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Pressable } from 'react-native';
 
+import { useAppColors } from '@/hooks/useAppColors';
 import { useTheme } from '@/hooks/useTheme';
 
 export function DarkModeToggle() {
   const { isDark, toggleTheme } = useTheme();
+  const colors = useAppColors();
 
   return (
     <Pressable
@@ -11,9 +14,17 @@ export function DarkModeToggle() {
       accessibilityRole="switch"
       accessibilityState={{ checked: isDark }}
       accessibilityLabel={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-      className="rounded-full bg-slate-100 px-3 py-1.5 dark:bg-slate-800"
+      className="rounded-full border p-2.5 active:opacity-80"
+      style={{
+        backgroundColor: colors.glass,
+        borderColor: colors.glassBorder,
+      }}
     >
-      <Text className="text-base">{isDark ? '☀️' : '🌙'}</Text>
+      <Ionicons
+        name={isDark ? 'sunny-outline' : 'moon-outline'}
+        size={20}
+        color={colors.textOnGlass}
+      />
     </Pressable>
   );
 }

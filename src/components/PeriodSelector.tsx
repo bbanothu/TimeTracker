@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from 'react-native';
 
+import { useAppColors } from '@/hooks/useAppColors';
 import type { PeriodType } from '@/types';
 import { formatPeriodLabel } from '@/utils/periodBounds';
 
@@ -18,43 +19,55 @@ export function PeriodSelector({
   onPeriodChange,
   onShift,
 }: PeriodSelectorProps) {
+  const colors = useAppColors();
+
   return (
     <View className="mb-4">
-      <View className="mb-3 flex-row rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
-        {PERIODS.map((item) => (
-          <Pressable
-            key={item}
-            onPress={() => onPeriodChange(item)}
-            className={`flex-1 rounded-lg py-2 ${period === item ? 'bg-white dark:bg-slate-900' : ''}`}
-          >
-            <Text
-              className={`text-center text-sm font-semibold capitalize ${
-                period === item
-                  ? 'text-slate-900 dark:text-slate-100'
-                  : 'text-slate-500 dark:text-slate-400'
-              }`}
+      <View
+        className="mb-3 flex-row rounded-xl p-1"
+        style={{ backgroundColor: colors.glass, borderColor: colors.glassBorder, borderWidth: 1 }}
+      >
+        {PERIODS.map((item) => {
+          const selected = period === item;
+          return (
+            <Pressable
+              key={item}
+              onPress={() => onPeriodChange(item)}
+              className="flex-1 rounded-lg py-2"
+              style={{ backgroundColor: selected ? colors.selectedBg : 'transparent' }}
             >
-              {item}
-            </Text>
-          </Pressable>
-        ))}
+              <Text
+                className="text-center text-sm font-semibold capitalize"
+                style={{ color: selected ? colors.selectedText : colors.textMuted }}
+              >
+                {item}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
 
       <View className="flex-row items-center justify-between">
         <Pressable
           onPress={() => onShift(-1)}
-          className="rounded-full bg-slate-100 px-4 py-2 dark:bg-slate-800"
+          className="rounded-full px-4 py-2"
+          style={{ backgroundColor: colors.secondaryBg }}
         >
-          <Text className="font-semibold text-slate-700 dark:text-slate-200">Prev</Text>
+          <Text className="font-semibold" style={{ color: colors.textOnBg }}>
+            Prev
+          </Text>
         </Pressable>
-        <Text className="text-sm font-medium text-slate-700 dark:text-slate-300">
+        <Text className="text-sm font-medium" style={{ color: colors.textSecondary }}>
           {formatPeriodLabel(anchorDate, period)}
         </Text>
         <Pressable
           onPress={() => onShift(1)}
-          className="rounded-full bg-slate-100 px-4 py-2 dark:bg-slate-800"
+          className="rounded-full px-4 py-2"
+          style={{ backgroundColor: colors.secondaryBg }}
         >
-          <Text className="font-semibold text-slate-700 dark:text-slate-200">Next</Text>
+          <Text className="font-semibold" style={{ color: colors.textOnBg }}>
+            Next
+          </Text>
         </Pressable>
       </View>
     </View>

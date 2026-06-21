@@ -17,12 +17,14 @@ import { AuthBackground } from '@/components/auth/AuthBackground';
 import { authScreenStyles as styles } from '@/components/auth/authScreenStyles';
 import { GlassInput } from '@/components/auth/GlassInput';
 import { useAuth } from '@/hooks/useAuth';
+import { useAppColors } from '@/hooks/useAppColors';
 import { isSupabaseConfigured } from '@/lib/supabase';
 
 const registerBackground = require('../../assets/login2.jpg');
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const colors = useAppColors();
   const { signUp } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -108,13 +110,13 @@ export default function RegisterScreen() {
 
               <Pressable onPress={handleRegister} disabled={submitting} style={styles.buttonWrap}>
                 <LinearGradient
-                  colors={['#10B981', '#3B82F6', '#8B5CF6']}
+                  colors={colors.authGradient}
                   start={{ x: 0, y: 0.5 }}
                   end={{ x: 1, y: 0.5 }}
                   style={styles.button}
                 >
                   {submitting ? (
-                    <ActivityIndicator color="#fff" />
+                    <ActivityIndicator color="#FFFFFF" />
                   ) : (
                     <Text style={styles.buttonText}>Create account</Text>
                   )}

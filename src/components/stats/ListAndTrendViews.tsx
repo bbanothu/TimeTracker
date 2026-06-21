@@ -3,27 +3,29 @@ import { LineChart } from 'react-native-gifted-charts';
 
 import { buildBucketLineData, hasBucketData, hasTagData } from '@/components/stats/chartUtils';
 import { TagLegend } from '@/components/stats/TagLegend';
-import { useTheme } from '@/hooks/useTheme';
-import { formatDurationLong, formatTagName } from '@/utils/formatDuration';
+import { ThemedSurface } from '@/components/ThemedSurface';
+import { useAppColors } from '@/hooks/useAppColors';
 import type { StatsSummary } from '@/types';
+import { formatDurationLong, formatTagName } from '@/utils/formatDuration';
 
 interface ChartViewProps {
   summary: StatsSummary;
 }
 
 export function ListView({ summary }: ChartViewProps) {
-  const { isDark } = useTheme();
+  const colors = useAppColors();
   const lineData = buildBucketLineData(summary);
-  const chartTextColor = isDark ? '#CBD5E1' : '#64748B';
 
   return (
     <>
-      <View className="mb-4 rounded-2xl bg-white p-4 dark:bg-slate-900">
-        <Text className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">
+      <ThemedSurface className="mb-4 p-4">
+        <Text className="mb-4 text-base font-semibold" style={{ color: colors.text }}>
           Time by tag
         </Text>
         {!hasTagData(summary) ? (
-          <Text className="text-center text-slate-500 dark:text-slate-400">No data for this period</Text>
+          <Text className="text-center" style={{ color: colors.textMuted }}>
+            No data for this period
+          </Text>
         ) : (
           summary.byTag.map((item) => {
             const share = summary.totalMs > 0 ? item.durationMs / summary.totalMs : 0;
@@ -31,14 +33,17 @@ export function ListView({ summary }: ChartViewProps) {
             return (
               <View key={item.tag.id} className="mb-4">
                 <View className="mb-1 flex-row items-center justify-between">
-                  <Text className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <Text className="text-sm font-medium" style={{ color: colors.textSecondary }}>
                     {formatTagName(item.tag.name)}
                   </Text>
-                  <Text className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  <Text className="text-sm font-semibold" style={{ color: colors.text }}>
                     {formatDurationLong(item.durationMs)}
                   </Text>
                 </View>
-                <View className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                <View
+                  className="h-2 overflow-hidden rounded-full"
+                  style={{ backgroundColor: colors.secondaryBg }}
+                >
                   <View
                     className="h-full rounded-full"
                     style={{
@@ -51,22 +56,24 @@ export function ListView({ summary }: ChartViewProps) {
             );
           })
         )}
-      </View>
+      </ThemedSurface>
 
-      <View className="mb-8 rounded-2xl bg-white p-4 dark:bg-slate-900">
-        <Text className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">
+      <ThemedSurface className="mb-8 p-4">
+        <Text className="mb-4 text-base font-semibold" style={{ color: colors.text }}>
           Trend
         </Text>
         {!hasBucketData(summary) ? (
-          <Text className="text-center text-slate-500 dark:text-slate-400">No trend data</Text>
+          <Text className="text-center" style={{ color: colors.textMuted }}>
+            No trend data
+          </Text>
         ) : (
           <LineChart
             data={lineData}
             areaChart
             curved
-            color="#2563EB"
-            startFillColor="#3B82F6"
-            endFillColor="#EFF6FF"
+            color={colors.chartPrimary}
+            startFillColor={colors.chartSecondary}
+            endFillColor={colors.surface}
             startOpacity={0.4}
             endOpacity={0.05}
             hideRules
@@ -74,27 +81,28 @@ export function ListView({ summary }: ChartViewProps) {
             yAxisThickness={0}
             noOfSections={4}
             maxValue={Math.max(...lineData.map((item) => item.value), 60)}
-            yAxisTextStyle={{ color: chartTextColor, fontSize: 10 }}
-            xAxisLabelTextStyle={{ color: chartTextColor, fontSize: 10 }}
+            yAxisTextStyle={{ color: colors.chartText, fontSize: 10 }}
+            xAxisLabelTextStyle={{ color: colors.chartText, fontSize: 10 }}
           />
         )}
-      </View>
+      </ThemedSurface>
     </>
   );
 }
 
 export function TrendView({ summary }: ChartViewProps) {
-  const { isDark } = useTheme();
+  const colors = useAppColors();
   const lineData = buildBucketLineData(summary);
-  const chartTextColor = isDark ? '#CBD5E1' : '#64748B';
 
   return (
-    <View className="mb-8 rounded-2xl bg-white p-4 dark:bg-slate-900">
-      <Text className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">
+    <ThemedSurface className="mb-8 p-4">
+      <Text className="mb-4 text-base font-semibold" style={{ color: colors.text }}>
         Tracked over time
       </Text>
       {!hasBucketData(summary) ? (
-        <Text className="text-center text-slate-500 dark:text-slate-400">No data for this period</Text>
+        <Text className="text-center" style={{ color: colors.textMuted }}>
+          No data for this period
+        </Text>
       ) : (
         <>
           <LineChart
@@ -102,9 +110,9 @@ export function TrendView({ summary }: ChartViewProps) {
             areaChart
             curved
             height={220}
-            color="#2563EB"
-            startFillColor="#3B82F6"
-            endFillColor={isDark ? '#1E293B' : '#EFF6FF'}
+            color={colors.chartPrimary}
+            startFillColor={colors.chartSecondary}
+            endFillColor={colors.surface}
             startOpacity={0.5}
             endOpacity={0.05}
             thickness={3}
@@ -113,12 +121,12 @@ export function TrendView({ summary }: ChartViewProps) {
             yAxisThickness={0}
             noOfSections={4}
             maxValue={Math.max(...lineData.map((item) => item.value), 60)}
-            yAxisTextStyle={{ color: chartTextColor, fontSize: 10 }}
-            xAxisLabelTextStyle={{ color: chartTextColor, fontSize: 10 }}
+            yAxisTextStyle={{ color: colors.chartText, fontSize: 10 }}
+            xAxisLabelTextStyle={{ color: colors.chartText, fontSize: 10 }}
           />
           <TagLegend items={summary.byTag} compact />
         </>
       )}
-    </View>
+    </ThemedSurface>
   );
 }

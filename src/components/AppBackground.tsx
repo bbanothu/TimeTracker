@@ -1,0 +1,40 @@
+import { BlurView } from 'expo-blur';
+import { Image, type ImageSource } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import { StyleSheet, View } from 'react-native';
+
+import { useAppColors } from '@/hooks/useAppColors';
+
+const defaultSource = require('../../assets/login1.jpg');
+
+interface AppBackgroundProps {
+  children: React.ReactNode;
+  source?: ImageSource;
+}
+
+export function AppBackground({ children, source = defaultSource }: AppBackgroundProps) {
+  const colors = useAppColors();
+
+  return (
+    <View style={styles.root}>
+      <Image source={source} style={StyleSheet.absoluteFillObject} contentFit="cover" />
+      <BlurView
+        intensity={colors.blurIntensity}
+        tint={colors.blurTint}
+        style={StyleSheet.absoluteFillObject}
+      />
+      <LinearGradient
+        colors={colors.backgroundGradient}
+        locations={[0, 0.45, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
+      {children}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+});

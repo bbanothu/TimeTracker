@@ -2,17 +2,21 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
 import { Alert, FlatList, Modal, Pressable, Text, TextInput, View } from 'react-native';
 
+import { ActionButton } from '@/components/ActionButton';
 import { TagChip } from '@/components/TagChip';
+import { TabScreenContainer } from '@/components/TabScreenContainer';
+import { ThemedSurface } from '@/components/ThemedSurface';
+import { useAppColors } from '@/hooks/useAppColors';
 import { useTags } from '@/hooks/useTags';
+import { TAG_COLOR_OPTIONS } from '@/theme/colors';
 import type { Tag } from '@/types';
 import { flattenTags, getEligibleParents } from '@/utils/tagTree';
 
-const COLORS = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444', '#EC4899', '#14B8A6'];
-
 export default function TagsScreen() {
   const { tags, addTag, editTag, removeTag } = useTags();
+  const colors = useAppColors();
   const [name, setName] = useState('');
-  const [color, setColor] = useState(COLORS[0]);
+  const [color, setColor] = useState<string>(TAG_COLOR_OPTIONS[0]);
   const [parentId, setParentId] = useState<string | null>(null);
   const [parentPickerOpen, setParentPickerOpen] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
@@ -29,7 +33,7 @@ export default function TagsScreen() {
 
   const resetForm = () => {
     setName('');
-    setColor(COLORS[0]);
+    setColor(colors.primary);
     setParentId(null);
     setEditingTag(null);
   };
@@ -73,86 +77,107 @@ export default function TagsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-slate-50 px-4 pt-2 dark:bg-slate-950">
-      <View className="mb-4 rounded-2xl bg-white p-4 dark:bg-slate-900">
-        <Text className="mb-3 text-base font-semibold text-slate-900 dark:text-slate-100">
+    <TabScreenContainer className="px-4 pt-2">
+      <ThemedSurface className="mb-4 p-4">
+        <Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>
           {editingTag ? 'Edit tag' : 'New tag'}
         </Text>
         <TextInput
           value={name}
           onChangeText={setName}
           placeholder="work"
-          placeholderTextColor="#94A3B8"
+          placeholderTextColor={colors.inputPlaceholder}
           autoCapitalize="none"
-          className="mb-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          className="mb-3 rounded-xl border px-4 py-3 text-base"
+          style={{
+            backgroundColor: colors.inputBg,
+            borderColor: colors.inputBorder,
+            color: colors.text,
+          }}
         />
-        <Text className="mb-2 text-sm text-slate-500 dark:text-slate-400">Parent tag</Text>
+        <Text className="mb-2 text-sm" style={{ color: colors.textMuted }}>
+          Parent tag
+        </Text>
         <Pressable
           onPress={() => setParentPickerOpen(true)}
-          className="mb-3 flex-row items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800"
+          className="mb-3 flex-row items-center justify-between rounded-xl border px-4 py-3"
+          style={{ backgroundColor: colors.inputBg, borderColor: colors.inputBorder }}
         >
-          <Text className="text-base text-slate-900 dark:text-slate-100">{selectedParentLabel}</Text>
-          <Ionicons name="chevron-down" size={18} color="#94A3B8" />
+          <Text className="text-base" style={{ color: colors.text }}>
+            {selectedParentLabel}
+          </Text>
+          <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
         </Pressable>
-        <Text className="mb-2 text-sm text-slate-500 dark:text-slate-400">Color</Text>
+        <Text className="mb-2 text-sm" style={{ color: colors.textMuted }}>
+          Color
+        </Text>
         <View className="mb-4 flex-row flex-wrap">
-          {COLORS.map((item) => (
+          {TAG_COLOR_OPTIONS.map((item) => (
             <Pressable
               key={item}
               onPress={() => setColor(item)}
-              className={`mr-2 mb-2 h-10 w-10 rounded-full ${
-                color === item ? 'border-2 border-slate-900 dark:border-slate-100' : ''
-              }`}
-              style={{ backgroundColor: item }}
+              className={`mr-2 mb-2 h-10 w-10 rounded-full ${color === item ? 'border-2' : ''}`}
+              style={{
+                backgroundColor: item,
+                borderColor: color === item ? colors.text : 'transparent',
+              }}
             />
           ))}
         </View>
         <View className="flex-row gap-3">
-          <Pressable onPress={handleSave} className="flex-1 rounded-xl bg-blue-600 py-3">
-            <Text className="text-center font-semibold text-white">
-              {editingTag ? 'Update' : 'Add tag'}
-            </Text>
-          </Pressable>
+          <ActionButton
+            label={editingTag ? 'Update' : 'Add tag'}
+            onPress={handleSave}
+            className="flex-1"
+          />
           {editingTag ? (
-            <Pressable onPress={resetForm} className="rounded-xl bg-slate-200 px-4 py-3 dark:bg-slate-700">
-              <Text className="font-semibold text-slate-700 dark:text-slate-200">Cancel</Text>
-            </Pressable>
+            <ActionButton label="Cancel" onPress={resetForm} variant="secondary" />
           ) : null}
         </View>
-      </View>
+      </ThemedSurface>
 
       <FlatList
         data={flatTags}
         keyExtractor={(item) => item.tag.id}
         renderItem={({ item }) => (
-          <View
-            className="mb-3 flex-row items-center justify-between rounded-2xl bg-white p-4 dark:bg-slate-900"
+          <ThemedSurface
+            className="mb-3 flex-row items-center justify-between p-4"
             style={{ marginLeft: item.depth * 16 }}
           >
-            <View className="flex-1 mr-2">
+            <View className="mr-2 flex-1">
               <TagChip tag={item.tag} />
               {item.depth > 0 ? (
-                <Text className="mt-1 text-xs text-slate-400 dark:text-slate-500">{item.path}</Text>
+                <Text className="mt-1 text-xs" style={{ color: colors.textMuted }}>
+                  {item.path}
+                </Text>
               ) : null}
             </View>
             <View className="flex-row gap-2">
               <Pressable
                 onPress={() => handleEdit(item.tag)}
-                className="rounded-lg bg-slate-100 px-3 py-2 dark:bg-slate-800"
+                className="rounded-lg px-3 py-2"
+                style={{ backgroundColor: colors.secondaryBg }}
               >
-                <Text className="text-sm font-medium text-slate-700 dark:text-slate-200">Edit</Text>
+                <Text className="text-sm font-medium" style={{ color: colors.secondaryText }}>
+                  Edit
+                </Text>
               </Pressable>
               <Pressable
                 onPress={() => handleDelete(item.tag)}
-                className="rounded-lg bg-rose-100 px-3 py-2 dark:bg-rose-950"
+                className="rounded-lg px-3 py-2"
+                style={{ backgroundColor: colors.destructiveBg }}
               >
-                <Text className="text-sm font-medium text-rose-700 dark:text-rose-300">Delete</Text>
+                <Text className="text-sm font-medium" style={{ color: colors.destructiveText }}>
+                  Delete
+                </Text>
               </Pressable>
             </View>
-          </View>
+          </ThemedSurface>
         )}
         ListEmptyComponent={
-          <Text className="text-center text-slate-500 dark:text-slate-400">No tags yet.</Text>
+          <Text className="text-center" style={{ color: colors.textMuted }}>
+            No tags yet.
+          </Text>
         }
       />
 
@@ -164,10 +189,11 @@ export default function TagsScreen() {
       >
         <Pressable className="flex-1 justify-end bg-black/40" onPress={() => setParentPickerOpen(false)}>
           <Pressable
-            className="max-h-[50%] rounded-t-3xl bg-white px-4 pb-8 pt-4 dark:bg-slate-900"
+            className="max-h-[50%] rounded-t-3xl px-4 pb-8 pt-4"
+            style={{ backgroundColor: colors.surface }}
             onPress={(event) => event.stopPropagation()}
           >
-            <Text className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100">
+            <Text className="mb-4 text-lg font-semibold" style={{ color: colors.text }}>
               Select parent
             </Text>
             <Pressable
@@ -175,11 +201,14 @@ export default function TagsScreen() {
                 setParentId(null);
                 setParentPickerOpen(false);
               }}
-              className={`mb-2 rounded-xl px-4 py-3 ${
-                parentId === null ? 'bg-blue-50 dark:bg-blue-950' : 'bg-slate-50 dark:bg-slate-800'
-              }`}
+              className="mb-2 rounded-xl px-4 py-3"
+              style={{
+                backgroundColor: parentId === null ? colors.selectedBg : colors.secondaryBg,
+              }}
             >
-              <Text className="text-base text-slate-900 dark:text-slate-100">None (top level)</Text>
+              <Text className="text-base" style={{ color: colors.text }}>
+                None (top level)
+              </Text>
             </Pressable>
             {parentOptions.map((item) => (
               <Pressable
@@ -188,19 +217,21 @@ export default function TagsScreen() {
                   setParentId(item.tag.id);
                   setParentPickerOpen(false);
                 }}
-                className={`mb-2 rounded-xl px-4 py-3 ${
-                  parentId === item.tag.id
-                    ? 'bg-blue-50 dark:bg-blue-950'
-                    : 'bg-slate-50 dark:bg-slate-800'
-                }`}
-                style={{ marginLeft: item.depth * 12 }}
+                className="mb-2 rounded-xl px-4 py-3"
+                style={{
+                  marginLeft: item.depth * 12,
+                  backgroundColor:
+                    parentId === item.tag.id ? colors.selectedBg : colors.secondaryBg,
+                }}
               >
-                <Text className="text-base text-slate-900 dark:text-slate-100">{item.path}</Text>
+                <Text className="text-base" style={{ color: colors.text }}>
+                  {item.path}
+                </Text>
               </Pressable>
             ))}
           </Pressable>
         </Pressable>
       </Modal>
-    </View>
+    </TabScreenContainer>
   );
 }

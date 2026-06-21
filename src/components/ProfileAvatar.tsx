@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, View } from 'react-native';
 
 import { UserAvatar } from '@/components/UserAvatar';
+import { useAppColors } from '@/hooks/useAppColors';
 import { useProfilePhoto } from '@/hooks/useProfilePhoto';
 import { saveProfilePhoto } from '@/services/profilePhotoService';
 
@@ -13,6 +14,7 @@ interface ProfileAvatarProps {
 }
 
 export function ProfileAvatar({ userId, fallbackLabel }: ProfileAvatarProps) {
+  const colors = useAppColors();
   const { photoUri, setPhotoUri } = useProfilePhoto(userId);
   const [loading, setLoading] = useState(false);
 
@@ -47,9 +49,12 @@ export function ProfileAvatar({ userId, fallbackLabel }: ProfileAvatarProps) {
 
   return (
     <View className="relative mb-3">
-      <View className="h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-blue-100 dark:bg-blue-950">
+      <View
+        className="h-20 w-20 items-center justify-center overflow-hidden rounded-full"
+        style={{ backgroundColor: colors.selectedBg }}
+      >
         {loading ? (
-          <ActivityIndicator color="#2563EB" />
+          <ActivityIndicator color={colors.primary} />
         ) : (
           <UserAvatar photoUri={photoUri} fallbackLabel={fallbackLabel} size={80} />
         )}
@@ -60,9 +65,10 @@ export function ProfileAvatar({ userId, fallbackLabel }: ProfileAvatarProps) {
         disabled={loading || !userId}
         accessibilityRole="button"
         accessibilityLabel="Change profile photo"
-        className="absolute -bottom-1 -right-1 h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-blue-600 dark:border-slate-900"
+        className="absolute -bottom-1 -right-1 h-7 w-7 items-center justify-center rounded-full border-2"
+        style={{ backgroundColor: colors.primary, borderColor: colors.surface }}
       >
-        <Ionicons name="add" size={16} color="#FFFFFF" />
+        <Ionicons name="add" size={16} color={colors.textOnPrimary} />
       </Pressable>
     </View>
   );

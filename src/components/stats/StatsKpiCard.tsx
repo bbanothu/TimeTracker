@@ -1,19 +1,25 @@
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
 
-import { formatDurationLong, formatTagName } from '@/utils/formatDuration';
+import { ThemedSurface } from '@/components/ThemedSurface';
+import { useAppColors } from '@/hooks/useAppColors';
 import type { StatsSummary } from '@/types';
+import { formatDurationLong, formatTagName } from '@/utils/formatDuration';
 
 export function StatsKpiCard({ summary }: { summary: StatsSummary }) {
+  const colors = useAppColors();
+
   return (
-    <View className="mb-4 rounded-2xl bg-white p-4 dark:bg-slate-900">
-      <Text className="mb-1 text-sm text-slate-500 dark:text-slate-400">Total tracked</Text>
-      <Text className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+    <ThemedSurface className="mb-4 p-4">
+      <Text className="mb-1 text-sm" style={{ color: colors.textMuted }}>
+        Total tracked
+      </Text>
+      <Text className="text-2xl font-bold" style={{ color: colors.text }}>
         {formatDurationLong(summary.totalMs)}
       </Text>
-      <Text className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+      <Text className="mt-2 text-sm" style={{ color: colors.textMuted }}>
         {summary.entryCount} entries
         {summary.topTag ? ` · Top tag ${formatTagName(summary.topTag.name)}` : ''}
       </Text>
-    </View>
+    </ThemedSurface>
   );
 }

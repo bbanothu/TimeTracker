@@ -1,7 +1,9 @@
 import { FlatList, Text, View } from 'react-native';
 
-import { formatDurationLong, formatTagName } from '@/utils/formatDuration';
+import { ThemedSurface } from '@/components/ThemedSurface';
+import { useAppColors } from '@/hooks/useAppColors';
 import type { TimeEntry } from '@/types';
+import { formatDurationLong, formatTagName } from '@/utils/formatDuration';
 
 interface EntryListProps {
   entries: TimeEntry[];
@@ -9,9 +11,13 @@ interface EntryListProps {
 }
 
 export function EntryList({ entries, emptyMessage = 'No entries yet' }: EntryListProps) {
+  const colors = useAppColors();
+
   if (entries.length === 0) {
     return (
-      <Text className="py-4 text-center text-slate-500 dark:text-slate-400">{emptyMessage}</Text>
+      <Text className="py-4 text-center" style={{ color: colors.textMuted }}>
+        {emptyMessage}
+      </Text>
     );
   }
 
@@ -25,17 +31,17 @@ export function EntryList({ entries, emptyMessage = 'No entries yet' }: EntryLis
         const tagLabel = item.tags.map((tag) => formatTagName(tag.name)).join(' ');
 
         return (
-          <View className="mb-3 rounded-2xl border border-slate-100 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <ThemedSurface className="mb-3 p-4">
             <View className="flex-row items-center justify-between">
-              <Text className="text-base font-semibold text-slate-900 dark:text-slate-100">
+              <Text className="text-base font-semibold" style={{ color: colors.text }}>
                 {tagLabel || 'Untagged'}
               </Text>
-              <Text className="text-sm font-medium text-slate-600 dark:text-slate-300">
+              <Text className="text-sm font-medium" style={{ color: colors.textSecondary }}>
                 {formatDurationLong(duration)}
               </Text>
             </View>
             <View className="mt-2 flex-row items-center justify-between">
-              <Text className="text-xs text-slate-500 dark:text-slate-400">
+              <Text className="text-xs" style={{ color: colors.textMuted }}>
                 {new Date(item.startedAt).toLocaleTimeString([], {
                   hour: 'numeric',
                   minute: '2-digit',
@@ -47,24 +53,15 @@ export function EntryList({ entries, emptyMessage = 'No entries yet' }: EntryLis
                 })}
               </Text>
               <View
-                className={`rounded-full px-2 py-1 ${
-                  item.source === 'geofence'
-                    ? 'bg-violet-100 dark:bg-violet-950'
-                    : 'bg-sky-100 dark:bg-sky-950'
-                }`}
+                className="rounded-full px-2 py-1"
+                style={{ backgroundColor: colors.selectedBg }}
               >
-                <Text
-                  className={`text-xs font-medium ${
-                    item.source === 'geofence'
-                      ? 'text-violet-700 dark:text-violet-300'
-                      : 'text-sky-700 dark:text-sky-300'
-                  }`}
-                >
+                <Text className="text-xs font-medium" style={{ color: colors.selectedText }}>
                   {item.source}
                 </Text>
               </View>
             </View>
-          </View>
+          </ThemedSurface>
         );
       }}
     />
