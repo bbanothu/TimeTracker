@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 
-import { ActionButton } from '@/components/ui/ActionButton';
+import { GeofencesList } from '@/components/ui/GeofencesList';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { deleteGeofence, fetchGeofences, updateGeofence } from '@/services/data';
 import type { Geofence } from '@/types';
-import { formatTagName } from '@/utils/formatDuration';
 
 export function MapPage() {
   const colors = useAppColors();
@@ -44,46 +43,16 @@ export function MapPage() {
         </p>
       </ThemedSurface>
 
-      <h2 className="mb-3 text-lg font-semibold" style={{ color: colors.textOnBg }}>
-        Saved places
-      </h2>
-
-      {geofences.length === 0 ? (
-        <p style={{ color: colors.textMuted }}>No saved places yet.</p>
-      ) : (
-        <div className="space-y-3">
-          {geofences.map((item) => (
-            <ThemedSurface key={item.id} className="p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-semibold" style={{ color: colors.text }}>
-                    {item.name}
-                  </p>
-                  <p className="text-sm" style={{ color: colors.textMuted }}>
-                    {formatTagName(item.tag?.name ?? 'tag')} · {item.radiusMeters}m
-                  </p>
-                </div>
-                <label className="flex items-center gap-2 text-sm" style={{ color: colors.textSecondary }}>
-                  <input
-                    type="checkbox"
-                    checked={item.enabled}
-                    onChange={(e) =>
-                      updateGeofence(user!.id, item.id, { enabled: e.target.checked }).then(load)
-                    }
-                  />
-                  Enabled
-                </label>
-              </div>
-              <ActionButton
-                label="Delete"
-                variant="destructiveOutline"
-                className="mt-3"
-                onClick={() => deleteGeofence(user!.id, item.id).then(load)}
-              />
-            </ThemedSurface>
-          ))}
-        </div>
-      )}
+      <p className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
+        Saved places ({geofences.length})
+      </p>
+      <GeofencesList
+        geofences={geofences}
+        onToggle={(geofence, enabled) =>
+          updateGeofence(user!.id, geofence.id, { enabled }).then(load)
+        }
+        onDelete={(geofence) => deleteGeofence(user!.id, geofence.id).then(load)}
+      />
     </div>
   );
 }

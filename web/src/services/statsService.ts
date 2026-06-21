@@ -1,7 +1,7 @@
 import { addDays, addWeeks, endOfDay, endOfWeek, format, startOfDay, startOfWeek } from 'date-fns';
 
 import { getPeriodBounds } from '@/utils/periodBounds';
-import type { Geofence, PeriodType, StatsSummary, TagDuration, TimeEntry } from '@/types';
+import type { Geofence, PeriodType, StatsSummary, Tag, TagDuration, TimeEntry, BucketTagBreakdown, BucketDuration } from '@/types';
 
 function clipDuration(startMs: number, endMs: number, rangeStart: number, rangeEnd: number): number {
   const clippedStart = Math.max(startMs, rangeStart);
@@ -108,6 +108,35 @@ function buildWeekBuckets(anchor: Date, entries: TimeEntry[]) {
   return buckets;
 }
 
+function buildBucketTagBreakdown(
+  buckets: BucketDuration[],
+  entries: TimeEntry[],
+): BucketTagBreakdown[] {
+  return buckets.map((bucket) => {
+    const tagTotals = new Map<string, { tag: Tag; durationMs: number }>();
+
+    for (const entry of entries) {
+      const duration = clipDuration(entry.startedAt, entry.endedAt, bucket.startMs, bucket.endMs);
+      if (duration <= 0 || entry.tags.length === 0) continue;
+
+      const share = duration / entry.tags.length;
+      for (const tag of entry.tags) {
+        const existing = tagTotals.get(tag.id);
+        if (existing) existing.durationMs += share;
+        else tagTotals.set(tag.id, { tag, durationMs: share });
+      }
+    }
+
+    return {
+      label: bucket.label,
+      startMs: bucket.startMs,
+      endMs: bucket.endMs,
+      totalMs: bucket.durationMs,
+      byTag: Array.from(tagTotals.values()).sort((a, b) => b.durationMs - a.durationMs),
+    };
+  });
+}
+
 export function getStatsSummary(
   anchor: Date,
   period: PeriodType,
@@ -141,5 +170,6 @@ export function getStatsSummary(
     byTag,
     byGeofence,
     buckets,
+    bucketTagBreakdown: buildBucketTagBreakdown(buckets, filtered),
   };
 }

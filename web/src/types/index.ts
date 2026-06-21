@@ -37,9 +37,24 @@ export interface Geofence {
 
 export type PeriodType = 'day' | 'week' | 'month';
 
+export type StatsVisualization = 'overview' | 'bars' | 'list' | 'stacked' | 'trend';
+
 export interface TagDuration {
   tag: Tag;
   durationMs: number;
+}
+
+export interface TagBucketSlice {
+  tag: Tag;
+  durationMs: number;
+}
+
+export interface BucketTagBreakdown {
+  label: string;
+  startMs: number;
+  endMs: number;
+  totalMs: number;
+  byTag: TagBucketSlice[];
 }
 
 export interface GeofenceDuration {
@@ -62,4 +77,5 @@ export interface StatsSummary {
   byTag: TagDuration[];
   byGeofence: GeofenceDuration[];
   buckets: BucketDuration[];
+  bucketTagBreakdown: BucketTagBreakdown[];
 }
