@@ -1,10 +1,8 @@
-import { useState } from 'react';
-
-import { ActionButton } from '@/components/ui/ActionButton';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAppColors } from '@/contexts/ThemeContext';
+import { confirmDelete } from '@/lib/confirm';
 import type { TimeEntry } from '@/types';
-import { formatDuration, formatDurationLong, formatTagName } from '@/utils/formatDuration';
+import { formatDurationLong, formatTagName } from '@/utils/formatDuration';
 
 interface EntryListProps {
   entries: TimeEntry[];
@@ -37,6 +35,21 @@ function formatTimeRange(startedAt: number, endedAt: number, showDate: boolean):
   return `${startDate} ${startTime} – ${endDate} ${endTime}`;
 }
 
+function DeleteIcon({ color }: { color: string }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M10 11v6M14 11v6" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function EntryList({
   entries,
   emptyMessage = 'No entries yet',
@@ -45,11 +58,6 @@ export function EntryList({
   onDelete,
 }: EntryListProps) {
   const colors = useAppColors();
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  const toggleExpanded = (entryId: string) => {
-    setExpandedId((current) => (current === entryId ? null : entryId));
-  };
 
   if (entries.length === 0) {
     return (
@@ -66,104 +74,60 @@ export function EntryList({
         const tagLabel = entry.tags.map((tag) => formatTagName(tag.name)).join(', ') || 'Untagged';
         const geofenceName = entry.geofenceId ? geofenceNames?.get(entry.geofenceId) : null;
         const timeRange = formatTimeRange(entry.startedAt, entry.endedAt, showDate);
-        const expanded = expandedId === entry.id;
+        const subtitle =
+          entry.source === 'geofence' && geofenceName ? `${timeRange} · @ ${geofenceName}` : timeRange;
 
         return (
           <div
             key={entry.id}
+            className="flex items-center gap-2 px-3 py-2.5"
             style={
               index < entries.length - 1
                 ? { borderBottom: `1px solid ${colors.surfaceBorder}` }
                 : undefined
             }
           >
-            <button
-              type="button"
-              onClick={() => toggleExpanded(entry.id)}
-              className="flex w-full items-center gap-2 px-3 py-2.5 text-left transition hover:opacity-90"
-            >
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <span
-                    className="h-2 w-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: entry.tags[0]?.color ?? colors.primary }}
-                  />
-                  <span
-                    className="truncate text-sm font-semibold"
-                    style={{ color: colors.textOnBg }}
-                    title={tagLabel}
-                  >
-                    {tagLabel}
-                  </span>
-                  <span className="text-xs" style={{ color: colors.textMuted }}>
-                    {expanded ? '▴' : '▾'}
-                  </span>
-                </div>
-                {!expanded ? (
-                  <p className="ml-3.5 text-xs" style={{ color: colors.textMuted }}>
-                    {timeRange}
-                  </p>
-                ) : null}
-              </div>
-
-              {!expanded ? (
-                <span className="shrink-0 text-sm font-medium tabular-nums" style={{ color: colors.textSecondary }}>
-                  {formatDurationLong(duration)}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="h-2 w-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: entry.tags[0]?.color ?? colors.primary }}
+                />
+                <span
+                  className="truncate text-sm font-semibold"
+                  style={{ color: colors.textOnBg }}
+                  title={tagLabel}
+                >
+                  {tagLabel}
                 </span>
-              ) : null}
-            </button>
-
-            <div
-              className="grid transition-[grid-template-rows] duration-200 ease-in-out"
-              style={{ gridTemplateRows: expanded ? '1fr' : '0fr' }}
-            >
-              <div className="overflow-hidden">
-                <div className="px-3 pb-3">
-                  <div className="mb-3 flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap gap-2">
-                        {entry.tags.length > 0 ? (
-                          entry.tags.map((tag) => (
-                            <span key={tag.id} className="font-semibold" style={{ color: tag.color }}>
-                              {formatTagName(tag.name)}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="font-semibold" style={{ color: colors.text }}>
-                            Untagged
-                          </span>
-                        )}
-                      </div>
-                      {entry.source === 'geofence' && geofenceName ? (
-                        <p className="mt-1 text-sm" style={{ color: colors.textSecondary }}>
-                          at {geofenceName}
-                        </p>
-                      ) : null}
-                      <p className="mt-1 text-xs" style={{ color: colors.textMuted }}>
-                        {timeRange}
-                      </p>
-                      <span
-                        className="mt-2 inline-block rounded-full px-2 py-1 text-xs font-medium"
-                        style={{ backgroundColor: colors.selectedBg, color: colors.selectedText }}
-                      >
-                        {entry.source}
-                      </span>
-                    </div>
-                    <span className="font-mono text-2xl font-bold tabular-nums" style={{ color: colors.textOnBg }}>
-                      {formatDuration(duration)}
-                    </span>
-                  </div>
-                  {onDelete ? (
-                    <ActionButton
-                      label="Delete"
-                      onClick={() => onDelete(entry.id)}
-                      variant="destructiveOutline"
-                      className="w-full"
-                    />
-                  ) : null}
-                </div>
               </div>
+              <p className="ml-3.5 text-xs" style={{ color: colors.textMuted }}>
+                {subtitle}
+              </p>
             </div>
+            <span className="shrink-0 text-sm font-medium tabular-nums" style={{ color: colors.textSecondary }}>
+              {formatDurationLong(duration)}
+            </span>
+            {onDelete ? (
+              <button
+                type="button"
+                aria-label={`Delete ${tagLabel}`}
+                title="Delete"
+                onClick={() => {
+                  if (
+                    !confirmDelete(
+                      'Remove this tracked session permanently? This cannot be undone.',
+                    )
+                  ) {
+                    return;
+                  }
+                  onDelete(entry.id);
+                }}
+                className="shrink-0 rounded p-1 transition hover:opacity-80"
+              >
+                <DeleteIcon color={colors.destructiveText} />
+              </button>
+            ) : null}
           </div>
         );
       })}

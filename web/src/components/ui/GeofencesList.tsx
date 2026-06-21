@@ -1,8 +1,6 @@
-import { useState } from 'react';
-
-import { ActionButton } from '@/components/ui/ActionButton';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAppColors } from '@/contexts/ThemeContext';
+import { confirmDelete } from '@/lib/confirm';
 import type { Geofence } from '@/types';
 import { formatTagName } from '@/utils/formatDuration';
 
@@ -13,6 +11,21 @@ interface GeofencesListProps {
   onDelete: (geofence: Geofence) => void;
 }
 
+function DeleteIcon({ color }: { color: string }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M10 11v6M14 11v6" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function GeofencesList({
   geofences,
   emptyMessage = 'No saved places yet.',
@@ -20,7 +33,6 @@ export function GeofencesList({
   onDelete,
 }: GeofencesListProps) {
   const colors = useAppColors();
-  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (geofences.length === 0) {
     return (
@@ -33,86 +45,71 @@ export function GeofencesList({
   return (
     <ThemedSurface className="overflow-hidden p-0">
       {geofences.map((geofence, index) => {
-        const expanded = expandedId === geofence.id;
         const tagLabel = formatTagName(geofence.tag?.name ?? 'tag');
         const subtitle = `${tagLabel} · ${geofence.radiusMeters}m`;
 
         return (
           <div
             key={geofence.id}
+            className="flex items-center gap-2 px-3 py-2.5"
             style={
               index < geofences.length - 1
                 ? { borderBottom: `1px solid ${colors.surfaceBorder}` }
                 : undefined
             }
           >
-            <div className="flex items-center gap-2 px-3 py-2.5">
-              <button
-                type="button"
-                onClick={() => setExpandedId((current) => (current === geofence.id ? null : geofence.id))}
-                className="flex min-w-0 flex-1 items-center gap-2 text-left"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <span
-                      className="h-2 w-2 shrink-0 rounded-full"
-                      style={{
-                        backgroundColor: geofence.enabled
-                          ? geofence.tag?.color ?? colors.chartPrimary
-                          : colors.textMuted,
-                      }}
-                    />
-                    <span
-                      className="truncate text-sm font-semibold"
-                      style={{ color: colors.textOnBg }}
-                    >
-                      {geofence.name}
-                    </span>
-                    <span className="text-xs" style={{ color: colors.textMuted }}>
-                      {expanded ? '▴' : '▾'}
-                    </span>
-                  </div>
-                  {!expanded ? (
-                    <p className="ml-3.5 truncate text-xs" style={{ color: colors.textMuted }}>
-                      {subtitle}
-                    </p>
-                  ) : null}
-                </div>
-              </button>
-              <label className="flex shrink-0 items-center gap-2 text-xs" style={{ color: colors.textSecondary }}>
-                <input
-                  type="checkbox"
-                  checked={geofence.enabled}
-                  onChange={(event) => onToggle(geofence, event.target.checked)}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="h-2 w-2 shrink-0 rounded-full"
+                  style={{
+                    backgroundColor: geofence.enabled
+                      ? geofence.tag?.color ?? colors.chartPrimary
+                      : colors.textMuted,
+                  }}
                 />
-                On
-              </label>
-            </div>
-
-            <div
-              className="grid transition-[grid-template-rows] duration-200 ease-in-out"
-              style={{ gridTemplateRows: expanded ? '1fr' : '0fr' }}
-            >
-              <div className="overflow-hidden">
-                <div className="px-3 pb-3">
-                  <p className="text-base font-semibold" style={{ color: colors.text }}>
-                    {geofence.name}
-                  </p>
-                  <p className="mt-1 text-sm" style={{ color: colors.textSecondary }}>
-                    {subtitle}
-                  </p>
-                  <p className="mt-1 text-xs" style={{ color: colors.textMuted }}>
-                    {geofence.enabled ? 'Auto-tracking on' : 'Auto-tracking off'}
-                  </p>
-                  <ActionButton
-                    label="Delete"
-                    variant="destructiveOutline"
-                    className="mt-3"
-                    onClick={() => onDelete(geofence)}
-                  />
-                </div>
+                <span
+                  className="truncate text-sm font-semibold"
+                  style={{ color: colors.textOnBg, opacity: geofence.enabled ? 1 : 0.55 }}
+                  title={geofence.name}
+                >
+                  {geofence.name}
+                </span>
               </div>
+              <p className="ml-3.5 truncate text-xs" style={{ color: colors.textMuted }}>
+                {subtitle}
+              </p>
             </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={geofence.enabled}
+              aria-label={`Auto-tracking for ${geofence.name}`}
+              title={geofence.enabled ? 'Auto-tracking on' : 'Auto-tracking off'}
+              onClick={() => onToggle(geofence, !geofence.enabled)}
+              className="relative h-5 w-9 shrink-0 rounded-full border transition"
+              style={{
+                backgroundColor: geofence.enabled ? colors.primary : colors.secondaryBg,
+                borderColor: geofence.enabled ? colors.primary : colors.surfaceBorder,
+              }}
+            >
+              <span
+                className="absolute top-0.5 h-3.5 w-3.5 rounded-full bg-white transition-all"
+                style={{ left: geofence.enabled ? '18px' : '2px' }}
+              />
+            </button>
+            <button
+              type="button"
+              aria-label={`Delete ${geofence.name}`}
+              title="Delete"
+              onClick={() => {
+                if (!confirmDelete(`Remove ${geofence.name}? This cannot be undone.`)) return;
+                onDelete(geofence);
+              }}
+              className="shrink-0 rounded p-1 transition hover:opacity-80"
+            >
+              <DeleteIcon color={colors.destructiveText} />
+            </button>
           </div>
         );
       })}

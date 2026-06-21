@@ -5,6 +5,7 @@ export interface Tag {
   name: string;
   color: string;
   parentId: string | null;
+  includeInAnalytics: boolean;
 }
 
 export interface TimeEntry {

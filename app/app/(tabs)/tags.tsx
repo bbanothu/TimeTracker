@@ -16,7 +16,7 @@ import { flattenTags, getEligibleParents } from '@/utils/tagTree';
 import { formatTagName } from '@/utils/formatDuration';
 
 export default function TagsScreen() {
-  const { tags, addTag, editTag, removeTag } = useTags();
+  const { tags, addTag, editTag, removeTag, toggleTagAnalytics } = useTags();
   const colors = useAppColors();
   const [name, setName] = useState('');
   const [color, setColor] = useState<string>(TAG_COLOR_OPTIONS[0]);
@@ -62,21 +62,12 @@ export default function TagsScreen() {
   };
 
   const handleDelete = (tag: Tag) => {
-    Alert.alert('Delete tag', `Remove ${formatTagName(tag.name)}?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => {
-          try {
-            removeTag(tag.id);
-            if (editingTag?.id === tag.id) resetForm();
-          } catch (error) {
-            Alert.alert('Error', error instanceof Error ? error.message : 'Could not delete tag');
-          }
-        },
-      },
-    ]);
+    try {
+      removeTag(tag.id);
+      if (editingTag?.id === tag.id) resetForm();
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Could not delete tag');
+    }
   };
 
   return (
@@ -143,7 +134,12 @@ export default function TagsScreen() {
       <Text className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
         Tags ({flatTags.length})
       </Text>
-      <TagsList items={flatTags} onEdit={handleEdit} onDelete={handleDelete} />
+      <TagsList
+        items={flatTags}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onToggleAnalytics={(tag, includeInAnalytics) => toggleTagAnalytics(tag.id, includeInAnalytics)}
+      />
       </TabScrollView>
 
       <BottomSheetModal

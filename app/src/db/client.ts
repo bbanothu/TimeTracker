@@ -47,12 +47,14 @@ function rowToTag(row: {
   name: string;
   color: string;
   parent_id?: string | null;
+  include_in_analytics?: number | boolean | null;
 }): Tag {
   return {
     id: row.id,
     name: row.name,
     color: row.color,
     parentId: row.parent_id ?? null,
+    includeInAnalytics: row.include_in_analytics === 0 || row.include_in_analytics === false ? false : true,
   };
 }
 
@@ -80,6 +82,17 @@ function migrateTagsToV3(database: SQLite.SQLiteDatabase): void {
     ALTER TABLE tags_v3 RENAME TO tags;
   `);
   database.execSync('PRAGMA foreign_keys = ON');
+}
+
+function migrateTagsToV4(database: SQLite.SQLiteDatabase): void {
+  const hasIncludeInAnalytics = database.getFirstSync<{ name: string }>(
+    "SELECT name FROM pragma_table_info('tags') WHERE name = 'include_in_analytics'",
+  );
+  if (hasIncludeInAnalytics) return;
+
+  database.execSync(
+    'ALTER TABLE tags ADD COLUMN include_in_analytics INTEGER NOT NULL DEFAULT 1',
+  );
 }
 
 function validateSiblingName(
@@ -117,8 +130,14 @@ function validateParentId(userId: string, parentId: string | null, tagId?: strin
 function loadTagsForEntry(entryId: string): Tag[] {
   const userId = requireUserId();
   return getDb()
-    .getAllSync<{ id: string; name: string; color: string; parent_id: string | null }>(
-      `SELECT t.id, t.name, t.color, t.parent_id
+    .getAllSync<{
+      id: string;
+      name: string;
+      color: string;
+      parent_id: string | null;
+      include_in_analytics: number;
+    }>(
+      `SELECT t.id, t.name, t.color, t.parent_id, t.include_in_analytics
        FROM tags t
        INNER JOIN time_entry_tags tet ON tet.tag_id = t.id
        WHERE tet.entry_id = ? AND tet.user_id = ?`,
@@ -129,8 +148,14 @@ function loadTagsForEntry(entryId: string): Tag[] {
 
 function loadTagsForSession(sessionId: string): Tag[] {
   return getDb()
-    .getAllSync<{ id: string; name: string; color: string; parent_id: string | null }>(
-      `SELECT t.id, t.name, t.color, t.parent_id
+    .getAllSync<{
+      id: string;
+      name: string;
+      color: string;
+      parent_id: string | null;
+      include_in_analytics: number;
+    }>(
+      `SELECT t.id, t.name, t.color, t.parent_id, t.include_in_analytics
        FROM tags t
        INNER JOIN active_session_tags ast ON ast.tag_id = t.id
        WHERE ast.session_id = ?`,
@@ -246,6 +271,7 @@ export function initDatabase(userId: string): void {
 
   // Existing v2 databases have a tags table without parent_id; migrate before index creation.
   migrateTagsToV3(database);
+  migrateTagsToV4(database);
   database.execSync(TAGS_V3_INDEX_SQL);
 
   const versionRow = database.getFirstSync<{ value: string }>(
@@ -273,6 +299,9 @@ export function initDatabase(userId: string): void {
     if (storedVersion < SCHEMA_VERSION) {
       if (storedVersion < 3) {
         migrateTagsToV3(database);
+      }
+      if (storedVersion < 4) {
+        migrateTagsToV4(database);
       }
       database.runSync('UPDATE meta SET value = ? WHERE key = ?', [
         String(SCHEMA_VERSION),
@@ -302,8 +331,8 @@ export function seedLocalDefaultTagsIfEmpty(): void {
   for (const tag of DEFAULT_TAGS) {
     const id = createId();
     getDb().runSync(
-      'INSERT INTO tags (id, user_id, name, color, parent_id, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
-      [id, userId, tag.name, tag.color, null, ts],
+      'INSERT INTO tags (id, user_id, name, color, parent_id, include_in_analytics, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [id, userId, tag.name, tag.color, null, 1, ts],
     );
     enqueueSync('tag', id, 'upsert', {
       id,
@@ -311,6 +340,7 @@ export function seedLocalDefaultTagsIfEmpty(): void {
       name: tag.name,
       color: tag.color,
       parent_id: null,
+      include_in_analytics: true,
       updated_at: new Date(ts).toISOString(),
     });
   }
@@ -322,6 +352,7 @@ export function upsertTagFromRemote(tag: {
   name: string;
   color: string;
   parent_id?: string | null;
+  include_in_analytics?: boolean;
   updated_at: string;
 }): void {
   const updatedAt = new Date(tag.updated_at).getTime();
@@ -348,15 +379,18 @@ export function upsertTagFromRemote(tag: {
     database.execSync('PRAGMA foreign_keys = ON');
   }
 
+  const includeInAnalytics = tag.include_in_analytics === false ? 0 : 1;
+
   database.runSync(
-    `INSERT INTO tags (id, user_id, name, color, parent_id, updated_at) VALUES (?, ?, ?, ?, ?, ?)
+    `INSERT INTO tags (id, user_id, name, color, parent_id, include_in_analytics, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
        name = excluded.name,
        color = excluded.color,
        parent_id = excluded.parent_id,
+       include_in_analytics = excluded.include_in_analytics,
        updated_at = excluded.updated_at
      WHERE excluded.updated_at >= tags.updated_at`,
-    [tag.id, tag.user_id, tag.name, tag.color, tag.parent_id ?? null, updatedAt],
+    [tag.id, tag.user_id, tag.name, tag.color, tag.parent_id ?? null, includeInAnalytics, updatedAt],
   );
 }
 
@@ -453,8 +487,14 @@ export function deleteGeofenceLocally(id: string): void {
 export function getAllTags(): Tag[] {
   const userId = requireUserId();
   return getDb()
-    .getAllSync<{ id: string; name: string; color: string; parent_id: string | null }>(
-      'SELECT id, name, color, parent_id FROM tags WHERE user_id = ? ORDER BY name ASC',
+    .getAllSync<{
+      id: string;
+      name: string;
+      color: string;
+      parent_id: string | null;
+      include_in_analytics: number;
+    }>(
+      'SELECT id, name, color, parent_id, include_in_analytics FROM tags WHERE user_id = ? ORDER BY name ASC',
       [userId],
     )
     .map(rowToTag);
@@ -469,10 +509,10 @@ export function createTag(name: string, color: string, parentId: string | null =
   validateSiblingName(userId, normalized, parentId);
 
   const ts = nowMs();
-  const tag: Tag = { id: createId(), name: normalized, color, parentId };
+  const tag: Tag = { id: createId(), name: normalized, color, parentId, includeInAnalytics: true };
   getDb().runSync(
-    'INSERT INTO tags (id, user_id, name, color, parent_id, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
-    [tag.id, userId, tag.name, tag.color, parentId, ts],
+    'INSERT INTO tags (id, user_id, name, color, parent_id, include_in_analytics, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [tag.id, userId, tag.name, tag.color, parentId, 1, ts],
   );
   enqueueSync('tag', tag.id, 'upsert', {
     id: tag.id,
@@ -480,6 +520,7 @@ export function createTag(name: string, color: string, parentId: string | null =
     name: tag.name,
     color: tag.color,
     parent_id: parentId,
+    include_in_analytics: true,
     updated_at: new Date(ts).toISOString(),
   });
   return tag;
@@ -497,7 +538,8 @@ export function updateTag(
     name: string;
     color: string;
     parent_id: string | null;
-  }>('SELECT id, name, color, parent_id FROM tags WHERE id = ? AND user_id = ?', [id, userId]);
+    include_in_analytics: number;
+  }>('SELECT id, name, color, parent_id, include_in_analytics FROM tags WHERE id = ? AND user_id = ?', [id, userId]);
   if (!existing) throw new Error('Tag not found');
 
   const resolvedParentId = parentId !== undefined ? parentId : existing.parent_id;
@@ -518,9 +560,51 @@ export function updateTag(
     name: normalized,
     color,
     parent_id: resolvedParentId,
+    include_in_analytics: existing.include_in_analytics !== 0,
     updated_at: new Date(ts).toISOString(),
   });
-  return { id, name: normalized, color, parentId: resolvedParentId };
+  return {
+    id,
+    name: normalized,
+    color,
+    parentId: resolvedParentId,
+    includeInAnalytics: existing.include_in_analytics !== 0,
+  };
+}
+
+export function setTagIncludeInAnalytics(id: string, includeInAnalytics: boolean): Tag {
+  const userId = requireUserId();
+  const existing = getDb().getFirstSync<{
+    id: string;
+    name: string;
+    color: string;
+    parent_id: string | null;
+    include_in_analytics: number;
+  }>('SELECT id, name, color, parent_id, include_in_analytics FROM tags WHERE id = ? AND user_id = ?', [id, userId]);
+  if (!existing) throw new Error('Tag not found');
+
+  const ts = nowMs();
+  const includeValue = includeInAnalytics ? 1 : 0;
+  getDb().runSync(
+    'UPDATE tags SET include_in_analytics = ?, updated_at = ? WHERE id = ? AND user_id = ?',
+    [includeValue, ts, id, userId],
+  );
+  enqueueSync('tag', id, 'upsert', {
+    id,
+    user_id: userId,
+    name: existing.name,
+    color: existing.color,
+    parent_id: existing.parent_id,
+    include_in_analytics: includeInAnalytics,
+    updated_at: new Date(ts).toISOString(),
+  });
+  return {
+    id,
+    name: existing.name,
+    color: existing.color,
+    parentId: existing.parent_id,
+    includeInAnalytics,
+  };
 }
 
 export function deleteTag(id: string): void {
@@ -781,7 +865,7 @@ export function getAllGeofences(): Geofence[] {
     longitude: row.longitude,
     radiusMeters: row.radius_meters,
     enabled: row.enabled === 1,
-    tag: { id: row.tag_id, name: row.tag_name, color: row.tag_color, parentId: null },
+    tag: { id: row.tag_id, name: row.tag_name, color: row.tag_color, parentId: null, includeInAnalytics: true },
   }));
 }
 
@@ -816,7 +900,7 @@ export function getGeofenceById(id: string): Geofence | null {
     longitude: row.longitude,
     radiusMeters: row.radius_meters,
     enabled: row.enabled === 1,
-    tag: { id: row.tag_id, name: row.tag_name, color: row.tag_color, parentId: null },
+    tag: { id: row.tag_id, name: row.tag_name, color: row.tag_color, parentId: null, includeInAnalytics: true },
   };
 }
 

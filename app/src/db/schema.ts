@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export const MIGRATION_SQL = `
 CREATE TABLE IF NOT EXISTS tags (
@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS tags (
   name TEXT NOT NULL,
   color TEXT NOT NULL,
   parent_id TEXT,
+  include_in_analytics INTEGER NOT NULL DEFAULT 1,
   updated_at INTEGER NOT NULL,
   FOREIGN KEY (parent_id) REFERENCES tags(id) ON DELETE CASCADE
 );

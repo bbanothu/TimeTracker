@@ -200,23 +200,14 @@ export default function MapScreen() {
   };
 
   const handleDelete = async (geofence: Geofence) => {
-    Alert.alert('Delete geofence', `Remove ${geofence.name}?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          deleteGeofence(geofence.id);
-          loadGeofences();
-          try {
-            await syncGeofencingTask();
-          } catch (error) {
-            console.warn('Geofence sync unavailable:', error);
-          }
-          pushChangesInBackground(user?.id);
-        },
-      },
-    ]);
+    deleteGeofence(geofence.id);
+    loadGeofences();
+    try {
+      await syncGeofencingTask();
+    } catch (error) {
+      console.warn('Geofence sync unavailable:', error);
+    }
+    pushChangesInBackground(user?.id);
   };
 
   const setupHeader = (

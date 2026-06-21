@@ -1,28 +1,18 @@
-import { useState } from 'react';
-import { LayoutAnimation, Platform, Pressable, Text, UIManager, View } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-import { ActionButton } from '@/components/ActionButton';
-import { TagChip } from '@/components/TagChip';
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAppColors } from '@/hooks/useAppColors';
 import type { Tag } from '@/types';
 import { formatTagName } from '@/utils/formatDuration';
 import type { FlatTagItem } from '@/utils/tagTree';
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
 interface TagsListProps {
   items: FlatTagItem[];
   emptyMessage?: string;
   onEdit: (tag: Tag) => void;
   onDelete: (tag: Tag) => void;
-}
-
-function toggleExpanded(setExpandedId: (value: string | null | ((current: string | null) => string | null)) => void, id: string) {
-  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-  setExpandedId((current) => (current === id ? null : id));
+  onToggleAnalytics: (tag: Tag, includeInAnalytics: boolean) => void;
 }
 
 export function TagsList({
@@ -30,9 +20,9 @@ export function TagsList({
   emptyMessage = 'No tags yet.',
   onEdit,
   onDelete,
+  onToggleAnalytics,
 }: TagsListProps) {
   const colors = useAppColors();
-  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (items.length === 0) {
     return (
@@ -45,78 +35,77 @@ export function TagsList({
   return (
     <ThemedSurface className="overflow-hidden">
       {items.map((item, index) => {
-        const expanded = expandedId === item.tag.id;
         const indent = item.depth * 12;
+        const included = item.tag.includeInAnalytics !== false;
+        const label = formatTagName(item.tag.name);
+        const pathLabel = item.depth > 0 ? formatTagName(item.path) : label;
 
         return (
           <View
             key={item.tag.id}
-            style={
-              index < items.length - 1
-                ? { borderBottomWidth: 1, borderBottomColor: colors.surfaceBorder }
-                : undefined
-            }
+            className="flex-row items-center gap-2 py-2.5 pr-3"
+            style={{
+              paddingLeft: 12 + indent,
+              borderBottomWidth: index < items.length - 1 ? 1 : 0,
+              borderBottomColor: colors.surfaceBorder,
+            }}
           >
-            <Pressable
-              onPress={() => toggleExpanded(setExpandedId, item.tag.id)}
-              className="flex-row items-center gap-2 py-2.5 pr-3"
-              style={{ paddingLeft: 12 + indent }}
+            <View
+              className="h-2 w-2 shrink-0 rounded-full"
+              style={{ backgroundColor: item.tag.color }}
+            />
+            <Text
+              className="min-w-0 flex-1 text-sm font-semibold"
+              style={{ color: included ? colors.textOnBg : colors.textMuted }}
+              numberOfLines={1}
+              accessibilityLabel={pathLabel}
             >
-              <View className="min-w-0 flex-1">
-                <View className="flex-row items-center gap-1.5">
-                  <View
-                    className="h-2 w-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: item.tag.color }}
-                  />
-                  <Text
-                    className="flex-1 text-sm font-semibold"
-                    style={{ color: item.tag.color }}
-                    numberOfLines={1}
-                  >
-                    {formatTagName(item.tag.name)}
-                  </Text>
-                  <Text className="text-xs" style={{ color: colors.textMuted }}>
-                    {expanded ? '▴' : '▾'}
-                  </Text>
-                </View>
-                {!expanded && item.depth > 0 ? (
-                  <Text className="ml-3.5 text-xs" style={{ color: colors.textMuted }} numberOfLines={1}>
-                    {formatTagName(item.path)}
-                  </Text>
-                ) : null}
-              </View>
+              {label}
+            </Text>
+            <Pressable
+              onPress={() => onToggleAnalytics(item.tag, !included)}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: included }}
+              accessibilityLabel="Include in analytics"
+              hitSlop={8}
+              className="h-5 w-9 shrink-0 justify-center rounded-full border"
+              style={{
+                backgroundColor: included ? colors.primary : colors.secondaryBg,
+                borderColor: included ? colors.primary : colors.surfaceBorder,
+              }}
+            >
+              <View
+                className="h-3.5 w-3.5 rounded-full bg-white"
+                style={{ marginLeft: included ? 18 : 2 }}
+              />
             </Pressable>
-
-            {expanded ? (
-              <View className="px-3 pb-3" style={{ paddingLeft: 12 + indent }}>
-                <View className="mb-3">
-                  <TagChip tag={item.tag} />
-                  {item.depth > 0 ? (
-                    <Text className="mt-2 text-sm" style={{ color: colors.textSecondary }}>
-                      {formatTagName(item.path)}
-                    </Text>
-                  ) : null}
-                  <View className="mt-2 flex-row items-center gap-2">
-                    <View
-                      className="h-6 w-6 rounded-full border"
-                      style={{ backgroundColor: item.tag.color, borderColor: colors.surfaceBorder }}
-                    />
-                    <Text className="text-xs uppercase tracking-wide" style={{ color: colors.textMuted }}>
-                      {item.depth === 0 ? 'Top level' : 'Nested tag'}
-                    </Text>
-                  </View>
-                </View>
-                <View className="flex-row gap-2">
-                  <ActionButton label="Edit" onPress={() => onEdit(item.tag)} variant="secondary" className="flex-1" />
-                  <ActionButton
-                    label="Delete"
-                    onPress={() => onDelete(item.tag)}
-                    variant="destructiveOutline"
-                    className="flex-1"
-                  />
-                </View>
-              </View>
-            ) : null}
+            <Pressable
+              onPress={() => onEdit(item.tag)}
+              accessibilityRole="button"
+              accessibilityLabel={`Edit ${label}`}
+              hitSlop={8}
+              className="shrink-0 p-1"
+            >
+              <Ionicons name="create-outline" size={18} color={colors.textMuted} />
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                Alert.alert('Delete tag', `Remove ${label}? This cannot be undone.`, [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: () => onDelete(item.tag),
+                  },
+                ]);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Delete ${label}`}
+              hitSlop={8}
+              className="shrink-0 p-1"
+            >
+              <Ionicons name="trash-outline" size={18} color={colors.destructiveText} />
+            </Pressable>
           </View>
         );
       })}

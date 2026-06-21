@@ -71,7 +71,6 @@ export function HistoryPage() {
 
   const handleDelete = async (entryId: string) => {
     if (!user) return;
-    if (!window.confirm('Remove this tracked session permanently?')) return;
 
     try {
       setError(null);

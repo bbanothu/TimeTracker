@@ -15,6 +15,7 @@ import {
   deleteTag,
   fetchTags,
   seedDefaultTags,
+  setTagIncludeInAnalytics,
   updateTag,
 } from '@/services/data';
 import type { Tag } from '@/types';
@@ -26,6 +27,7 @@ interface TagsContextValue {
   addTag: (name: string, color: string, parentId?: string | null) => Promise<void>;
   editTag: (id: string, name: string, color: string, parentId?: string | null) => Promise<void>;
   removeTag: (id: string) => Promise<void>;
+  toggleTagAnalytics: (id: string, includeInAnalytics: boolean) => Promise<void>;
 }
 
 const TagsContext = createContext<TagsContextValue | null>(null);
@@ -89,9 +91,18 @@ export function TagsProvider({ children }: { children: ReactNode }) {
     [user, refresh],
   );
 
+  const toggleTagAnalytics = useCallback(
+    async (id: string, includeInAnalytics: boolean) => {
+      if (!user) return;
+      await setTagIncludeInAnalytics(user.id, id, includeInAnalytics);
+      await refresh();
+    },
+    [user, refresh],
+  );
+
   const value = useMemo(
-    () => ({ tags, loading, refresh, addTag, editTag, removeTag }),
-    [tags, loading, refresh, addTag, editTag, removeTag],
+    () => ({ tags, loading, refresh, addTag, editTag, removeTag, toggleTagAnalytics }),
+    [tags, loading, refresh, addTag, editTag, removeTag, toggleTagAnalytics],
   );
 
   return <TagsContext.Provider value={value}>{children}</TagsContext.Provider>;

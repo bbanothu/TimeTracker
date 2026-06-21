@@ -52,22 +52,13 @@ export default function HistoryScreen() {
   }, [ready, entries]);
 
   const handleDelete = (entryId: string) => {
-    Alert.alert('Delete entry', 'Remove this tracked session permanently?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => {
-          try {
-            deleteEntry(entryId);
-            notifyDataRefresh();
-            pushChangesInBackground(user?.id);
-          } catch (error) {
-            Alert.alert('Delete failed', error instanceof Error ? error.message : 'Unknown error');
-          }
-        },
-      },
-    ]);
+    try {
+      deleteEntry(entryId);
+      notifyDataRefresh();
+      pushChangesInBackground(user?.id);
+    } catch (error) {
+      Alert.alert('Delete failed', error instanceof Error ? error.message : 'Unknown error');
+    }
   };
 
   if (!ready) {

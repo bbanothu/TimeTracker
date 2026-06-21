@@ -1,8 +1,6 @@
-import { useState } from 'react';
-
-import { ActionButton } from '@/components/ui/ActionButton';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAppColors } from '@/contexts/ThemeContext';
+import { confirmDelete } from '@/lib/confirm';
 import type { Tag } from '@/types';
 import { formatTagName } from '@/utils/formatDuration';
 import type { FlatTagItem } from '@/utils/tagTree';
@@ -12,6 +10,43 @@ interface TagsListProps {
   emptyMessage?: string;
   onEdit: (tag: Tag) => void;
   onDelete: (tag: Tag) => void;
+  onToggleAnalytics: (tag: Tag, includeInAnalytics: boolean) => void;
+}
+
+function EditIcon({ color }: { color: string }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function DeleteIcon({ color }: { color: string }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M10 11v6M14 11v6" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
 }
 
 export function TagsList({
@@ -19,13 +54,9 @@ export function TagsList({
   emptyMessage = 'No tags yet.',
   onEdit,
   onDelete,
+  onToggleAnalytics,
 }: TagsListProps) {
   const colors = useAppColors();
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  const toggleExpanded = (tagId: string) => {
-    setExpandedId((current) => (current === tagId ? null : tagId));
-  };
 
   if (items.length === 0) {
     return (
@@ -38,89 +69,70 @@ export function TagsList({
   return (
     <ThemedSurface className="overflow-hidden p-0">
       {items.map((item, index) => {
-        const expanded = expandedId === item.tag.id;
         const indent = item.depth * 12;
+        const included = item.tag.includeInAnalytics !== false;
+        const label = formatTagName(item.tag.name);
+        const pathLabel = item.depth > 0 ? formatTagName(item.path) : label;
 
         return (
           <div
             key={item.tag.id}
-            style={
-              index < items.length - 1
-                ? { borderBottom: `1px solid ${colors.surfaceBorder}` }
-                : undefined
-            }
+            className="flex items-center gap-2 py-2.5 pr-3"
+            style={{
+              paddingLeft: 12 + indent,
+              borderBottom: index < items.length - 1 ? `1px solid ${colors.surfaceBorder}` : undefined,
+            }}
           >
+            <span
+              className="h-2 w-2 shrink-0 rounded-full"
+              style={{ backgroundColor: item.tag.color }}
+            />
+            <span
+              className="min-w-0 flex-1 truncate text-sm font-semibold"
+              style={{ color: included ? colors.textOnBg : colors.textMuted }}
+              title={pathLabel}
+            >
+              {label}
+            </span>
             <button
               type="button"
-              onClick={() => toggleExpanded(item.tag.id)}
-              className="flex w-full items-center gap-2 py-2.5 pr-3 text-left transition hover:opacity-90"
-              style={{ paddingLeft: 12 + indent }}
+              role="switch"
+              aria-checked={included}
+              aria-label="Include in analytics"
+              title={included ? 'Shown in analytics' : 'Hidden from analytics'}
+              onClick={() => onToggleAnalytics(item.tag, !included)}
+              className="relative h-5 w-9 shrink-0 rounded-full border transition"
+              style={{
+                backgroundColor: included ? colors.primary : colors.secondaryBg,
+                borderColor: included ? colors.primary : colors.surfaceBorder,
+              }}
             >
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <span
-                    className="h-2 w-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: item.tag.color }}
-                  />
-                  <span
-                    className="truncate text-sm font-semibold"
-                    style={{ color: item.tag.color }}
-                    title={formatTagName(item.tag.name)}
-                  >
-                    {formatTagName(item.tag.name)}
-                  </span>
-                  <span className="text-xs" style={{ color: colors.textMuted }}>
-                    {expanded ? '▴' : '▾'}
-                  </span>
-                </div>
-                {!expanded && item.depth > 0 ? (
-                  <p className="ml-3.5 text-xs" style={{ color: colors.textMuted }}>
-                    {formatTagName(item.path)}
-                  </p>
-                ) : null}
-              </div>
+              <span
+                className="absolute top-0.5 h-3.5 w-3.5 rounded-full bg-white transition-all"
+                style={{ left: included ? '18px' : '2px' }}
+              />
             </button>
-
-            <div
-              className="grid transition-[grid-template-rows] duration-200 ease-in-out"
-              style={{ gridTemplateRows: expanded ? '1fr' : '0fr' }}
+            <button
+              type="button"
+              aria-label={`Edit ${label}`}
+              title="Edit"
+              onClick={() => onEdit(item.tag)}
+              className="shrink-0 rounded p-1 transition hover:opacity-80"
             >
-              <div className="overflow-hidden">
-                <div className="px-3 pb-3" style={{ paddingLeft: 12 + indent }}>
-                  <div className="mb-3">
-                    <span
-                      className="inline-block rounded-full border px-3 py-1.5 text-sm font-semibold text-white"
-                      style={{ backgroundColor: item.tag.color, borderColor: item.tag.color }}
-                    >
-                      {formatTagName(item.tag.name)}
-                    </span>
-                    {item.depth > 0 ? (
-                      <p className="mt-2 text-sm" style={{ color: colors.textSecondary }}>
-                        {formatTagName(item.path)}
-                      </p>
-                    ) : null}
-                    <div className="mt-2 flex items-center gap-2">
-                      <span
-                        className="h-6 w-6 rounded-full border"
-                        style={{ backgroundColor: item.tag.color, borderColor: colors.surfaceBorder }}
-                      />
-                      <span className="text-xs uppercase tracking-wide" style={{ color: colors.textMuted }}>
-                        {item.depth === 0 ? 'Top level' : 'Nested tag'}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <ActionButton label="Edit" variant="secondary" onClick={() => onEdit(item.tag)} className="flex-1" />
-                    <ActionButton
-                      label="Delete"
-                      variant="destructiveOutline"
-                      onClick={() => onDelete(item.tag)}
-                      className="flex-1"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+              <EditIcon color={colors.textMuted} />
+            </button>
+            <button
+              type="button"
+              aria-label={`Delete ${label}`}
+              title="Delete"
+              onClick={() => {
+                if (!confirmDelete(`Remove ${label}? This cannot be undone.`)) return;
+                onDelete(item.tag);
+              }}
+              className="shrink-0 rounded p-1 transition hover:opacity-80"
+            >
+              <DeleteIcon color={colors.destructiveText} />
+            </button>
           </div>
         );
       })}

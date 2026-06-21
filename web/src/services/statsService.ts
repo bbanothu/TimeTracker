@@ -1,6 +1,7 @@
 import { addDays, addWeeks, endOfDay, endOfWeek, format, startOfDay, startOfWeek } from 'date-fns';
 
 import { getPeriodBounds } from '@/utils/periodBounds';
+import { analyticsIncludedTags, analyticsVisibleDurationMs } from '@/utils/tagAnalytics';
 import type { Geofence, PeriodType, StatsSummary, Tag, TagDuration, TimeEntry, BucketTagBreakdown, BucketDuration } from '@/types';
 
 function clipDuration(startMs: number, endMs: number, rangeStart: number, rangeEnd: number): number {
@@ -18,10 +19,11 @@ function aggregateByTag(
 
   for (const entry of entries) {
     const duration = clipDuration(entry.startedAt, entry.endedAt, rangeStart, rangeEnd);
-    if (duration <= 0 || entry.tags.length === 0) continue;
+    const includedTags = analyticsIncludedTags(entry.tags);
+    if (duration <= 0 || includedTags.length === 0) continue;
 
-    const share = duration / entry.tags.length;
-    for (const tag of entry.tags) {
+    const share = duration / includedTags.length;
+    for (const tag of includedTags) {
       const existing = totals.get(tag.id);
       if (existing) existing.durationMs += share;
       else totals.set(tag.id, { tag, durationMs: share });
@@ -70,7 +72,10 @@ function buildDayBuckets(anchor: Date, entries: TimeEntry[]) {
     let durationMs = 0;
 
     for (const entry of entries) {
-      durationMs += clipDuration(entry.startedAt, entry.endedAt, dayStart, dayEnd);
+      durationMs += analyticsVisibleDurationMs(
+        clipDuration(entry.startedAt, entry.endedAt, dayStart, dayEnd),
+        entry.tags,
+      );
     }
 
     buckets.push({ label: format(day, 'EEE'), startMs: dayStart, endMs: dayEnd, durationMs });
@@ -91,7 +96,10 @@ function buildWeekBuckets(anchor: Date, entries: TimeEntry[]) {
     let durationMs = 0;
 
     for (const entry of entries) {
-      durationMs += clipDuration(entry.startedAt, entry.endedAt, bucketStart, bucketEnd);
+      durationMs += analyticsVisibleDurationMs(
+        clipDuration(entry.startedAt, entry.endedAt, bucketStart, bucketEnd),
+        entry.tags,
+      );
     }
 
     buckets.push({
@@ -117,10 +125,11 @@ function buildBucketTagBreakdown(
 
     for (const entry of entries) {
       const duration = clipDuration(entry.startedAt, entry.endedAt, bucket.startMs, bucket.endMs);
-      if (duration <= 0 || entry.tags.length === 0) continue;
+      const includedTags = analyticsIncludedTags(entry.tags);
+      if (duration <= 0 || includedTags.length === 0) continue;
 
-      const share = duration / entry.tags.length;
-      for (const tag of entry.tags) {
+      const share = duration / includedTags.length;
+      for (const tag of includedTags) {
         const existing = tagTotals.get(tag.id);
         if (existing) existing.durationMs += share;
         else tagTotals.set(tag.id, { tag, durationMs: share });
@@ -152,7 +161,12 @@ export function getStatsSummary(
   const byTag = aggregateByTag(filtered, rangeStart, rangeEnd);
   const byGeofence = aggregateByGeofence(filtered, geofences, rangeStart, rangeEnd);
   const totalMs = filtered.reduce(
-    (sum, entry) => sum + clipDuration(entry.startedAt, entry.endedAt, rangeStart, rangeEnd),
+    (sum, entry) =>
+      sum +
+      analyticsVisibleDurationMs(
+        clipDuration(entry.startedAt, entry.endedAt, rangeStart, rangeEnd),
+        entry.tags,
+      ),
     0,
   );
 

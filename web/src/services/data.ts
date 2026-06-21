@@ -10,6 +10,7 @@ type TagRow = {
   name: string;
   color: string;
   parent_id: string | null;
+  include_in_analytics?: boolean | null;
 };
 
 type EntryRow = {
@@ -38,6 +39,7 @@ function mapTag(row: TagRow): Tag {
     name: row.name,
     color: row.color,
     parentId: row.parent_id,
+    includeInAnalytics: row.include_in_analytics !== false,
   };
 }
 
@@ -72,7 +74,7 @@ function mapGeofence(row: GeofenceRow): Geofence {
 export async function fetchTags(userId: string): Promise<Tag[]> {
   const { data, error } = await supabase
     .from('tags')
-    .select('id, name, color, parent_id')
+    .select('id, name, color, parent_id, include_in_analytics')
     .eq('user_id', userId)
     .order('name');
 
@@ -90,6 +92,7 @@ export async function seedDefaultTags(userId: string): Promise<void> {
     name: tag.name,
     color: tag.color,
     parent_id: null,
+    include_in_analytics: true,
     updated_at: now,
   }));
 
@@ -113,9 +116,30 @@ export async function createTag(
       name: normalized,
       color,
       parent_id: parentId,
+      include_in_analytics: true,
       updated_at: new Date().toISOString(),
     })
-    .select('id, name, color, parent_id')
+    .select('id, name, color, parent_id, include_in_analytics')
+    .single();
+
+  if (error) throw error;
+  return mapTag(data);
+}
+
+export async function setTagIncludeInAnalytics(
+  userId: string,
+  id: string,
+  includeInAnalytics: boolean,
+): Promise<Tag> {
+  const { data, error } = await supabase
+    .from('tags')
+    .update({
+      include_in_analytics: includeInAnalytics,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .eq('user_id', userId)
+    .select('id, name, color, parent_id, include_in_analytics')
     .single();
 
   if (error) throw error;
@@ -142,7 +166,7 @@ export async function updateTag(
     })
     .eq('id', id)
     .eq('user_id', userId)
-    .select('id, name, color, parent_id')
+    .select('id, name, color, parent_id, include_in_analytics')
     .single();
 
   if (error) throw error;
@@ -159,7 +183,7 @@ export async function fetchEntries(userId: string, startMs: number, endMs: numbe
     .from('time_entries')
     .select(
       `id, started_at, ended_at, source, geofence_id,
-       time_entry_tags(tag_id, tags(id, name, color, parent_id))`,
+       time_entry_tags(tag_id, tags(id, name, color, parent_id, include_in_analytics))`,
     )
     .eq('user_id', userId)
     .gt('ended_at', startMs)
@@ -175,7 +199,7 @@ export async function fetchAllEntries(userId: string): Promise<TimeEntry[]> {
     .from('time_entries')
     .select(
       `id, started_at, ended_at, source, geofence_id,
-       time_entry_tags(tag_id, tags(id, name, color, parent_id))`,
+       time_entry_tags(tag_id, tags(id, name, color, parent_id, include_in_analytics))`,
     )
     .eq('user_id', userId)
     .order('started_at', { ascending: false });
@@ -248,7 +272,7 @@ export async function fetchGeofences(userId: string): Promise<Geofence[]> {
   const { data, error } = await supabase
     .from('geofences')
     .select(
-      'id, tag_id, name, latitude, longitude, radius_meters, enabled, tags(id, name, color, parent_id)',
+      'id, tag_id, name, latitude, longitude, radius_meters, enabled, tags(id, name, color, parent_id, include_in_analytics)',
     )
     .eq('user_id', userId)
     .order('name');

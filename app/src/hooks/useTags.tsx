@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
-import { createTag, deleteTag, getAllTags, updateTag } from '@/db/client';
+import { createTag, deleteTag, getAllTags, setTagIncludeInAnalytics, updateTag } from '@/db/client';
 import { useActiveSession } from '@/hooks/useActiveSession';
 import { useAuth } from '@/hooks/useAuth';
 import { subscribeDataRefresh } from '@/lib/dataRefresh';
@@ -13,6 +13,7 @@ interface TagsContextValue {
   addTag: (name: string, color: string, parentId?: string | null) => void;
   editTag: (id: string, name: string, color: string, parentId?: string | null) => void;
   removeTag: (id: string) => void;
+  toggleTagAnalytics: (id: string, includeInAnalytics: boolean) => void;
 }
 
 const TagsContext = createContext<TagsContextValue | null>(null);
@@ -66,9 +67,17 @@ export function TagsProvider({ children }: { children: React.ReactNode }) {
     [syncAfterMutation],
   );
 
+  const toggleTagAnalytics = useCallback(
+    (id: string, includeInAnalytics: boolean) => {
+      setTagIncludeInAnalytics(id, includeInAnalytics);
+      syncAfterMutation();
+    },
+    [syncAfterMutation],
+  );
+
   const value = useMemo(
-    () => ({ tags, refresh, addTag, editTag, removeTag }),
-    [tags, refresh, addTag, editTag, removeTag],
+    () => ({ tags, refresh, addTag, editTag, removeTag, toggleTagAnalytics }),
+    [tags, refresh, addTag, editTag, removeTag, toggleTagAnalytics],
   );
 
   return <TagsContext.Provider value={value}>{children}</TagsContext.Provider>;

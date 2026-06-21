@@ -13,7 +13,7 @@ import { formatTagName } from '@/utils/formatDuration';
 
 export function TagsPage() {
   const colors = useAppColors();
-  const { tags, loading, addTag, editTag, removeTag } = useTags();
+  const { tags, loading, addTag, editTag, removeTag, toggleTagAnalytics } = useTags();
   const [name, setName] = useState('');
   const [color, setColor] = useState<string>(TAG_COLOR_OPTIONS[0]);
   const [parentId, setParentId] = useState<string | null>(null);
@@ -130,7 +130,16 @@ export function TagsPage() {
       <p className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
         Tags ({flatTags.length})
       </p>
-      <TagsList items={flatTags} onEdit={handleEdit} onDelete={handleDelete} />
+      <TagsList
+        items={flatTags}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onToggleAnalytics={(tag, includeInAnalytics) => {
+          toggleTagAnalytics(tag.id, includeInAnalytics).catch((err) => {
+            setError(err instanceof Error ? err.message : 'Could not update tag');
+          });
+        }}
+      />
 
       <BottomSheetModal
         visible={parentPickerOpen}
