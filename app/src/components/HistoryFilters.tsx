@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
+import { BottomSheetModal } from '@/components/BottomSheetModal';
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAppColors } from '@/hooks/useAppColors';
 import type { Geofence, Tag } from '@/types';
@@ -124,7 +125,7 @@ export function HistoryFilters({ tags, geofences, filters, onChange }: HistoryFi
             <Pressable
               onPress={() => setPicker('tag')}
               className="flex-row items-center justify-between rounded-xl border px-3 py-2.5"
-              style={{ backgroundColor: colors.inputBg, borderColor: colors.inputBorder }}
+              style={{ backgroundColor: colors.inputBgSolid, borderColor: colors.inputBorder }}
             >
               <Text className="flex-1 text-sm" style={{ color: colors.text }} numberOfLines={1}>
                 {tagLabel}
@@ -141,7 +142,7 @@ export function HistoryFilters({ tags, geofences, filters, onChange }: HistoryFi
               <Pressable
                 onPress={() => setPicker('place')}
                 className="flex-row items-center justify-between rounded-xl border px-3 py-2.5"
-                style={{ backgroundColor: colors.inputBg, borderColor: colors.inputBorder }}
+                style={{ backgroundColor: colors.inputBgSolid, borderColor: colors.inputBorder }}
               >
                 <Text className="flex-1 text-sm" style={{ color: colors.text }} numberOfLines={1}>
                   {placeLabel}
@@ -153,110 +154,97 @@ export function HistoryFilters({ tags, geofences, filters, onChange }: HistoryFi
         </View>
       </ThemedSurface>
 
-      <Modal visible={picker === 'tag'} transparent animationType="fade" onRequestClose={() => setPicker(null)}>
-        <Pressable className="flex-1 justify-end bg-black/40" onPress={() => setPicker(null)}>
+      <BottomSheetModal
+        visible={picker === 'tag'}
+        title="Filter by tag"
+        onClose={() => setPicker(null)}
+      >
+        <ScrollView className="max-h-80">
           <Pressable
-            className="max-h-[60%] rounded-t-3xl px-4 pb-8 pt-4"
-            style={{ backgroundColor: colors.surface }}
-            onPress={(event) => event.stopPropagation()}
+            onPress={() => {
+              onChange({ ...filters, tagId: null });
+              setPicker(null);
+            }}
+            className="mb-2 rounded-xl px-4 py-3"
+            style={{
+              backgroundColor: filters.tagId === null ? colors.selectedBgSolid : colors.secondaryBgSolid,
+            }}
           >
-            <Text className="mb-4 text-lg font-semibold" style={{ color: colors.text }}>
-              Filter by tag
+            <Text className="text-base" style={{ color: colors.text }}>
+              All tags
             </Text>
-            <ScrollView className="max-h-80">
+          </Pressable>
+          {flatTags.map((item) => {
+            const selected = filters.tagId === item.tag.id;
+            return (
               <Pressable
+                key={item.tag.id}
                 onPress={() => {
-                  onChange({ ...filters, tagId: null });
+                  onChange({ ...filters, tagId: item.tag.id });
                   setPicker(null);
                 }}
-                className="mb-2 rounded-xl px-4 py-3"
+                className="mb-2 flex-row items-center rounded-xl px-4 py-3"
                 style={{
-                  backgroundColor: filters.tagId === null ? colors.selectedBg : colors.secondaryBg,
+                  marginLeft: item.depth * 12,
+                  backgroundColor: selected ? colors.selectedBgSolid : colors.secondaryBgSolid,
                 }}
               >
+                <View
+                  className="mr-3 h-3 w-3 rounded-full"
+                  style={{ backgroundColor: item.tag.color }}
+                />
                 <Text className="text-base" style={{ color: colors.text }}>
-                  All tags
+                  {formatTagName(item.path)}
                 </Text>
               </Pressable>
-              {flatTags.map((item) => {
-                const selected = filters.tagId === item.tag.id;
-                return (
-                  <Pressable
-                    key={item.tag.id}
-                    onPress={() => {
-                      onChange({ ...filters, tagId: item.tag.id });
-                      setPicker(null);
-                    }}
-                    className="mb-2 flex-row items-center rounded-xl px-4 py-3"
-                    style={{
-                      marginLeft: item.depth * 12,
-                      backgroundColor: selected ? colors.selectedBg : colors.secondaryBg,
-                    }}
-                  >
-                    <View
-                      className="mr-3 h-3 w-3 rounded-full"
-                      style={{ backgroundColor: item.tag.color }}
-                    />
-                    <Text className="text-base" style={{ color: colors.text }}>
-                      {formatTagName(item.path)}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          </Pressable>
-        </Pressable>
-      </Modal>
+            );
+          })}
+        </ScrollView>
+      </BottomSheetModal>
 
-      <Modal visible={picker === 'place'} transparent animationType="fade" onRequestClose={() => setPicker(null)}>
-        <Pressable className="flex-1 justify-end bg-black/40" onPress={() => setPicker(null)}>
+      <BottomSheetModal
+        visible={picker === 'place'}
+        title="Filter by place"
+        onClose={() => setPicker(null)}
+        sheetClassName="max-h-[50%]"
+      >
+        <ScrollView className="max-h-72">
           <Pressable
-            className="max-h-[50%] rounded-t-3xl px-4 pb-8 pt-4"
-            style={{ backgroundColor: colors.surface }}
-            onPress={(event) => event.stopPropagation()}
+            onPress={() => {
+              onChange({ ...filters, geofenceId: null });
+              setPicker(null);
+            }}
+            className="mb-2 rounded-xl px-4 py-3"
+            style={{
+              backgroundColor: filters.geofenceId === null ? colors.selectedBgSolid : colors.secondaryBgSolid,
+            }}
           >
-            <Text className="mb-4 text-lg font-semibold" style={{ color: colors.text }}>
-              Filter by place
+            <Text className="text-base" style={{ color: colors.text }}>
+              All places
             </Text>
-            <ScrollView className="max-h-72">
+          </Pressable>
+          {geofences.map((geofence) => {
+            const selected = filters.geofenceId === geofence.id;
+            return (
               <Pressable
+                key={geofence.id}
                 onPress={() => {
-                  onChange({ ...filters, geofenceId: null });
+                  onChange({ ...filters, geofenceId: geofence.id });
                   setPicker(null);
                 }}
                 className="mb-2 rounded-xl px-4 py-3"
                 style={{
-                  backgroundColor: filters.geofenceId === null ? colors.selectedBg : colors.secondaryBg,
+                  backgroundColor: selected ? colors.selectedBgSolid : colors.secondaryBgSolid,
                 }}
               >
                 <Text className="text-base" style={{ color: colors.text }}>
-                  All places
+                  {geofence.name}
                 </Text>
               </Pressable>
-              {geofences.map((geofence) => {
-                const selected = filters.geofenceId === geofence.id;
-                return (
-                  <Pressable
-                    key={geofence.id}
-                    onPress={() => {
-                      onChange({ ...filters, geofenceId: geofence.id });
-                      setPicker(null);
-                    }}
-                    className="mb-2 rounded-xl px-4 py-3"
-                    style={{
-                      backgroundColor: selected ? colors.selectedBg : colors.secondaryBg,
-                    }}
-                  >
-                    <Text className="text-base" style={{ color: colors.text }}>
-                      {geofence.name}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          </Pressable>
-        </Pressable>
-      </Modal>
+            );
+          })}
+        </ScrollView>
+      </BottomSheetModal>
     </>
   );
 }

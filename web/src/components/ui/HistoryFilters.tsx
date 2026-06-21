@@ -120,7 +120,7 @@ export function HistoryFilters({ tags, geofences, filters, onChange }: HistoryFi
               type="button"
               onClick={() => setPicker('tag')}
               className="flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-left text-sm"
-              style={{ backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }}
+              style={{ backgroundColor: colors.inputBgSolid, borderColor: colors.inputBorder, color: colors.text }}
             >
               <span className="truncate">{selectedTag ? formatTagName(selectedTag.name) : 'All tags'}</span>
               <span className="shrink-0" style={{ color: colors.textMuted }}>
@@ -138,7 +138,7 @@ export function HistoryFilters({ tags, geofences, filters, onChange }: HistoryFi
                 type="button"
                 onClick={() => setPicker('place')}
                 className="flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-left text-sm"
-                style={{ backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }}
+                style={{ backgroundColor: colors.inputBgSolid, borderColor: colors.inputBorder, color: colors.text }}
               >
                 <span className="truncate">{selectedGeofence ? selectedGeofence.name : 'All places'}</span>
                 <span className="shrink-0" style={{ color: colors.textMuted }}>
@@ -151,8 +151,14 @@ export function HistoryFilters({ tags, geofences, filters, onChange }: HistoryFi
       </ThemedSurface>
 
       {picker ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
-          <ThemedSurface className="max-h-[70vh] w-full max-w-md overflow-hidden p-4">
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center"
+          style={{ backgroundColor: colors.overlay }}
+        >
+          <ThemedSurface
+            className="max-h-[70vh] w-full max-w-md overflow-hidden p-4"
+            style={{ backgroundColor: colors.surfaceSolid, borderColor: colors.surfaceBorder }}
+          >
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold" style={{ color: colors.text }}>
                 {picker === 'tag' ? 'Filter by tag' : 'Filter by place'}
@@ -172,7 +178,7 @@ export function HistoryFilters({ tags, geofences, filters, onChange }: HistoryFi
                     }}
                     className="w-full rounded-xl px-4 py-3 text-left"
                     style={{
-                      backgroundColor: filters.tagId === null ? colors.selectedBg : colors.secondaryBg,
+                      backgroundColor: filters.tagId === null ? colors.selectedBgSolid : colors.secondaryBgSolid,
                       color: colors.text,
                     }}
                   >
@@ -190,7 +196,7 @@ export function HistoryFilters({ tags, geofences, filters, onChange }: HistoryFi
                       style={{
                         marginLeft: item.depth * 12,
                         backgroundColor:
-                          filters.tagId === item.tag.id ? colors.selectedBg : colors.secondaryBg,
+                          filters.tagId === item.tag.id ? colors.selectedBgSolid : colors.secondaryBgSolid,
                         color: colors.text,
                       }}
                     >
@@ -209,7 +215,7 @@ export function HistoryFilters({ tags, geofences, filters, onChange }: HistoryFi
                     }}
                     className="w-full rounded-xl px-4 py-3 text-left"
                     style={{
-                      backgroundColor: filters.geofenceId === null ? colors.selectedBg : colors.secondaryBg,
+                      backgroundColor: filters.geofenceId === null ? colors.selectedBgSolid : colors.secondaryBgSolid,
                       color: colors.text,
                     }}
                   >
@@ -226,7 +232,7 @@ export function HistoryFilters({ tags, geofences, filters, onChange }: HistoryFi
                       className="w-full rounded-xl px-4 py-3 text-left"
                       style={{
                         backgroundColor:
-                          filters.geofenceId === geofence.id ? colors.selectedBg : colors.secondaryBg,
+                          filters.geofenceId === geofence.id ? colors.selectedBgSolid : colors.secondaryBgSolid,
                         color: colors.text,
                       }}
                     >

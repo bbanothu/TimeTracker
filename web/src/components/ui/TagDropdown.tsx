@@ -34,8 +34,14 @@ export function TagDropdown({ tags, selectedId, onSelect }: TagDropdownProps) {
       </button>
 
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
-          <ThemedSurface className="max-h-[70vh] w-full max-w-md overflow-hidden p-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: colors.overlay }}
+        >
+          <ThemedSurface
+            className="max-h-[70vh] w-full max-w-md overflow-hidden p-4"
+            style={{ backgroundColor: colors.surfaceSolid, borderColor: colors.surfaceBorder }}
+          >
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold" style={{ color: colors.text }}>
                 Select activity
@@ -58,7 +64,7 @@ export function TagDropdown({ tags, selectedId, onSelect }: TagDropdownProps) {
                     className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-left"
                     style={{
                       marginLeft: item.depth * 12,
-                      backgroundColor: selected ? colors.selectedBg : colors.secondaryBg,
+                      backgroundColor: selected ? colors.selectedBgSolid : colors.secondaryBgSolid,
                       color: colors.text,
                     }}
                   >

@@ -7,6 +7,7 @@ export interface AppColors {
   destructiveBg: string;
   destructiveBorder: string;
   surface: string;
+  surfaceSolid: string;
   surfaceBorder: string;
   glass: string;
   glassBorder: string;
@@ -25,8 +26,10 @@ export interface AppColors {
   inputBorder: string;
   inputPlaceholder: string;
   selectedBg: string;
+  selectedBgSolid: string;
   selectedText: string;
   secondaryBg: string;
+  secondaryBgSolid: string;
   secondaryText: string;
   chartPrimary: string;
   chartSecondary: string;
@@ -39,6 +42,7 @@ export interface AppColors {
   disabled: string;
   spinnerOnPrimary: string;
   switchTrackOff: string;
+  overlay: string;
 }
 
 /** Warm botanical palette — cream surfaces, emerald accents */
@@ -51,6 +55,7 @@ export const lightColors: AppColors = {
   destructiveBg: 'rgba(220, 38, 38, 0.1)',
   destructiveBorder: 'rgba(220, 38, 38, 0.25)',
   surface: 'rgba(255, 252, 245, 0.88)',
+  surfaceSolid: '#FFFCF5',
   surfaceBorder: 'rgba(68, 64, 60, 0.1)',
   glass: 'rgba(255, 252, 245, 0.5)',
   glassBorder: 'rgba(255, 255, 255, 0.65)',
@@ -69,8 +74,10 @@ export const lightColors: AppColors = {
   inputBorder: 'rgba(68, 64, 60, 0.12)',
   inputPlaceholder: 'rgba(68, 64, 60, 0.45)',
   selectedBg: 'rgba(5, 150, 105, 0.16)',
+  selectedBgSolid: '#D1FAE5',
   selectedText: '#047857',
   secondaryBg: 'rgba(68, 64, 60, 0.08)',
+  secondaryBgSolid: '#E7E5E4',
   secondaryText: '#44403C',
   chartPrimary: '#059669',
   chartSecondary: '#34D399',
@@ -87,6 +94,7 @@ export const lightColors: AppColors = {
   disabled: 'rgba(120, 113, 108, 0.35)',
   spinnerOnPrimary: '#FFFFFF',
   switchTrackOff: '#D6D3D1',
+  overlay: 'rgba(0, 0, 0, 0.65)',
 };
 
 /** Warm ember palette — stone dark surfaces, amber/coral accents */
@@ -99,6 +107,7 @@ export const darkColors: AppColors = {
   destructiveBg: 'rgba(251, 113, 133, 0.15)',
   destructiveBorder: 'rgba(251, 113, 133, 0.35)',
   surface: 'rgba(28, 25, 23, 0.78)',
+  surfaceSolid: '#1C1917',
   surfaceBorder: 'rgba(255, 255, 255, 0.1)',
   glass: 'rgba(255, 255, 255, 0.08)',
   glassBorder: 'rgba(255, 255, 255, 0.16)',
@@ -117,8 +126,10 @@ export const darkColors: AppColors = {
   inputBorder: 'rgba(255, 255, 255, 0.18)',
   inputPlaceholder: 'rgba(255, 255, 255, 0.45)',
   selectedBg: 'rgba(251, 146, 60, 0.2)',
+  selectedBgSolid: '#422006',
   selectedText: '#FED7AA',
   secondaryBg: 'rgba(255, 255, 255, 0.1)',
+  secondaryBgSolid: '#292524',
   secondaryText: '#E7E5E4',
   chartPrimary: '#FB923C',
   chartSecondary: '#FDBA74',
@@ -135,6 +146,7 @@ export const darkColors: AppColors = {
   disabled: 'rgba(120, 113, 108, 0.5)',
   spinnerOnPrimary: '#1C1917',
   switchTrackOff: '#57534E',
+  overlay: 'rgba(0, 0, 0, 0.75)',
 };
 
 /** Default tag picker swatches — no blue */

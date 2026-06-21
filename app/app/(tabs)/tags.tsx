@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { ActionButton } from '@/components/ActionButton';
+import { BottomSheetModal } from '@/components/BottomSheetModal';
 import { TabScreenContainer } from '@/components/TabScreenContainer';
 import { TagsList } from '@/components/TagsList';
 import { ThemedSurface } from '@/components/ThemedSurface';
@@ -144,57 +145,46 @@ export default function TagsScreen() {
       <TagsList items={flatTags} onEdit={handleEdit} onDelete={handleDelete} />
       </ScrollView>
 
-      <Modal
+      <BottomSheetModal
         visible={parentPickerOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setParentPickerOpen(false)}
+        title="Select parent"
+        onClose={() => setParentPickerOpen(false)}
+        sheetClassName="max-h-[50%]"
       >
-        <Pressable className="flex-1 justify-end bg-black/40" onPress={() => setParentPickerOpen(false)}>
-          <Pressable
-            className="max-h-[50%] rounded-t-3xl px-4 pb-8 pt-4"
-            style={{ backgroundColor: colors.surface }}
-            onPress={(event) => event.stopPropagation()}
-          >
-            <Text className="mb-4 text-lg font-semibold" style={{ color: colors.text }}>
-              Select parent
-            </Text>
-            <Pressable
-              onPress={() => {
-                setParentId(null);
-                setParentPickerOpen(false);
-              }}
-              className="mb-2 rounded-xl px-4 py-3"
-              style={{
-                backgroundColor: parentId === null ? colors.selectedBg : colors.secondaryBg,
-              }}
-            >
-              <Text className="text-base" style={{ color: colors.text }}>
-                None (top level)
-              </Text>
-            </Pressable>
-            {parentOptions.map((item) => (
-              <Pressable
-                key={item.tag.id}
-                onPress={() => {
-                  setParentId(item.tag.id);
-                  setParentPickerOpen(false);
-                }}
-                className="mb-2 rounded-xl px-4 py-3"
-                style={{
-                  marginLeft: item.depth * 12,
-                  backgroundColor:
-                    parentId === item.tag.id ? colors.selectedBg : colors.secondaryBg,
-                }}
-              >
-                <Text className="text-base" style={{ color: colors.text }}>
-                  {formatTagName(item.path)}
-                </Text>
-              </Pressable>
-            ))}
-          </Pressable>
+        <Pressable
+          onPress={() => {
+            setParentId(null);
+            setParentPickerOpen(false);
+          }}
+          className="mb-2 rounded-xl px-4 py-3"
+          style={{
+            backgroundColor: parentId === null ? colors.selectedBgSolid : colors.secondaryBgSolid,
+          }}
+        >
+          <Text className="text-base" style={{ color: colors.text }}>
+            None (top level)
+          </Text>
         </Pressable>
-      </Modal>
+        {parentOptions.map((item) => (
+          <Pressable
+            key={item.tag.id}
+            onPress={() => {
+              setParentId(item.tag.id);
+              setParentPickerOpen(false);
+            }}
+            className="mb-2 rounded-xl px-4 py-3"
+            style={{
+              marginLeft: item.depth * 12,
+              backgroundColor:
+                parentId === item.tag.id ? colors.selectedBgSolid : colors.secondaryBgSolid,
+            }}
+          >
+            <Text className="text-base" style={{ color: colors.text }}>
+              {formatTagName(item.path)}
+            </Text>
+          </Pressable>
+        ))}
+      </BottomSheetModal>
     </TabScreenContainer>
   );
 }
