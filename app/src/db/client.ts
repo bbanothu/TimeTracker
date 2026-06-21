@@ -664,6 +664,14 @@ export function getAllEntries(): TimeEntry[] {
   }));
 }
 
+export function deleteEntry(id: string): void {
+  const userId = requireUserId();
+  const database = getDb();
+  database.runSync('DELETE FROM time_entry_tags WHERE entry_id = ? AND user_id = ?', [id, userId]);
+  database.runSync('DELETE FROM time_entries WHERE id = ? AND user_id = ?', [id, userId]);
+  enqueueSync('entry', id, 'delete', { id, user_id: userId });
+}
+
 export function clearAllTrackedData(): number {
   const userId = requireUserId();
   const database = getDb();

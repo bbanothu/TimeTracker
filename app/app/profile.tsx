@@ -1,11 +1,10 @@
 import { useRouter } from 'expo-router';
+import { useHeaderHeight } from '@react-navigation/elements';
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   Text,
   TextInput,
@@ -13,25 +12,17 @@ import {
 } from 'react-native';
 
 import { ActionButton } from '@/components/ActionButton';
+import { AppBackground } from '@/components/AppBackground';
 import { DarkModeToggle } from '@/components/DarkModeToggle';
 import { ProfileAvatar } from '@/components/ProfileAvatar';
+import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppColors } from '@/hooks/useAppColors';
 import { clearTrackedData, exportTrackedDataCsv } from '@/services/dataService';
 
-function SettingsSection({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <View className="mb-6">
-      <Text className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-        {title}
-      </Text>
-      <View className="rounded-2xl bg-white p-4 dark:bg-slate-900">{children}</View>
-    </View>
-  );
-}
-
 export default function ProfileScreen() {
   const router = useRouter();
+  const headerHeight = useHeaderHeight();
   const colors = useAppColors();
   const { user, signOut, updateEmail, updatePassword } = useAuth();
   const [email, setEmail] = useState('');
@@ -159,131 +150,139 @@ export default function ProfileScreen() {
       })
     : null;
 
+  const inputStyle = {
+    backgroundColor: colors.inputBg,
+    borderColor: colors.inputBorder,
+    color: colors.text,
+  };
+
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      className="flex-1 bg-slate-50 dark:bg-slate-950"
-    >
-      <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled">
-        <View className="relative mb-6 items-center rounded-2xl bg-white p-6 dark:bg-slate-900">
-          <View className="absolute right-4 top-4">
-            <DarkModeToggle />
-          </View>
-          <View className="items-center pt-2">
-            <ProfileAvatar
-              userId={user?.id}
-              fallbackLabel={(user?.email?.[0] ?? '?').toUpperCase()}
-            />
-            <Text className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-              {user?.email ?? 'Account'}
+    <AppBackground>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        className="flex-1"
+      >
+        <ScrollView
+          className="flex-1 px-4 pb-8"
+          style={{ paddingTop: headerHeight + 8 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <ThemedSurface className="mb-4 px-3 py-3">
+            <View className="flex-row items-center gap-3">
+              <ProfileAvatar
+                compact
+                userId={user?.id}
+                fallbackLabel={(user?.email?.[0] ?? '?').toUpperCase()}
+              />
+              <View className="min-w-0 flex-1">
+                <Text
+                  className="text-sm font-semibold"
+                  style={{ color: colors.textOnBg }}
+                  numberOfLines={1}
+                >
+                  {user?.email ?? 'Account'}
+                </Text>
+                {memberSince ? (
+                  <Text className="mt-0.5 text-xs" style={{ color: colors.textMuted }}>
+                    Member since {memberSince}
+                  </Text>
+                ) : null}
+              </View>
+              <DarkModeToggle />
+            </View>
+          </ThemedSurface>
+
+          {/* <ThemedSurface className="mb-4 p-4">
+            <Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>
+              Account
             </Text>
-            {memberSince ? (
-              <Text className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                Member since {memberSince}
-              </Text>
-            ) : null}
-          </View>
-        </View>
-
-        <SettingsSection title="Account">
-          <Text className="mb-2 text-sm text-slate-500 dark:text-slate-400">Email</Text>
-          <TextInput
-            value={email}
-            onChangeText={setEmail}
-            placeholder="Email"
-            placeholderTextColor="#94A3B8"
-            autoCapitalize="none"
-            keyboardType="email-address"
-            className="mb-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-          />
-          <Pressable
-            onPress={handleUpdateEmail}
-            disabled={savingEmail || email.trim() === user?.email}
-            className="rounded-xl py-3"
-            style={{ backgroundColor: colors.primary }}
-          >
-            {savingEmail ? (
-              <ActivityIndicator color={colors.spinnerOnPrimary} />
-            ) : (
-              <Text
-                className="text-center font-semibold"
-                style={{ color: colors.textOnPrimary }}
-              >
-                Save email
-              </Text>
-            )}
-          </Pressable>
-        </SettingsSection>
-
-        <SettingsSection title="Password">
-          <TextInput
-            value={newPassword}
-            onChangeText={setNewPassword}
-            placeholder="New password"
-            placeholderTextColor="#94A3B8"
-            secureTextEntry
-            className="mb-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-          />
-          <TextInput
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            placeholder="Confirm new password"
-            placeholderTextColor="#94A3B8"
-            secureTextEntry
-            className="mb-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-          />
-          <Pressable
-            onPress={handleUpdatePassword}
-            disabled={savingPassword || !newPassword}
-            className="rounded-xl py-3"
-            style={{ backgroundColor: colors.primary }}
-          >
-            {savingPassword ? (
-              <ActivityIndicator color={colors.spinnerOnPrimary} />
-            ) : (
-              <Text
-                className="text-center font-semibold"
-                style={{ color: colors.textOnPrimary }}
-              >
-                Update password
-              </Text>
-            )}
-          </Pressable>
-        </SettingsSection>
-
-        <SettingsSection title="Data">
-          <Text className="mb-4 text-sm text-slate-500 dark:text-slate-400">
-            Export your tracked time or permanently remove all time entries. Tags and geofences are
-            not affected.
-          </Text>
-          <View className="flex-row gap-3">
-            <ActionButton
-              label="Export to CSV"
-              onPress={handleExportCsv}
-              disabled={exporting || clearing}
-              loading={exporting}
-              className="flex-1"
+            <Text className="mb-2 text-sm" style={{ color: colors.textMuted }}>
+              Email
+            </Text>
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              placeholder="Email"
+              placeholderTextColor={colors.inputPlaceholder}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              className="mb-3 rounded-xl border px-4 py-3 text-base"
+              style={inputStyle}
             />
             <ActionButton
-              label="Clear all data"
-              onPress={handleClearAllData}
-              variant="destructiveOutline"
-              disabled={exporting || clearing}
-              loading={clearing}
-              className="flex-1"
+              label="Save email"
+              onPress={handleUpdateEmail}
+              loading={savingEmail}
+              disabled={savingEmail || email.trim() === user?.email}
             />
-          </View>
-        </SettingsSection>
+          </ThemedSurface> */}
 
-        <ActionButton
-          label="Sign out"
-          onPress={handleLogout}
-          variant="destructiveOutline"
-          size="lg"
-          className="mb-8"
-          textClassName="text-base"
-        />
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <ThemedSurface className="mb-4 p-4">
+            <Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>
+              Password
+            </Text>
+            <TextInput
+              value={newPassword}
+              onChangeText={setNewPassword}
+              placeholder="New password"
+              placeholderTextColor={colors.inputPlaceholder}
+              secureTextEntry
+              className="mb-3 rounded-xl border px-4 py-3 text-base"
+              style={inputStyle}
+            />
+            <TextInput
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder="Confirm new password"
+              placeholderTextColor={colors.inputPlaceholder}
+              secureTextEntry
+              className="mb-3 rounded-xl border px-4 py-3 text-base"
+              style={inputStyle}
+            />
+            <ActionButton
+              label="Update password"
+              onPress={handleUpdatePassword}
+              loading={savingPassword}
+              disabled={savingPassword || !newPassword}
+            />
+          </ThemedSurface>
+
+          <ThemedSurface className="mb-4 p-4">
+            <Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>
+              Data
+            </Text>
+            <Text className="mb-4 text-sm" style={{ color: colors.textMuted }}>
+              Export your tracked time or permanently remove all time entries. Tags and geofences are
+              not affected.
+            </Text>
+            <View className="flex-row gap-3">
+              <ActionButton
+                label="Export to CSV"
+                onPress={handleExportCsv}
+                disabled={exporting || clearing}
+                loading={exporting}
+                className="flex-1"
+              />
+              <ActionButton
+                label="Clear all data"
+                onPress={handleClearAllData}
+                variant="destructiveOutline"
+                disabled={exporting || clearing}
+                loading={clearing}
+                className="flex-1"
+              />
+            </View>
+          </ThemedSurface>
+
+          <ActionButton
+            label="Sign out"
+            onPress={handleLogout}
+            variant="destructiveOutline"
+            size="lg"
+            className="mb-8"
+          />
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </AppBackground>
   );
 }

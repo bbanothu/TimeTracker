@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { HistoryPage } from '@/pages/HistoryPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { MapPage } from '@/pages/MapPage';
 import { ProfilePage } from '@/pages/ProfilePage';
@@ -24,6 +25,7 @@ export function App() {
               <Route path="tags" element={<TagsPage />} />
               <Route path="map" element={<MapPage />} />
               <Route path="stats" element={<StatsPage />} />
+              <Route path="history" element={<HistoryPage />} />
             </Route>
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="*" element={<Navigate to="/" replace />} />

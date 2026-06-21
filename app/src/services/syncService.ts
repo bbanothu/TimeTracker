@@ -36,37 +36,43 @@ export async function push(userId: string): Promise<void> {
           if (error) throw error;
         }
       } else if (item.entityType === 'entry') {
-        const payload = item.payload as {
-          id: string;
-          user_id: string;
-          started_at: number;
-          ended_at: number;
-          source: EntrySource;
-          geofence_id: string | null;
-          updated_at: string;
-          tag_ids: string[];
-        };
-        const { error: entryError } = await supabase.from('time_entries').upsert({
-          id: payload.id,
-          user_id: payload.user_id,
-          started_at: payload.started_at,
-          ended_at: payload.ended_at,
-          source: payload.source,
-          geofence_id: payload.geofence_id,
-          updated_at: payload.updated_at,
-        });
-        if (entryError) throw entryError;
+        if (item.operation === 'delete') {
+          await supabase.from('time_entry_tags').delete().eq('entry_id', item.entityId);
+          const { error } = await supabase.from('time_entries').delete().eq('id', item.entityId);
+          if (error) throw error;
+        } else {
+          const payload = item.payload as {
+            id: string;
+            user_id: string;
+            started_at: number;
+            ended_at: number;
+            source: EntrySource;
+            geofence_id: string | null;
+            updated_at: string;
+            tag_ids: string[];
+          };
+          const { error: entryError } = await supabase.from('time_entries').upsert({
+            id: payload.id,
+            user_id: payload.user_id,
+            started_at: payload.started_at,
+            ended_at: payload.ended_at,
+            source: payload.source,
+            geofence_id: payload.geofence_id,
+            updated_at: payload.updated_at,
+          });
+          if (entryError) throw entryError;
 
-        await supabase.from('time_entry_tags').delete().eq('entry_id', payload.id);
-        if (payload.tag_ids.length > 0) {
-          const { error: tagsError } = await supabase.from('time_entry_tags').insert(
-            payload.tag_ids.map((tagId) => ({
-              entry_id: payload.id,
-              tag_id: tagId,
-              user_id: userId,
-            })),
-          );
-          if (tagsError) throw tagsError;
+          await supabase.from('time_entry_tags').delete().eq('entry_id', payload.id);
+          if (payload.tag_ids.length > 0) {
+            const { error: tagsError } = await supabase.from('time_entry_tags').insert(
+              payload.tag_ids.map((tagId) => ({
+                entry_id: payload.id,
+                tag_id: tagId,
+                user_id: userId,
+              })),
+            );
+            if (tagsError) throw tagsError;
+          }
         }
       } else if (item.entityType === 'geofence') {
         if (item.operation === 'delete') {

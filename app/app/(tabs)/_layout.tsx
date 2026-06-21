@@ -111,6 +111,22 @@ function TabsNavigator() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="history"
+        options={{
+          title: 'History',
+          tabBarLabel: 'History',
+          tabBarIcon: ({ color, size, focused }) => (
+            <TabIcon
+              focused={focused}
+              color={color}
+              size={size}
+              active="list"
+              inactive="list-outline"
+            />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

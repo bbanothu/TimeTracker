@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { LayoutAnimation, Platform, Pressable, Text, UIManager, View } from 'react-native';
 
+import { ActionButton } from '@/components/ActionButton';
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAppColors } from '@/hooks/useAppColors';
 import type { TimeEntry } from '@/types';
@@ -14,11 +15,31 @@ interface EntryListProps {
   entries: TimeEntry[];
   emptyMessage?: string;
   geofenceNames?: Map<string, string>;
+  showDate?: boolean;
+  onDelete?: (entryId: string) => void;
 }
 
-function formatTimeRange(startedAt: number, endedAt: number): string {
-  const options: Intl.DateTimeFormatOptions = { hour: 'numeric', minute: '2-digit' };
-  return `${new Date(startedAt).toLocaleTimeString([], options)} – ${new Date(endedAt).toLocaleTimeString([], options)}`;
+function formatTimeRange(startedAt: number, endedAt: number, showDate: boolean): string {
+  const timeOptions: Intl.DateTimeFormatOptions = { hour: 'numeric', minute: '2-digit' };
+  const start = new Date(startedAt);
+  const end = new Date(endedAt);
+  const startTime = start.toLocaleTimeString([], timeOptions);
+  const endTime = end.toLocaleTimeString([], timeOptions);
+
+  if (!showDate) {
+    return `${startTime} – ${endTime}`;
+  }
+
+  const sameDay = start.toDateString() === end.toDateString();
+  const dateOptions: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+  const startDate = start.toLocaleDateString([], dateOptions);
+
+  if (sameDay) {
+    return `${startDate}, ${startTime} – ${endTime}`;
+  }
+
+  const endDate = end.toLocaleDateString([], dateOptions);
+  return `${startDate} ${startTime} – ${endDate} ${endTime}`;
 }
 
 function toggleExpanded(setExpandedId: (value: string | null | ((current: string | null) => string | null)) => void, id: string) {
@@ -30,6 +51,8 @@ export function EntryList({
   entries,
   emptyMessage = 'No entries yet',
   geofenceNames,
+  showDate = false,
+  onDelete,
 }: EntryListProps) {
   const colors = useAppColors();
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -48,7 +71,7 @@ export function EntryList({
         const duration = entry.endedAt - entry.startedAt;
         const tagLabel = entry.tags.map((tag) => formatTagName(tag.name)).join(', ') || 'Untagged';
         const geofenceName = entry.geofenceId ? geofenceNames?.get(entry.geofenceId) : null;
-        const timeRange = formatTimeRange(entry.startedAt, entry.endedAt);
+        const timeRange = formatTimeRange(entry.startedAt, entry.endedAt, showDate);
         const expanded = expandedId === entry.id;
 
         return (
@@ -97,7 +120,7 @@ export function EntryList({
 
             {expanded ? (
               <View className="px-3 pb-3">
-                <View className="flex-row items-start justify-between gap-3">
+                <View className="mb-3 flex-row items-start justify-between gap-3">
                   <View className="flex-1">
                     <View className="flex-row flex-wrap">
                       {entry.tags.length > 0 ? (
@@ -137,6 +160,13 @@ export function EntryList({
                     {formatDuration(duration)}
                   </Text>
                 </View>
+                {onDelete ? (
+                  <ActionButton
+                    label="Delete"
+                    onPress={() => onDelete(entry.id)}
+                    variant="destructiveOutline"
+                  />
+                ) : null}
               </View>
             ) : null}
           </View>

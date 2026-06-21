@@ -7,6 +7,7 @@ const tabs = [
   { to: '/tags', label: 'Tags', icon: '🏷' },
   { to: '/map', label: 'Map', icon: '📍' },
   { to: '/stats', label: 'Stats', icon: '📊' },
+  { to: '/history', label: 'History', icon: '📋' },
 ];
 
 export function TabNav() {
@@ -17,7 +18,7 @@ export function TabNav() {
       className="fixed inset-x-0 bottom-0 z-20 border-t backdrop-blur-md"
       style={{ backgroundColor: colors.tabBarBg, borderColor: colors.tabBarBorder }}
     >
-      <div className="mx-auto grid max-w-lg grid-cols-4">
+      <div className="mx-auto grid max-w-lg grid-cols-5">
         {tabs.map((tab) => (
           <NavLink
             key={tab.to}

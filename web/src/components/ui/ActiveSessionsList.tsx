@@ -9,10 +9,11 @@ import { formatDuration, formatTagName } from '@/utils/formatDuration';
 interface ActiveSessionsListProps {
   sessions: ActiveSession[];
   tags: Tag[];
+  geofenceNames?: Map<string, string>;
   onStop: (sessionId: string) => void;
 }
 
-export function ActiveSessionsList({ sessions, tags, onStop }: ActiveSessionsListProps) {
+export function ActiveSessionsList({ sessions, tags, geofenceNames, onStop }: ActiveSessionsListProps) {
   const colors = useAppColors();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -30,7 +31,10 @@ export function ActiveSessionsList({ sessions, tags, onStop }: ActiveSessionsLis
       {sessions.map((session, index) => {
         const sessionTags = tags.filter((tag) => session.tagIds.includes(tag.id));
         const elapsed = Date.now() - session.startedAt;
+        const geofenceName = session.geofenceId ? geofenceNames?.get(session.geofenceId) : null;
         const tagLabel = sessionTags.map((tag) => formatTagName(tag.name)).join(', ');
+        const subtitle =
+          session.source === 'geofence' && geofenceName ? `@ ${geofenceName}` : null;
         const expanded = expandedId === session.id;
 
         return (
@@ -65,6 +69,11 @@ export function ActiveSessionsList({ sessions, tags, onStop }: ActiveSessionsLis
                       {expanded ? '▴' : '▾'}
                     </span>
                   </div>
+                  {!expanded && subtitle ? (
+                    <p className="ml-3.5 text-xs" style={{ color: colors.textMuted }}>
+                      {subtitle}
+                    </p>
+                  ) : null}
                 </div>
 
                 {!expanded ? (
@@ -108,8 +117,13 @@ export function ActiveSessionsList({ sessions, tags, onStop }: ActiveSessionsLis
                           </span>
                         ))}
                       </div>
+                      {session.source === 'geofence' && geofenceName ? (
+                        <p className="mt-1 text-sm" style={{ color: colors.textSecondary }}>
+                          at {geofenceName}
+                        </p>
+                      ) : null}
                       <p className="mt-1 text-xs uppercase tracking-wide" style={{ color: colors.textMuted }}>
-                        {session.source}
+                        {session.source === 'geofence' ? 'Location tracking' : session.source}
                       </p>
                     </div>
                     <span className="font-mono text-2xl font-bold tabular-nums" style={{ color: colors.textOnBg }}>

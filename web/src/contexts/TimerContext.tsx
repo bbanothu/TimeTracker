@@ -21,6 +21,7 @@ interface TimerContextValue {
   ready: boolean;
   sessions: ActiveSession[];
   todayEntries: TimeEntry[];
+  entriesRevision: number;
   tick: number;
   startManual: (tagIds: string[]) => void;
   stop: (sessionId: string) => Promise<void>;
@@ -46,6 +47,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [sessions, setSessions] = useState<ActiveSession[]>(() => loadActiveSessions());
   const [todayEntries, setTodayEntries] = useState<TimeEntry[]>([]);
+  const [entriesRevision, setEntriesRevision] = useState(0);
   const [tick, setTick] = useState(0);
 
   const refresh = useCallback(async () => {
@@ -57,6 +59,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
 
     const entries = await fetchEntries(user.id, startOfTodayMs(), endOfTodayMs());
     setTodayEntries(entries);
+    setEntriesRevision((value) => value + 1);
     setReady(true);
   }, [user]);
 
@@ -115,12 +118,13 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       ready,
       sessions,
       todayEntries,
+      entriesRevision,
       tick,
       startManual,
       stop,
       refresh,
     }),
-    [ready, sessions, todayEntries, tick, startManual, stop, refresh],
+    [ready, sessions, todayEntries, entriesRevision, tick, startManual, stop, refresh],
   );
 
   return <TimerContext.Provider value={value}>{children}</TimerContext.Provider>;

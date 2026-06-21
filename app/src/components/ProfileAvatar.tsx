@@ -11,12 +11,14 @@ import { saveProfilePhoto } from '@/services/profilePhotoService';
 interface ProfileAvatarProps {
   userId: string | undefined;
   fallbackLabel: string;
+  compact?: boolean;
 }
 
-export function ProfileAvatar({ userId, fallbackLabel }: ProfileAvatarProps) {
+export function ProfileAvatar({ userId, fallbackLabel, compact = false }: ProfileAvatarProps) {
   const colors = useAppColors();
   const { photoUri, setPhotoUri } = useProfilePhoto(userId);
   const [loading, setLoading] = useState(false);
+  const size = compact ? 52 : 80;
 
   const handlePickPhoto = useCallback(async () => {
     if (!userId) return;
@@ -48,15 +50,15 @@ export function ProfileAvatar({ userId, fallbackLabel }: ProfileAvatarProps) {
   }, [userId, setPhotoUri]);
 
   return (
-    <View className="relative mb-3">
+    <View className={compact ? 'relative' : 'relative mb-3'}>
       <View
-        className="h-20 w-20 items-center justify-center overflow-hidden rounded-full"
-        style={{ backgroundColor: colors.selectedBg }}
+        className="items-center justify-center overflow-hidden rounded-full"
+        style={{ width: size, height: size, backgroundColor: colors.selectedBg }}
       >
         {loading ? (
           <ActivityIndicator color={colors.primary} />
         ) : (
-          <UserAvatar photoUri={photoUri} fallbackLabel={fallbackLabel} size={80} />
+          <UserAvatar photoUri={photoUri} fallbackLabel={fallbackLabel} size={size} />
         )}
       </View>
 
@@ -65,10 +67,17 @@ export function ProfileAvatar({ userId, fallbackLabel }: ProfileAvatarProps) {
         disabled={loading || !userId}
         accessibilityRole="button"
         accessibilityLabel="Change profile photo"
-        className="absolute -bottom-1 -right-1 h-7 w-7 items-center justify-center rounded-full border-2"
-        style={{ backgroundColor: colors.primary, borderColor: colors.surface }}
+        className="absolute items-center justify-center rounded-full border-2"
+        style={{
+          width: compact ? 22 : 28,
+          height: compact ? 22 : 28,
+          bottom: compact ? -2 : -4,
+          right: compact ? -2 : -4,
+          backgroundColor: colors.primary,
+          borderColor: colors.surface,
+        }}
       >
-        <Ionicons name="add" size={16} color={colors.textOnPrimary} />
+        <Ionicons name="add" size={compact ? 12 : 16} color={colors.textOnPrimary} />
       </Pressable>
     </View>
   );

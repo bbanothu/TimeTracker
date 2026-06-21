@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 
 import { AppBackground } from '@/components/layout/AppBackground';
@@ -18,16 +18,16 @@ import {
 export function ProfilePage() {
   const colors = useAppColors();
   const navigate = useNavigate();
-  const { user, signOut, updateEmail, updatePassword } = useAuth();
-  const [email, setEmail] = useState('');
+  const { user, signOut, updatePassword } = useAuth();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    setEmail(user?.email ?? '');
-  }, [user?.email]);
+  // const [email, setEmail] = useState('');
+  // useEffect(() => {
+  //   setEmail(user?.email ?? '');
+  // }, [user?.email]);
 
   if (!user) return <Navigate to="/login" replace />;
 
@@ -39,6 +39,7 @@ export function ProfilePage() {
 
   const handleExport = async () => {
     try {
+      setError(null);
       const [entries, geofences] = await Promise.all([
         fetchAllEntries(user.id),
         fetchGeofences(user.id),
@@ -55,6 +56,7 @@ export function ProfilePage() {
   const handleClear = async () => {
     if (!window.confirm('Delete all tracked time entries? This cannot be undone.')) return;
     try {
+      setError(null);
       const count = await deleteAllEntries(user.id);
       setMessage(`Removed ${count} entries.`);
     } catch (err) {
@@ -67,15 +69,16 @@ export function ProfilePage() {
     navigate('/login');
   };
 
-  const handleEmail = async (event: FormEvent) => {
-    event.preventDefault();
-    try {
-      await updateEmail(email);
-      setMessage('Email updated.');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Update failed');
-    }
-  };
+  // const handleEmail = async (event: FormEvent) => {
+  //   event.preventDefault();
+  //   try {
+  //     setError(null);
+  //     await updateEmail(email);
+  //     setMessage('Email updated.');
+  //   } catch (err) {
+  //     setError(err instanceof Error ? err.message : 'Update failed');
+  //   }
+  // };
 
   const handlePassword = async (event: FormEvent) => {
     event.preventDefault();
@@ -88,6 +91,7 @@ export function ProfilePage() {
       return;
     }
     try {
+      setError(null);
       await updatePassword(newPassword);
       setNewPassword('');
       setConfirmPassword('');
@@ -97,32 +101,52 @@ export function ProfilePage() {
     }
   };
 
+  const memberSince = user.created_at
+    ? new Date(user.created_at).toLocaleDateString(undefined, {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : null;
+
   return (
     <AppBackground>
       <div className="mx-auto min-h-dvh w-full max-w-lg px-4 pb-10 pt-6">
         <div className="mb-4 flex items-center justify-between">
-          <Link to="/" style={{ color: colors.textMuted }}>
+          <Link to="/" className="text-sm font-semibold" style={{ color: colors.textMuted }}>
             ← Back
           </Link>
+          <h1 className="text-2xl font-bold" style={{ color: colors.headerText }}>
+            Account
+          </h1>
           <DarkModeToggle />
         </div>
 
-        <ThemedSurface className="mb-6 p-6 text-center">
-          <div
-            className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full text-xl font-bold"
-            style={{ backgroundColor: colors.selectedBg, color: colors.selectedText }}
-          >
-            {(user.email?.[0] ?? '?').toUpperCase()}
+        <ThemedSurface className="mb-4 px-3 py-3">
+          <div className="flex items-center gap-3">
+            <div
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-bold"
+              style={{ backgroundColor: colors.selectedBg, color: colors.selectedText }}
+            >
+              {(user.email?.[0] ?? '?').toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold" style={{ color: colors.textOnBg }}>
+                {user.email}
+              </p>
+              {memberSince ? (
+                <p className="mt-0.5 text-xs" style={{ color: colors.textMuted }}>
+                  Member since {memberSince}
+                </p>
+              ) : null}
+            </div>
           </div>
-          <p className="text-lg font-semibold" style={{ color: colors.text }}>
-            {user.email}
-          </p>
         </ThemedSurface>
 
         {message ? <p className="mb-3 text-sm text-emerald-600">{message}</p> : null}
         {error ? <p className="mb-3 text-sm text-rose-500">{error}</p> : null}
 
-        <ThemedSurface className="mb-4 p-4">
+        {/* <ThemedSurface className="mb-4 p-4">
           <h2 className="mb-3 font-semibold" style={{ color: colors.text }}>
             Account
           </h2>
@@ -135,7 +159,7 @@ export function ProfilePage() {
             />
             <ActionButton label="Save email" type="submit" className="w-full" />
           </form>
-        </ThemedSurface>
+        </ThemedSurface> */}
 
         <ThemedSurface className="mb-4 p-4">
           <h2 className="mb-3 font-semibold" style={{ color: colors.text }}>
@@ -166,6 +190,10 @@ export function ProfilePage() {
           <h2 className="mb-3 font-semibold" style={{ color: colors.text }}>
             Data
           </h2>
+          <p className="mb-4 text-sm" style={{ color: colors.textMuted }}>
+            Export your tracked time or permanently remove all time entries. Tags and geofences are
+            not affected.
+          </p>
           <div className="flex gap-3">
             <ActionButton label="Export CSV" onClick={handleExport} className="flex-1" />
             <ActionButton

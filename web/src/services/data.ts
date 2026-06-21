@@ -221,6 +221,18 @@ export async function createTimeEntry(
   }
 }
 
+export async function deleteTimeEntry(userId: string, entryId: string): Promise<void> {
+  const { error: tagsError } = await supabase
+    .from('time_entry_tags')
+    .delete()
+    .eq('entry_id', entryId)
+    .eq('user_id', userId);
+  if (tagsError) throw tagsError;
+
+  const { error } = await supabase.from('time_entries').delete().eq('id', entryId).eq('user_id', userId);
+  if (error) throw error;
+}
+
 export async function deleteAllEntries(userId: string): Promise<number> {
   const { data, error } = await supabase
     .from('time_entries')

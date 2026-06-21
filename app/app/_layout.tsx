@@ -4,9 +4,11 @@ import '@/tasks/geofenceTask';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Text, View } from 'react-native';
 
+import { TabHeaderBackground } from '@/components/TabHeaderBackground';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
+import { useAppColors } from '@/hooks/useAppColors';
 import { ThemeProvider, useTheme } from '@/hooks/useTheme';
 import {
   registerNotificationResponseHandler,
@@ -24,6 +26,7 @@ function LoadingScreen() {
 
 function RootNavigator() {
   const { isDark } = useTheme();
+  const colors = useAppColors();
   const { session, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
@@ -66,12 +69,18 @@ function RootNavigator() {
             title: 'Account',
             headerBackTitle: '',
             headerBackButtonDisplayMode: 'minimal',
-            headerStyle: { backgroundColor: isDark ? '#0F172A' : '#FFFFFF' },
-            headerTintColor: isDark ? '#F8FAFC' : '#0F172A',
+            headerTransparent: true,
+            headerBackground: () => <TabHeaderBackground />,
+            headerStyle: Platform.select({
+              ios: { height: 108 },
+              android: { height: 72 },
+              default: { height: 72 },
+            }) as { backgroundColor?: string },
+            headerTintColor: colors.headerText,
             headerTitleStyle: {
               fontWeight: '700',
               fontSize: 20,
-              color: isDark ? '#F8FAFC' : '#0F172A',
+              color: colors.headerText,
             },
             headerShadowVisible: false,
           }}
