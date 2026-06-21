@@ -9,6 +9,7 @@ import {
 } from 'react';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { subscribeDataRefresh } from '@/lib/dataRefresh';
 import {
   createTag,
   deleteTag,
@@ -53,6 +54,13 @@ export function TagsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     refresh().catch(console.error);
   }, [refresh]);
+
+  useEffect(() => {
+    if (!user) return;
+    return subscribeDataRefresh(() => {
+      refresh().catch(console.error);
+    });
+  }, [user, refresh]);
 
   const addTag = useCallback(
     async (name: string, color: string, parentId: string | null = null) => {

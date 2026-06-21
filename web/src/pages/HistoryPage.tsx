@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { useTags } from '@/contexts/TagsContext';
 import { useTimer } from '@/contexts/TimerContext';
+import { subscribeDataRefresh } from '@/lib/dataRefresh';
 import { deleteTimeEntry, fetchAllEntries, fetchGeofences } from '@/services/data';
 import type { Geofence, TimeEntry } from '@/types';
 import {
@@ -50,6 +51,13 @@ export function HistoryPage() {
     if (!ready || location.pathname !== '/history') return;
     loadEntries().catch(console.error);
   }, [ready, location.pathname, entriesRevision, loadEntries]);
+
+  useEffect(() => {
+    if (!user) return;
+    return subscribeDataRefresh(() => {
+      loadEntries().catch(console.error);
+    });
+  }, [user, loadEntries]);
 
   const filteredEntries = useMemo(
     () => filterHistoryEntries(entries, filters),

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { ChartTypeSelector } from '@/components/ui/stats/ChartTypeSelector';
 import {
@@ -12,6 +12,7 @@ import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { useStatsVisualization } from '@/hooks/useStatsVisualization';
+import { subscribeDataRefresh } from '@/lib/dataRefresh';
 import { fetchAllEntries, fetchGeofences } from '@/services/data';
 import { getStatsSummary } from '@/services/statsService';
 import type { Geofence, PeriodType, StatsSummary, StatsVisualization, TimeEntry } from '@/types';
@@ -47,15 +48,31 @@ export function StatsPage() {
   const [geofences, setGeofences] = useState<Geofence[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const loadData = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const [nextEntries, nextGeofences] = await Promise.all([
+        fetchAllEntries(user.id),
+        fetchGeofences(user.id),
+      ]);
+      setEntries(nextEntries);
+      setGeofences(nextGeofences);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    loadData().catch(console.error);
+  }, [loadData]);
+
   useEffect(() => {
     if (!user) return;
-    Promise.all([fetchAllEntries(user.id), fetchGeofences(user.id)])
-      .then(([nextEntries, nextGeofences]) => {
-        setEntries(nextEntries);
-        setGeofences(nextGeofences);
-      })
-      .finally(() => setLoading(false));
-  }, [user]);
+    return subscribeDataRefresh(() => {
+      loadData().catch(console.error);
+    });
+  }, [user, loadData]);
 
   const summary = useMemo(
     () => getStatsSummary(anchorDate, period, entries, geofences),

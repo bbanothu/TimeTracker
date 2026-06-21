@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 
+import { BottomSheetModal, BottomSheetScroll } from '@/components/ui/BottomSheetModal';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAppColors } from '@/contexts/ThemeContext';
 import type { Geofence, Tag } from '@/types';
@@ -150,101 +151,88 @@ export function HistoryFilters({ tags, geofences, filters, onChange }: HistoryFi
         </div>
       </ThemedSurface>
 
-      {picker ? (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center"
-          style={{ backgroundColor: colors.overlay }}
-        >
-          <ThemedSurface
-            className="max-h-[70vh] w-full max-w-md overflow-hidden p-4"
-            style={{ backgroundColor: colors.surfaceSolid, borderColor: colors.surfaceBorder }}
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold" style={{ color: colors.text }}>
-                {picker === 'tag' ? 'Filter by tag' : 'Filter by place'}
-              </h3>
-              <button type="button" onClick={() => setPicker(null)} style={{ color: colors.textMuted }}>
-                ✕
+      <BottomSheetModal
+        visible={picker !== null}
+        title={picker === 'tag' ? 'Filter by tag' : 'Filter by place'}
+        onClose={() => setPicker(null)}
+        maxHeightFraction={0.55}
+      >
+        <BottomSheetScroll maxHeightFraction={0.45}>
+          {picker === 'tag' ? (
+            <div className="space-y-2 pb-2">
+              <button
+                type="button"
+                onClick={() => {
+                  onChange({ ...filters, tagId: null });
+                  setPicker(null);
+                }}
+                className="w-full rounded-xl px-4 py-3 text-left"
+                style={{
+                  backgroundColor: filters.tagId === null ? colors.selectedBgSolid : colors.secondaryBgSolid,
+                  color: colors.text,
+                }}
+              >
+                All tags
               </button>
+              {flatTags.map((item) => (
+                <button
+                  key={item.tag.id}
+                  type="button"
+                  onClick={() => {
+                    onChange({ ...filters, tagId: item.tag.id });
+                    setPicker(null);
+                  }}
+                  className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left"
+                  style={{
+                    marginLeft: item.depth * 12,
+                    backgroundColor:
+                      filters.tagId === item.tag.id ? colors.selectedBgSolid : colors.secondaryBgSolid,
+                    color: colors.text,
+                  }}
+                >
+                  <span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.tag.color }} />
+                  {formatTagName(item.path)}
+                </button>
+              ))}
             </div>
-            <div className="max-h-80 space-y-2 overflow-y-auto">
-              {picker === 'tag' ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onChange({ ...filters, tagId: null });
-                      setPicker(null);
-                    }}
-                    className="w-full rounded-xl px-4 py-3 text-left"
-                    style={{
-                      backgroundColor: filters.tagId === null ? colors.selectedBgSolid : colors.secondaryBgSolid,
-                      color: colors.text,
-                    }}
-                  >
-                    All tags
-                  </button>
-                  {flatTags.map((item) => (
-                    <button
-                      key={item.tag.id}
-                      type="button"
-                      onClick={() => {
-                        onChange({ ...filters, tagId: item.tag.id });
-                        setPicker(null);
-                      }}
-                      className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left"
-                      style={{
-                        marginLeft: item.depth * 12,
-                        backgroundColor:
-                          filters.tagId === item.tag.id ? colors.selectedBgSolid : colors.secondaryBgSolid,
-                        color: colors.text,
-                      }}
-                    >
-                      <span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.tag.color }} />
-                      {formatTagName(item.path)}
-                    </button>
-                  ))}
-                </>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onChange({ ...filters, geofenceId: null });
-                      setPicker(null);
-                    }}
-                    className="w-full rounded-xl px-4 py-3 text-left"
-                    style={{
-                      backgroundColor: filters.geofenceId === null ? colors.selectedBgSolid : colors.secondaryBgSolid,
-                      color: colors.text,
-                    }}
-                  >
-                    All places
-                  </button>
-                  {geofences.map((geofence) => (
-                    <button
-                      key={geofence.id}
-                      type="button"
-                      onClick={() => {
-                        onChange({ ...filters, geofenceId: geofence.id });
-                        setPicker(null);
-                      }}
-                      className="w-full rounded-xl px-4 py-3 text-left"
-                      style={{
-                        backgroundColor:
-                          filters.geofenceId === geofence.id ? colors.selectedBgSolid : colors.secondaryBgSolid,
-                        color: colors.text,
-                      }}
-                    >
-                      {geofence.name}
-                    </button>
-                  ))}
-                </>
-              )}
+          ) : (
+            <div className="space-y-2 pb-2">
+              <button
+                type="button"
+                onClick={() => {
+                  onChange({ ...filters, geofenceId: null });
+                  setPicker(null);
+                }}
+                className="w-full rounded-xl px-4 py-3 text-left"
+                style={{
+                  backgroundColor: filters.geofenceId === null ? colors.selectedBgSolid : colors.secondaryBgSolid,
+                  color: colors.text,
+                }}
+              >
+                All places
+              </button>
+              {geofences.map((geofence) => (
+                <button
+                  key={geofence.id}
+                  type="button"
+                  onClick={() => {
+                    onChange({ ...filters, geofenceId: geofence.id });
+                    setPicker(null);
+                  }}
+                  className="w-full rounded-xl px-4 py-3 text-left"
+                  style={{
+                    backgroundColor:
+                      filters.geofenceId === geofence.id ? colors.selectedBgSolid : colors.secondaryBgSolid,
+                    color: colors.text,
+                  }}
+                >
+                  {geofence.name}
+                </button>
+              ))}
             </div>
-          </ThemedSurface>
-        </div>
-      ) : null}
+          )}
+        </BottomSheetScroll>
+      </BottomSheetModal>
     </>
   );
 }

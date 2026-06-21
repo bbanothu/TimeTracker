@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { GeofencesList } from '@/components/ui/GeofencesList';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppColors } from '@/contexts/ThemeContext';
+import { subscribeDataRefresh } from '@/lib/dataRefresh';
 import { deleteGeofence, fetchGeofences, updateGeofence } from '@/services/data';
 import type { Geofence } from '@/types';
 
@@ -13,15 +14,22 @@ export function MapPage() {
   const [geofences, setGeofences] = useState<Geofence[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!user) return;
     setGeofences(await fetchGeofences(user.id));
     setLoading(false);
-  };
+  }, [user]);
 
   useEffect(() => {
     load().catch(console.error);
-  }, [user]);
+  }, [load]);
+
+  useEffect(() => {
+    if (!user) return;
+    return subscribeDataRefresh(() => {
+      load().catch(console.error);
+    });
+  }, [user, load]);
 
   if (loading) {
     return <p style={{ color: colors.textMuted }}>Loading…</p>;

@@ -1,14 +1,15 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 import { AppBackground } from '@/components/layout/AppBackground';
 import { AppShell } from '@/components/layout/AppShell';
 import { TabNav } from '@/components/layout/TabNav';
-import { TagsProvider } from '@/contexts/TagsContext';
-import { TimerProvider } from '@/contexts/TimerContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { AppDataProviders } from '@/routes/AppDataProviders';
 
 export function ProtectedLayout() {
   const { user, loading } = useAuth();
+  const location = useLocation();
+  const hideTabNav = location.pathname === '/profile';
 
   if (loading) {
     return (
@@ -23,15 +24,13 @@ export function ProtectedLayout() {
   if (!user) return <Navigate to="/login" replace />;
 
   return (
-    <TagsProvider>
-      <TimerProvider>
-        <AppBackground>
-          <AppShell>
-            <Outlet />
-          </AppShell>
-          <TabNav />
-        </AppBackground>
-      </TimerProvider>
-    </TagsProvider>
+    <AppDataProviders>
+      <AppBackground>
+        <AppShell className={hideTabNav ? 'pb-10' : undefined}>
+          <Outlet />
+        </AppShell>
+        {hideTabNav ? null : <TabNav />}
+      </AppBackground>
+    </AppDataProviders>
   );
 }

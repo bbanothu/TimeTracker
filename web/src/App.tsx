@@ -26,8 +26,8 @@ export function App() {
               <Route path="map" element={<MapPage />} />
               <Route path="stats" element={<StatsPage />} />
               <Route path="history" element={<HistoryPage />} />
+              <Route path="profile" element={<ProfilePage />} />
             </Route>
-            <Route path="/profile" element={<ProfilePage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>

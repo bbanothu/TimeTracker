@@ -9,6 +9,7 @@ import {
 } from 'react';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { subscribeDataRefresh } from '@/lib/dataRefresh';
 import {
   createTimeEntry,
   fetchEntries,
@@ -66,6 +67,13 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     refresh().catch(console.error);
   }, [refresh]);
+
+  useEffect(() => {
+    if (!user) return;
+    return subscribeDataRefresh(() => {
+      refresh().catch(console.error);
+    });
+  }, [user, refresh]);
 
   useEffect(() => {
     saveActiveSessions(sessions);

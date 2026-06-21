@@ -5,6 +5,7 @@ import { ActiveSessionsList } from '@/components/ui/ActiveSessionsList';
 import { ActionButton } from '@/components/ui/ActionButton';
 import { DarkModeToggle } from '@/components/ui/DarkModeToggle';
 import { EntryList } from '@/components/ui/EntryList';
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import { TagDropdown } from '@/components/ui/TagDropdown';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAuth } from '@/contexts/AuthContext';
@@ -86,12 +87,12 @@ export function TrackPage() {
         </h1>
         <div className="flex items-center gap-2">
           <DarkModeToggle />
-          <Link
-            to="/profile"
-            className="rounded-full border px-3 py-1.5 text-sm font-semibold"
-            style={{ borderColor: colors.surfaceBorder, color: colors.text }}
-          >
-            Account
+          <Link to="/profile" aria-label="Account">
+            <ProfileAvatar
+              compact
+              editable={false}
+              fallbackLabel={(user?.email?.[0] ?? '?').toUpperCase()}
+            />
           </Link>
         </div>
       </div>

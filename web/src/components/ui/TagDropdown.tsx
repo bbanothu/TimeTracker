@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import { ThemedSurface } from '@/components/ui/ThemedSurface';
+import { BottomSheetModal, BottomSheetScroll } from '@/components/ui/BottomSheetModal';
 import { useAppColors } from '@/contexts/ThemeContext';
 import type { Tag } from '@/types';
 import { flattenTags, getTagPath } from '@/utils/tagTree';
@@ -17,6 +17,7 @@ export function TagDropdown({ tags, selectedId, onSelect }: TagDropdownProps) {
   const [open, setOpen] = useState(false);
   const flatTags = useMemo(() => flattenTags(tags), [tags]);
   const selectedTag = tags.find((tag) => tag.id === selectedId) ?? null;
+  const selectedLabel = selectedTag ? getTagPath(selectedTag.id, tags) : null;
 
   return (
     <>
@@ -27,30 +28,29 @@ export function TagDropdown({ tags, selectedId, onSelect }: TagDropdownProps) {
         className="flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left disabled:opacity-100"
         style={{ backgroundColor: colors.inputBgSolid, borderColor: colors.inputBorder, color: colors.text }}
       >
-        <span>
-          {selectedTag ? formatTagName(getTagPath(selectedTag.id, tags)) : tags.length === 0 ? 'Add tags first' : 'Select activity'}
+        <span className="flex min-w-0 flex-1 items-center gap-2">
+          {selectedTag ? (
+            <>
+              <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: selectedTag.color }} />
+              <span className="truncate">{formatTagName(selectedLabel ?? '')}</span>
+            </>
+          ) : (
+            <span>{tags.length === 0 ? 'Add tags first' : 'Select activity'}</span>
+          )}
         </span>
-        <span style={{ color: colors.textMuted }}>▾</span>
+        <span className="shrink-0" style={{ color: colors.textMuted }}>
+          ▾
+        </span>
       </button>
 
-      {open ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ backgroundColor: colors.overlay }}
-        >
-          <ThemedSurface
-            className="max-h-[70vh] w-full max-w-md overflow-hidden p-4"
-            style={{ backgroundColor: colors.surfaceSolid, borderColor: colors.surfaceBorder }}
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold" style={{ color: colors.text }}>
-                Select activity
-              </h3>
-              <button type="button" onClick={() => setOpen(false)} style={{ color: colors.textMuted }}>
-                ✕
-              </button>
-            </div>
-            <div className="max-h-80 space-y-2 overflow-y-auto">
+      <BottomSheetModal visible={open} title="Select activity" onClose={() => setOpen(false)}>
+        <BottomSheetScroll>
+          {flatTags.length === 0 ? (
+            <p className="py-6 text-center text-sm" style={{ color: colors.textMuted }}>
+              No tags yet. Add some on the Tags tab.
+            </p>
+          ) : (
+            <div className="space-y-2 pb-2">
               {flatTags.map((item) => {
                 const selected = item.tag.id === selectedId;
                 return (
@@ -77,9 +77,9 @@ export function TagDropdown({ tags, selectedId, onSelect }: TagDropdownProps) {
                 );
               })}
             </div>
-          </ThemedSurface>
-        </div>
-      ) : null}
+          )}
+        </BottomSheetScroll>
+      </BottomSheetModal>
     </>
   );
 }
