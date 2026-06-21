@@ -58,6 +58,42 @@ export function ListView({ summary }: ChartViewProps) {
         )}
       </ThemedSurface>
 
+      {summary.byGeofence.length > 0 ? (
+        <ThemedSurface className="mb-8 p-4">
+          <Text className="mb-4 text-base font-semibold" style={{ color: colors.text }}>
+            Time by place
+          </Text>
+          {summary.byGeofence.map((item) => {
+            const share = summary.totalMs > 0 ? item.durationMs / summary.totalMs : 0;
+
+            return (
+              <View key={item.geofenceId} className="mb-4">
+                <View className="mb-1 flex-row items-center justify-between">
+                  <Text className="text-sm font-medium" style={{ color: colors.textSecondary }}>
+                    {item.name}
+                  </Text>
+                  <Text className="text-sm font-semibold" style={{ color: colors.text }}>
+                    {formatDurationLong(item.durationMs)}
+                  </Text>
+                </View>
+                <View
+                  className="h-2 overflow-hidden rounded-full"
+                  style={{ backgroundColor: colors.secondaryBg }}
+                >
+                  <View
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${Math.max(share * 100, 2)}%`,
+                      backgroundColor: colors.primary,
+                    }}
+                  />
+                </View>
+              </View>
+            );
+          })}
+        </ThemedSurface>
+      ) : null}
+
       <ThemedSurface className="mb-8 p-4">
         <Text className="mb-4 text-base font-semibold" style={{ color: colors.text }}>
           Trend

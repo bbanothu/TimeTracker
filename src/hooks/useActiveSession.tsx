@@ -4,6 +4,8 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { initDatabase } from '@/db/client';
 import { useAuth } from '@/hooks/useAuth';
 import { subscribeDataRefresh } from '@/lib/dataRefresh';
+import { syncGeofencingTask } from '@/services/geofenceService';
+import { dismissGeofenceNotification, setupNotifications } from '@/services/notificationService';
 import { syncService } from '@/services/syncService';
 import { timerService } from '@/services/timerService';
 import type { ActiveSession, TimeEntry } from '@/types';
@@ -46,8 +48,10 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       try {
         initDatabase(user.id);
+        await setupNotifications();
         await syncService.seedRemoteDefaultsIfEmpty(user.id);
         await syncService.sync(user.id);
+        await syncGeofencingTask();
         if (!cancelled) {
           setReady(true);
           refresh();
@@ -71,7 +75,13 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
 
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
-        syncService.sync(user.id).then(refresh).catch(console.warn);
+        syncService
+          .sync(user.id)
+          .then(async () => {
+            await syncGeofencingTask();
+            refresh();
+          })
+          .catch(console.warn);
       }
     });
 
@@ -97,8 +107,12 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
   );
 
   const stop = useCallback(() => {
+    const geofenceId = timerService.getActiveSession()?.geofenceId;
     timerService.stop();
     refresh();
+    if (geofenceId) {
+      dismissGeofenceNotification(geofenceId).catch(console.warn);
+    }
     if (user) {
       syncService.push(user.id).catch(console.warn);
     }

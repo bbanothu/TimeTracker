@@ -1,6 +1,7 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 
+import { getGeofenceById } from '@/db/client';
 import type { TimeEntry } from '@/types';
 
 function escapeCsv(value: string): string {
@@ -22,11 +23,15 @@ export async function exportEntriesToCsv(entries: TimeEntry[]): Promise<void> {
     'source',
     'tags',
     'geofence_id',
+    'geofence_name',
   ]);
 
   const rows = entries.map((entry) => {
     const durationMinutes = ((entry.endedAt - entry.startedAt) / 60000).toFixed(2);
     const tags = entry.tags.map((tag) => tag.name).join('; ');
+    const geofenceName = entry.geofenceId
+      ? (getGeofenceById(entry.geofenceId)?.name ?? '')
+      : '';
 
     return formatCsvRow([
       new Date(entry.startedAt).toISOString(),
@@ -35,6 +40,7 @@ export async function exportEntriesToCsv(entries: TimeEntry[]): Promise<void> {
       entry.source,
       tags,
       entry.geofenceId ?? '',
+      geofenceName,
     ]);
   });
 

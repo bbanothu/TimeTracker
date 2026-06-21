@@ -64,11 +64,18 @@ export interface BucketDuration {
   durationMs: number;
 }
 
+export interface GeofenceDuration {
+  geofenceId: string;
+  name: string;
+  durationMs: number;
+}
+
 export interface StatsSummary {
   totalMs: number;
   entryCount: number;
   topTag: Tag | null;
   byTag: TagDuration[];
+  byGeofence: GeofenceDuration[];
   buckets: BucketDuration[];
   bucketTagBreakdown: BucketTagBreakdown[];
 }

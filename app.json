@@ -13,6 +13,7 @@
         "NSLocationWhenInUseUsageDescription": "TimeTracker uses your location to auto-track time when you enter places like work.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "TimeTracker uses background location to automatically track time at saved places.",
         "NSPhotoLibraryUsageDescription": "TimeTracker needs photo library access so you can set a profile picture.",
+        "NSUserNotificationsUsageDescription": "TimeTracker sends alerts when you arrive at saved places so you can stop tracking if needed.",
         "UIBackgroundModes": ["location"]
       }
     },
@@ -50,6 +51,13 @@
         "expo-image-picker",
         {
           "photosPermission": "Allow TimeTracker to access your photos to set a profile picture."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#059669"
         }
       ]
     ]

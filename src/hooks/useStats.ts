@@ -10,6 +10,7 @@ const EMPTY_SUMMARY: StatsSummary = {
   entryCount: 0,
   topTag: null,
   byTag: [],
+  byGeofence: [],
   buckets: [],
   bucketTagBreakdown: [],
 };

@@ -5,6 +5,11 @@ import {
   getEnabledGeofences,
   getGeofenceById,
 } from '@/db/client';
+import { notifyDataRefresh } from '@/lib/dataRefresh';
+import {
+  dismissGeofenceNotification,
+  showGeofenceEnterNotification,
+} from '@/services/notificationService';
 import { timerService } from '@/services/timerService';
 
 export const GEOFENCE_TASK = 'TIMETRACKER_GEOFENCE';
@@ -37,45 +42,68 @@ export function isInsideGeofence(
 }
 
 export async function handleGeofenceEnter(geofenceId: string): Promise<void> {
-  const geofence = getGeofenceById(geofenceId);
-  if (!geofence || !geofence.enabled) return;
+  try {
+    const geofence = getGeofenceById(geofenceId);
+    if (!geofence || !geofence.enabled) return;
 
-  const active = getActiveSession();
-  if (active?.geofenceId === geofenceId) return;
+    const active = getActiveSession();
+    if (active?.geofenceId === geofenceId) return;
 
-  if (active) {
-    timerService.stop();
+    if (active) {
+      timerService.stop();
+    }
+
+    timerService.startGeofence(geofence.tagId, geofenceId);
+
+    const tagName = geofence.tag?.name ?? 'activity';
+    await showGeofenceEnterNotification(geofenceId, geofence.name, tagName);
+    notifyDataRefresh();
+  } catch (error) {
+    console.warn('Geofence enter failed:', error);
   }
-
-  timerService.startGeofence(geofence.tagId, geofenceId);
 }
 
 export async function handleGeofenceExit(geofenceId: string): Promise<void> {
-  const active = getActiveSession();
-  if (!active || active.geofenceId !== geofenceId) return;
-  timerService.stop();
+  try {
+    const active = getActiveSession();
+    if (!active || active.geofenceId !== geofenceId) return;
+
+    timerService.stop();
+    await dismissGeofenceNotification(geofenceId);
+    notifyDataRefresh();
+  } catch (error) {
+    console.warn('Geofence exit failed:', error);
+  }
 }
 
 export async function syncGeofencingTask(): Promise<void> {
-  const geofences = getEnabledGeofences();
-  const regions: Location.LocationRegion[] = geofences.map((g) => ({
-    identifier: g.id,
-    latitude: g.latitude,
-    longitude: g.longitude,
-    radius: g.radiusMeters,
-    notifyOnEnter: true,
-    notifyOnExit: true,
-  }));
+  try {
+    const geofences = getEnabledGeofences();
+    const regions: Location.LocationRegion[] = geofences.map((g) => ({
+      identifier: g.id,
+      latitude: g.latitude,
+      longitude: g.longitude,
+      radius: g.radiusMeters,
+      notifyOnEnter: true,
+      notifyOnExit: true,
+    }));
 
-  const hasStarted = await Location.hasStartedGeofencingAsync(GEOFENCE_TASK);
-  if (regions.length === 0) {
+    const hasStarted = await Location.hasStartedGeofencingAsync(GEOFENCE_TASK);
+    if (regions.length === 0) {
+      if (hasStarted) {
+        await Location.stopGeofencingAsync(GEOFENCE_TASK);
+      }
+      return;
+    }
+
     if (hasStarted) {
       await Location.stopGeofencingAsync(GEOFENCE_TASK);
     }
-    return;
-  }
 
-  await Location.startGeofencingAsync(GEOFENCE_TASK, regions);
+    await Location.startGeofencingAsync(GEOFENCE_TASK, regions);
+  } catch (error) {
+    console.warn('Geofence sync unavailable:', error);
+  }
 }
 
 export async function requestLocationPermissions(): Promise<boolean> {

@@ -1,8 +1,8 @@
 import { addDays, addWeeks, endOfDay, endOfWeek, format, startOfDay, startOfWeek } from 'date-fns';
 
-import { getEntriesBetween } from '@/db/client';
+import { getEntriesBetween, getGeofenceById } from '@/db/client';
 import { getPeriodBounds } from '@/utils/periodBounds';
-import type { PeriodType, StatsSummary, Tag, TagDuration, BucketDuration, BucketTagBreakdown } from '@/types';
+import type { PeriodType, StatsSummary, Tag, TagDuration, BucketDuration, BucketTagBreakdown, GeofenceDuration } from '@/types';
 
 function clipDuration(startMs: number, endMs: number, rangeStart: number, rangeEnd: number): number {
   const clippedStart = Math.max(startMs, rangeStart);
@@ -30,6 +30,35 @@ function aggregateByTag(
         totals.set(tag.id, { tag, durationMs: share });
       }
     }
+  }
+
+  return Array.from(totals.values()).sort((a, b) => b.durationMs - a.durationMs);
+}
+
+function aggregateByGeofence(
+  entries: ReturnType<typeof getEntriesBetween>,
+  rangeStart: number,
+  rangeEnd: number,
+): GeofenceDuration[] {
+  const totals = new Map<string, GeofenceDuration>();
+
+  for (const entry of entries) {
+    if (!entry.geofenceId) continue;
+    const duration = clipDuration(entry.startedAt, entry.endedAt, rangeStart, rangeEnd);
+    if (duration <= 0) continue;
+
+    const existing = totals.get(entry.geofenceId);
+    if (existing) {
+      existing.durationMs += duration;
+      continue;
+    }
+
+    const geofence = getGeofenceById(entry.geofenceId);
+    totals.set(entry.geofenceId, {
+      geofenceId: entry.geofenceId,
+      name: geofence?.name ?? 'Unknown place',
+      durationMs: duration,
+    });
   }
 
   return Array.from(totals.values()).sort((a, b) => b.durationMs - a.durationMs);
@@ -135,6 +164,7 @@ export function getStatsSummary(anchor: Date, period: PeriodType): StatsSummary 
   const rangeEnd = end.getTime();
   const entries = getEntriesBetween(rangeStart, rangeEnd);
   const byTag = aggregateByTag(entries, rangeStart, rangeEnd);
+  const byGeofence = aggregateByGeofence(entries, rangeStart, rangeEnd);
   const totalMs = entries.reduce(
     (sum, entry) => sum + clipDuration(entry.startedAt, entry.endedAt, rangeStart, rangeEnd),
     0,
@@ -160,6 +190,7 @@ export function getStatsSummary(anchor: Date, period: PeriodType): StatsSummary 
     entryCount: entries.length,
     topTag,
     byTag,
+    byGeofence,
     buckets,
     bucketTagBreakdown: buildBucketTagBreakdown(buckets, entries),
   };

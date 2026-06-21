@@ -7,6 +7,7 @@ import { TabScreenContainer } from '@/components/TabScreenContainer';
 import { TagDropdown } from '@/components/TagDropdown';
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { TimerDisplay } from '@/components/TimerDisplay';
+import { getGeofenceById } from '@/db/client';
 import { useActiveSession } from '@/hooks/useActiveSession';
 import { useAppColors } from '@/hooks/useAppColors';
 import { useTags } from '@/hooks/useTags';
@@ -19,7 +20,7 @@ export default function TrackScreen() {
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
 
   const isRunning = !!session;
-  const isManualSession = session?.source === 'manual';
+  const activeGeofence = session?.geofenceId ? getGeofenceById(session.geofenceId) : null;
 
   useEffect(() => {
     if (tags.length === 0) {
@@ -73,8 +74,13 @@ export default function TrackScreen() {
                 </Text>
               ))}
             </View>
+            {session.source === 'geofence' && activeGeofence ? (
+              <Text className="mt-2 text-sm" style={{ color: colors.textSecondary }}>
+                at {activeGeofence.name}
+              </Text>
+            ) : null}
             <Text className="mt-2 text-xs uppercase tracking-wide" style={{ color: colors.textMuted }}>
-              {session.source}
+              {session.source === 'geofence' ? 'Location tracking' : session.source}
             </Text>
           </ThemedSurface>
         ) : (
@@ -91,10 +97,9 @@ export default function TrackScreen() {
             <ActionButton label="Start" onPress={handleStart} size="lg" className="flex-1" />
           ) : (
             <ActionButton
-              label={isManualSession ? 'Stop' : 'Auto tracking'}
+              label="Stop"
               onPress={stop}
-              disabled={!isManualSession && session?.source === 'geofence'}
-              variant={isManualSession ? 'destructive' : 'secondary'}
+              variant="destructive"
               size="lg"
               className="flex-1"
             />

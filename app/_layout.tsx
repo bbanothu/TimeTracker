@@ -8,6 +8,10 @@ import { ActivityIndicator, Text, View } from 'react-native';
 
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
 import { ThemeProvider, useTheme } from '@/hooks/useTheme';
+import {
+  registerNotificationResponseHandler,
+  setupNotifications,
+} from '@/services/notificationService';
 
 function LoadingScreen() {
   return (
@@ -35,6 +39,15 @@ function RootNavigator() {
       router.replace('/(tabs)');
     }
   }, [session, loading, segments, router]);
+
+  useEffect(() => {
+    setupNotifications().catch(console.warn);
+  }, []);
+
+  useEffect(() => {
+    if (!session) return;
+    return registerNotificationResponseHandler(() => router.push('/(tabs)'));
+  }, [session, router]);
 
   if (loading) {
     return <LoadingScreen />;

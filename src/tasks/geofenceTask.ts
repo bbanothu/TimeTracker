@@ -13,16 +13,20 @@ TaskManager.defineTask(GEOFENCE_TASK, async ({ data, error }) => {
     return;
   }
 
-  const { eventType, region } = data as {
-    eventType: Location.GeofencingEventType;
-    region: Location.LocationRegion;
-  };
+  try {
+    const { eventType, region } = data as {
+      eventType: Location.GeofencingEventType;
+      region: Location.LocationRegion;
+    };
 
-  if (!region.identifier) return;
+    if (!region.identifier) return;
 
-  if (eventType === Location.GeofencingEventType.Enter) {
-    await handleGeofenceEnter(region.identifier);
-  } else if (eventType === Location.GeofencingEventType.Exit) {
-    await handleGeofenceExit(region.identifier);
+    if (eventType === Location.GeofencingEventType.Enter) {
+      await handleGeofenceEnter(region.identifier);
+    } else if (eventType === Location.GeofencingEventType.Exit) {
+      await handleGeofenceExit(region.identifier);
+    }
+  } catch (taskError) {
+    console.warn('Geofence task handler failed:', taskError);
   }
 });
