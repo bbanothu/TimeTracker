@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, Text, TextInput, View } from 'react-native';
 
 import { ActionButton } from '@/components/ActionButton';
 import { BottomSheetModal } from '@/components/BottomSheetModal';
+import { TabScrollView } from '@/components/TabScrollView';
 import { TabScreenContainer } from '@/components/TabScreenContainer';
 import { TagsList } from '@/components/TagsList';
 import { ThemedSurface } from '@/components/ThemedSurface';
@@ -80,7 +81,7 @@ export default function TagsScreen() {
 
   return (
     <TabScreenContainer className="px-4 pt-2">
-      <ScrollView className="flex-1" contentContainerClassName="pb-8">
+      <TabScrollView className="flex-1" contentContainerClassName="pb-8">
       <ThemedSurface className="mb-4 p-4">
         <Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>
           {editingTag ? 'Edit tag' : 'New tag'}
@@ -143,7 +144,7 @@ export default function TagsScreen() {
         Tags ({flatTags.length})
       </Text>
       <TagsList items={flatTags} onEdit={handleEdit} onDelete={handleDelete} />
-      </ScrollView>
+      </TabScrollView>
 
       <BottomSheetModal
         visible={parentPickerOpen}

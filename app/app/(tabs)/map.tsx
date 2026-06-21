@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Pressable,
-  ScrollView,
   Text,
   TextInput,
   View,
@@ -12,6 +11,7 @@ import * as Location from 'expo-location';
 
 import { ActionButton } from '@/components/ActionButton';
 import { GeofencesList } from '@/components/GeofencesList';
+import { TabScrollView } from '@/components/TabScrollView';
 import { TabScreenContainer } from '@/components/TabScreenContainer';
 import { TagDropdown } from '@/components/TagDropdown';
 import { ThemedSurface } from '@/components/ThemedSurface';
@@ -22,6 +22,7 @@ import {
   updateGeofence,
 } from '@/db/client';
 import { useActiveSession } from '@/hooks/useActiveSession';
+import { useAuth } from '@/hooks/useAuth';
 import { useAppColors } from '@/hooks/useAppColors';
 import { useTags } from '@/hooks/useTags';
 import {
@@ -31,6 +32,7 @@ import {
   syncGeofencingTask,
 } from '@/services/geofenceService';
 import { requestNotificationPermissions } from '@/services/notificationService';
+import { pushChangesInBackground } from '@/services/syncScheduler';
 import type { Geofence } from '@/types';
 
 const DEFAULT_REGION = {
@@ -51,6 +53,7 @@ function StepLabel({ step, label, colors }: { step: number; label: string; color
 export default function MapScreen() {
   const { tags } = useTags();
   const colors = useAppColors();
+  const { user } = useAuth();
   const { ready, refresh } = useActiveSession();
   const [geofences, setGeofences] = useState<Geofence[]>([]);
   const [draftLat, setDraftLat] = useState<number | null>(null);
@@ -69,6 +72,11 @@ export default function MapScreen() {
   const loadGeofences = useCallback(() => {
     setGeofences(getAllGeofences());
   }, []);
+
+  const refreshMapData = useCallback(() => {
+    if (!ready) return;
+    loadGeofences();
+  }, [ready, loadGeofences]);
 
   useEffect(() => {
     if (!ready) return;
@@ -158,6 +166,7 @@ export default function MapScreen() {
       } catch (error) {
         console.warn('Geofence sync unavailable:', error);
       }
+      pushChangesInBackground(user?.id);
 
       const backgroundGranted = await requestBackgroundPermissions();
       if (backgroundGranted) {
@@ -187,6 +196,7 @@ export default function MapScreen() {
     } catch (error) {
       console.warn('Geofence sync unavailable:', error);
     }
+    pushChangesInBackground(user?.id);
   };
 
   const handleDelete = async (geofence: Geofence) => {
@@ -203,6 +213,7 @@ export default function MapScreen() {
           } catch (error) {
             console.warn('Geofence sync unavailable:', error);
           }
+          pushChangesInBackground(user?.id);
         },
       },
     ]);
@@ -350,9 +361,9 @@ export default function MapScreen() {
 
   return (
     <TabScreenContainer>
-      <ScrollView className="flex-1" contentContainerClassName="pb-6">
+      <TabScrollView className="flex-1" contentContainerClassName="pb-6" onRefreshExtra={refreshMapData}>
         {setupHeader}
-      </ScrollView>
+      </TabScrollView>
     </TabScreenContainer>
   );
 }

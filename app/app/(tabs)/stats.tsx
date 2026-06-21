@@ -1,6 +1,7 @@
 import { StatsCharts } from '@/components/StatsCharts';
 import { ChartTypeSelector } from '@/components/ChartTypeSelector';
 import { PeriodSelector } from '@/components/PeriodSelector';
+import { TabScrollView } from '@/components/TabScrollView';
 import { TabScreenContainer } from '@/components/TabScreenContainer';
 import { useStats } from '@/hooks/useStats';
 import { useStatsVisualization } from '@/hooks/useStatsVisualization';
@@ -20,14 +21,16 @@ export default function StatsScreen() {
 
   return (
     <TabScreenContainer className="px-4 pt-2">
-      <PeriodSelector
-        period={period}
-        anchorDate={anchorDate}
-        onPeriodChange={setPeriod}
-        onShift={shift}
-      />
-      <ChartTypeSelector visualization={visualization} onChange={setVisualization} />
-      <StatsCharts summary={summary} visualization={visualization} />
+      <TabScrollView showsVerticalScrollIndicator={false} contentContainerClassName="pb-8">
+        <PeriodSelector
+          period={period}
+          anchorDate={anchorDate}
+          onPeriodChange={setPeriod}
+          onShift={shift}
+        />
+        <ChartTypeSelector visualization={visualization} onChange={setVisualization} />
+        <StatsCharts summary={summary} visualization={visualization} scrollEnabled={false} />
+      </TabScrollView>
     </TabScreenContainer>
   );
 }

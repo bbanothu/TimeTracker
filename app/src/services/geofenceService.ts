@@ -2,6 +2,7 @@ import * as Location from 'expo-location';
 
 import {
   getActiveSessionByGeofenceId,
+  getCurrentUserId,
   getEnabledGeofences,
   getGeofenceById,
 } from '@/db/client';
@@ -10,6 +11,7 @@ import {
   dismissGeofenceNotification,
   showGeofenceEnterNotification,
 } from '@/services/notificationService';
+import { pushChangesInBackground } from '@/services/syncScheduler';
 import { timerService } from '@/services/timerService';
 
 export const GEOFENCE_TASK = 'TIMETRACKER_GEOFENCE';
@@ -67,6 +69,7 @@ export async function handleGeofenceExit(geofenceId: string): Promise<void> {
     timerService.stop(active.id);
     await dismissGeofenceNotification(geofenceId);
     notifyDataRefresh();
+    pushChangesInBackground(getCurrentUserId());
   } catch (error) {
     console.warn('Geofence exit failed:', error);
   }

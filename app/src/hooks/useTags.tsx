@@ -2,6 +2,9 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 
 import { createTag, deleteTag, getAllTags, updateTag } from '@/db/client';
 import { useActiveSession } from '@/hooks/useActiveSession';
+import { useAuth } from '@/hooks/useAuth';
+import { subscribeDataRefresh } from '@/lib/dataRefresh';
+import { pushChangesInBackground } from '@/services/syncScheduler';
 import type { Tag } from '@/types';
 
 interface TagsContextValue {
@@ -15,6 +18,7 @@ interface TagsContextValue {
 const TagsContext = createContext<TagsContextValue | null>(null);
 
 export function TagsProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
   const { ready } = useActiveSession();
   const [tags, setTags] = useState<Tag[]>([]);
 
@@ -28,9 +32,15 @@ export function TagsProvider({ children }: { children: React.ReactNode }) {
     }
   }, [ready, refresh]);
 
+  useEffect(() => {
+    if (!ready) return;
+    return subscribeDataRefresh(refresh);
+  }, [ready, refresh]);
+
   const syncAfterMutation = useCallback(() => {
     refresh();
-  }, [refresh]);
+    pushChangesInBackground(user?.id);
+  }, [refresh, user?.id]);
 
   const addTag = useCallback(
     (name: string, color: string, parentId: string | null = null) => {

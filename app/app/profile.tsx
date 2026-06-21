@@ -295,9 +295,9 @@ export default function ProfileScreen() {
               Data
             </Text>
             <Text className="mb-4 text-sm" style={{ color: colors.textMuted }}>
-              Your data downloads from the cloud when you sign in. Use Sync now to upload local
-              changes to Supabase. You can also export tracked time or permanently remove all time
-              entries. Tags and geofences are not affected.
+              Your data downloads when you sign in. Changes upload automatically when you stop a
+              session, edit tags, or update saved places. Use Upload to cloud to retry a failed
+              upload. You can also export tracked time or permanently remove all time entries.
             </Text>
             {lastSyncedLabel ? (
               <Text className="mb-3 text-xs" style={{ color: colors.textMuted }}>

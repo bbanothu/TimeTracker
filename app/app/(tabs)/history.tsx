@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, ScrollView, Text } from 'react-native';
+import { Alert, Text } from 'react-native';
 
 import { EntryList } from '@/components/EntryList';
 import { HistoryFilters } from '@/components/HistoryFilters';
+import { TabScrollView } from '@/components/TabScrollView';
 import { TabScreenContainer } from '@/components/TabScreenContainer';
 import { deleteEntry, getAllEntries, getAllGeofences, getGeofenceById } from '@/db/client';
 import { useActiveSession } from '@/hooks/useActiveSession';
 import { useAppColors } from '@/hooks/useAppColors';
+import { useAuth } from '@/hooks/useAuth';
 import { useTags } from '@/hooks/useTags';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
+import { pushChangesInBackground } from '@/services/syncScheduler';
 import type { TimeEntry } from '@/types';
 import {
   defaultHistoryFilters,
@@ -19,6 +22,7 @@ import {
 
 export default function HistoryScreen() {
   const colors = useAppColors();
+  const { user } = useAuth();
   const { tags } = useTags();
   const { ready, entriesRevision } = useActiveSession();
   const [entries, setEntries] = useState<TimeEntry[]>([]);
@@ -57,6 +61,7 @@ export default function HistoryScreen() {
           try {
             deleteEntry(entryId);
             notifyDataRefresh();
+            pushChangesInBackground(user?.id);
           } catch (error) {
             Alert.alert('Delete failed', error instanceof Error ? error.message : 'Unknown error');
           }
@@ -79,7 +84,7 @@ export default function HistoryScreen() {
 
   return (
     <TabScreenContainer>
-      <ScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-2">
+      <TabScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-2">
         <HistoryFilters tags={tags} geofences={geofences} filters={filters} onChange={setFilters} />
 
         <Text className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
@@ -92,7 +97,7 @@ export default function HistoryScreen() {
           showDate
           onDelete={handleDelete}
         />
-      </ScrollView>
+      </TabScrollView>
     </TabScreenContainer>
   );
 }

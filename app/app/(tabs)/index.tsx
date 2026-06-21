@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, ScrollView, Text, View } from 'react-native';
+import { Alert, Text, View } from 'react-native';
 
 import { ActiveSessionsList } from '@/components/ActiveSessionsList';
 import { ActionButton } from '@/components/ActionButton';
 import { EntryList } from '@/components/EntryList';
+import { TabScrollView } from '@/components/TabScrollView';
 import { TabScreenContainer } from '@/components/TabScreenContainer';
 import { TagDropdown } from '@/components/TagDropdown';
 import { ThemedSurface } from '@/components/ThemedSurface';
@@ -74,7 +75,7 @@ export default function TrackScreen() {
 
   return (
     <TabScreenContainer>
-      <ScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-2">
+      <TabScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-2">
         <ThemedSurface className="mb-6 p-4">
           <Text className="mb-3 text-sm font-medium" style={{ color: colors.textMuted }}>
             Start new session
@@ -106,7 +107,7 @@ export default function TrackScreen() {
           emptyMessage="No tracked time yet today."
           geofenceNames={geofenceNames}
         />
-      </ScrollView>
+      </TabScrollView>
     </TabScreenContainer>
   );
 }

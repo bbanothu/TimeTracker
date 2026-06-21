@@ -9,6 +9,7 @@ import type { StatsSummary, StatsVisualization } from '@/types';
 interface StatsChartsProps {
   summary: StatsSummary;
   visualization: StatsVisualization;
+  scrollEnabled?: boolean;
 }
 
 function VisualizationContent({
@@ -33,11 +34,17 @@ function VisualizationContent({
   }
 }
 
-export function StatsCharts({ summary, visualization }: StatsChartsProps) {
-  return (
-    <ScrollView showsVerticalScrollIndicator={false}>
+export function StatsCharts({ summary, visualization, scrollEnabled = true }: StatsChartsProps) {
+  const content = (
+    <>
       <StatsKpiCard summary={summary} />
       <VisualizationContent summary={summary} visualization={visualization} />
-    </ScrollView>
+    </>
   );
+
+  if (!scrollEnabled) {
+    return content;
+  }
+
+  return <ScrollView showsVerticalScrollIndicator={false}>{content}</ScrollView>;
 }

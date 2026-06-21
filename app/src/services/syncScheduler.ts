@@ -27,9 +27,25 @@ export async function performManualSync(userId: string): Promise<SyncResult> {
   return result;
 }
 
+export function pushChangesInBackground(userId: string | null | undefined): void {
+  if (!userId) return;
+
+  syncService
+    .push(userId)
+    .then((pushed) => {
+      if (pushed) {
+        markSyncAt().catch(() => undefined);
+      }
+    })
+    .catch((error) => {
+      console.warn('Cloud sync failed:', error);
+    });
+}
+
 export const syncScheduler = {
   getLastSyncAt,
   performManualSync,
+  pushChangesInBackground,
 };
 
 // Backwards-compatible alias for profile screen.

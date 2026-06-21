@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { subscribeDataRefresh } from '@/lib/dataRefresh';
 import { initializeAppData, isDatabaseReady } from '@/services/appInitService';
 import { dismissGeofenceNotification } from '@/services/notificationService';
+import { pushChangesInBackground } from '@/services/syncScheduler';
 import { timerService } from '@/services/timerService';
 import type { ActiveSession, TimeEntry } from '@/types';
 
@@ -91,8 +92,11 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
       if (session?.geofenceId) {
         dismissGeofenceNotification(session.geofenceId).catch(console.warn);
       }
+      if (user) {
+        pushChangesInBackground(user.id);
+      }
     },
-    [refresh],
+    [refresh, user],
   );
 
   const value = useMemo(
