@@ -1,13 +1,13 @@
 import { FormEvent, useMemo, useState } from 'react';
 
 import { ActionButton } from '@/components/ui/ActionButton';
+import { TagsList } from '@/components/ui/TagsList';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { TAG_COLOR_OPTIONS } from '@/theme/colors';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { useTags } from '@/contexts/TagsContext';
 import type { Tag } from '@/types';
 import { flattenTags, getEligibleParents, wouldCreateCycle } from '@/utils/tagTree';
-import { formatTagName } from '@/utils/formatDuration';
 
 export function TagsPage() {
   const colors = useAppColors();
@@ -51,6 +51,16 @@ export function TagsPage() {
     setName(tag.name);
     setColor(tag.color);
     setParentId(tag.parentId);
+  };
+
+  const handleDelete = async (tag: Tag) => {
+    try {
+      setError(null);
+      await removeTag(tag.id);
+      if (editingTag?.id === tag.id) resetForm();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not delete tag');
+    }
   };
 
   if (loading) {
@@ -109,40 +119,10 @@ export function TagsPage() {
         </form>
       </ThemedSurface>
 
-      <div className="space-y-3">
-        {flatTags.length === 0 ? (
-          <p className="text-center text-sm" style={{ color: colors.textMuted }}>
-            No tags yet.
-          </p>
-        ) : (
-          flatTags.map((item) => (
-            <ThemedSurface
-              key={item.tag.id}
-              className="flex items-center justify-between gap-3 p-4"
-              style={{ marginLeft: item.depth * 16 }}
-            >
-              <div>
-                <span className="font-semibold" style={{ color: item.tag.color }}>
-                  {formatTagName(item.tag.name)}
-                </span>
-                {item.depth > 0 ? (
-                  <p className="text-xs" style={{ color: colors.textMuted }}>
-                    {item.path}
-                  </p>
-                ) : null}
-              </div>
-              <div className="flex gap-2">
-                <ActionButton label="Edit" variant="secondary" onClick={() => handleEdit(item.tag)} />
-                <ActionButton
-                  label="Delete"
-                  variant="destructiveOutline"
-                  onClick={() => removeTag(item.tag.id).catch((err) => setError(err.message))}
-                />
-              </div>
-            </ThemedSurface>
-          ))
-        )}
-      </div>
+      <p className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
+        Tags ({flatTags.length})
+      </p>
+      <TagsList items={flatTags} onEdit={handleEdit} onDelete={handleDelete} />
     </div>
   );
 }

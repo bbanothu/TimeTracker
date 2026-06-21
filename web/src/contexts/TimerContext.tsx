@@ -12,18 +12,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import {
   createTimeEntry,
   fetchEntries,
-  loadActiveSession,
-  saveActiveSession,
+  loadActiveSessions,
+  saveActiveSessions,
 } from '@/services/data';
 import type { ActiveSession, Tag, TimeEntry } from '@/types';
 
 interface TimerContextValue {
   ready: boolean;
-  session: ActiveSession | null;
+  sessions: ActiveSession[];
   todayEntries: TimeEntry[];
   tick: number;
   startManual: (tagIds: string[]) => void;
-  stop: () => Promise<void>;
+  stop: (sessionId: string) => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -44,7 +44,7 @@ function endOfTodayMs() {
 export function TimerProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [ready, setReady] = useState(false);
-  const [session, setSession] = useState<ActiveSession | null>(() => loadActiveSession());
+  const [sessions, setSessions] = useState<ActiveSession[]>(() => loadActiveSessions());
   const [todayEntries, setTodayEntries] = useState<TimeEntry[]>([]);
   const [tick, setTick] = useState(0);
 
@@ -65,57 +65,62 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   useEffect(() => {
-    saveActiveSession(session);
-  }, [session]);
+    saveActiveSessions(sessions);
+  }, [sessions]);
 
   useEffect(() => {
-    if (!session) return;
+    if (sessions.length === 0) return;
     const interval = setInterval(() => setTick((value) => value + 1), 1000);
     return () => clearInterval(interval);
-  }, [session?.id]);
+  }, [sessions.length]);
 
-  const startManual = useCallback(
-    (tagIds: string[]) => {
-      if (tagIds.length === 0) throw new Error('Select at least one tag');
-      if (session) throw new Error('A session is already running');
+  const startManual = useCallback((tagIds: string[]) => {
+    if (tagIds.length === 0) throw new Error('Select at least one tag');
 
-      setSession({
+    setSessions((current) => [
+      ...current,
+      {
         id: crypto.randomUUID(),
         startedAt: Date.now(),
         source: 'manual',
         geofenceId: null,
         tagIds,
+      },
+    ]);
+  }, []);
+
+  const stop = useCallback(
+    async (sessionId: string) => {
+      if (!user) return;
+
+      const session = sessions.find((item) => item.id === sessionId);
+      if (!session) return;
+
+      await createTimeEntry(user.id, {
+        startedAt: session.startedAt,
+        endedAt: Date.now(),
+        source: session.source,
+        geofenceId: session.geofenceId,
+        tagIds: session.tagIds,
       });
+
+      setSessions((current) => current.filter((item) => item.id !== sessionId));
+      await refresh();
     },
-    [session],
+    [user, sessions, refresh],
   );
-
-  const stop = useCallback(async () => {
-    if (!user || !session) return;
-
-    await createTimeEntry(user.id, {
-      startedAt: session.startedAt,
-      endedAt: Date.now(),
-      source: session.source,
-      geofenceId: session.geofenceId,
-      tagIds: session.tagIds,
-    });
-
-    setSession(null);
-    await refresh();
-  }, [user, session, refresh]);
 
   const value = useMemo(
     () => ({
       ready,
-      session,
+      sessions,
       todayEntries,
       tick,
       startManual,
       stop,
       refresh,
     }),
-    [ready, session, todayEntries, tick, startManual, stop, refresh],
+    [ready, sessions, todayEntries, tick, startManual, stop, refresh],
   );
 
   return <TimerContext.Provider value={value}>{children}</TimerContext.Provider>;

@@ -12,12 +12,13 @@ import type { ActiveSession, TimeEntry } from '@/types';
 
 interface TimerContextValue {
   ready: boolean;
-  session: ActiveSession | null;
+  sessions: ActiveSession[];
   todayEntries: TimeEntry[];
   entriesRevision: number;
+  tick: number;
   refresh: () => void;
   startManual: (tagIds: string[]) => void;
-  stop: () => void;
+  stop: (sessionId: string) => void;
 }
 
 const TimerContext = createContext<TimerContextValue | null>(null);
@@ -25,14 +26,14 @@ const TimerContext = createContext<TimerContextValue | null>(null);
 export function TimerProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [ready, setReady] = useState(false);
-  const [session, setSession] = useState<ActiveSession | null>(null);
+  const [sessions, setSessions] = useState<ActiveSession[]>([]);
   const [todayEntries, setTodayEntries] = useState<TimeEntry[]>([]);
   const [entriesRevision, setEntriesRevision] = useState(0);
   const [tick, setTick] = useState(0);
 
   const refresh = useCallback(() => {
     if (!user) return;
-    setSession(timerService.getActiveSession());
+    setSessions(timerService.getActiveSessions());
     setTodayEntries(timerService.getTodayEntries());
     setEntriesRevision((value) => value + 1);
   }, [user]);
@@ -93,10 +94,10 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
   }, [refresh]);
 
   useEffect(() => {
-    if (!session) return;
+    if (sessions.length === 0) return;
     const interval = setInterval(() => setTick((value) => value + 1), 1000);
     return () => clearInterval(interval);
-  }, [session?.id]);
+  }, [sessions.length]);
 
   const startManual = useCallback(
     (tagIds: string[]) => {
@@ -106,29 +107,33 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     [refresh],
   );
 
-  const stop = useCallback(() => {
-    const geofenceId = timerService.getActiveSession()?.geofenceId;
-    timerService.stop();
-    refresh();
-    if (geofenceId) {
-      dismissGeofenceNotification(geofenceId).catch(console.warn);
-    }
-    if (user) {
-      syncService.push(user.id).catch(console.warn);
-    }
-  }, [refresh, user]);
+  const stop = useCallback(
+    (sessionId: string) => {
+      const session = timerService.getActiveSessions().find((item) => item.id === sessionId);
+      timerService.stop(sessionId);
+      refresh();
+      if (session?.geofenceId) {
+        dismissGeofenceNotification(session.geofenceId).catch(console.warn);
+      }
+      if (user) {
+        syncService.push(user.id).catch(console.warn);
+      }
+    },
+    [refresh, user],
+  );
 
   const value = useMemo(
     () => ({
       ready,
-      session,
+      sessions,
       todayEntries,
       entriesRevision,
+      tick,
       refresh,
       startManual,
       stop,
     }),
-    [ready, session, todayEntries, entriesRevision, refresh, startManual, stop, tick],
+    [ready, sessions, todayEntries, entriesRevision, tick, refresh, startManual, stop],
   );
 
   return <TimerContext.Provider value={value}>{children}</TimerContext.Provider>;

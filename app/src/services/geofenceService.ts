@@ -1,7 +1,7 @@
 import * as Location from 'expo-location';
 
 import {
-  getActiveSession,
+  getActiveSessionByGeofenceId,
   getEnabledGeofences,
   getGeofenceById,
 } from '@/db/client';
@@ -46,12 +46,8 @@ export async function handleGeofenceEnter(geofenceId: string): Promise<void> {
     const geofence = getGeofenceById(geofenceId);
     if (!geofence || !geofence.enabled) return;
 
-    const active = getActiveSession();
-    if (active?.geofenceId === geofenceId) return;
-
-    if (active) {
-      timerService.stop();
-    }
+    const active = getActiveSessionByGeofenceId(geofenceId);
+    if (active) return;
 
     timerService.startGeofence(geofence.tagId, geofenceId);
 
@@ -65,10 +61,10 @@ export async function handleGeofenceEnter(geofenceId: string): Promise<void> {
 
 export async function handleGeofenceExit(geofenceId: string): Promise<void> {
   try {
-    const active = getActiveSession();
-    if (!active || active.geofenceId !== geofenceId) return;
+    const active = getActiveSessionByGeofenceId(geofenceId);
+    if (!active) return;
 
-    timerService.stop();
+    timerService.stop(active.id);
     await dismissGeofenceNotification(geofenceId);
     notifyDataRefresh();
   } catch (error) {

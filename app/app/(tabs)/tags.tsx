@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-import { Alert, FlatList, Modal, Pressable, Text, TextInput, View } from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { ActionButton } from '@/components/ActionButton';
-import { TagChip } from '@/components/TagChip';
 import { TabScreenContainer } from '@/components/TabScreenContainer';
+import { TagsList } from '@/components/TagsList';
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAppColors } from '@/hooks/useAppColors';
 import { useTags } from '@/hooks/useTags';
@@ -78,6 +78,7 @@ export default function TagsScreen() {
 
   return (
     <TabScreenContainer className="px-4 pt-2">
+      <ScrollView className="flex-1" contentContainerClassName="pb-8">
       <ThemedSurface className="mb-4 p-4">
         <Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>
           {editingTag ? 'Edit tag' : 'New tag'}
@@ -136,50 +137,11 @@ export default function TagsScreen() {
         </View>
       </ThemedSurface>
 
-      <FlatList
-        data={flatTags}
-        keyExtractor={(item) => item.tag.id}
-        renderItem={({ item }) => (
-          <ThemedSurface
-            className="mb-3 flex-row items-center justify-between p-4"
-            style={{ marginLeft: item.depth * 16 }}
-          >
-            <View className="mr-2 flex-1">
-              <TagChip tag={item.tag} />
-              {item.depth > 0 ? (
-                <Text className="mt-1 text-xs" style={{ color: colors.textMuted }}>
-                  {item.path}
-                </Text>
-              ) : null}
-            </View>
-            <View className="flex-row gap-2">
-              <Pressable
-                onPress={() => handleEdit(item.tag)}
-                className="rounded-lg px-3 py-2"
-                style={{ backgroundColor: colors.secondaryBg }}
-              >
-                <Text className="text-sm font-medium" style={{ color: colors.secondaryText }}>
-                  Edit
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => handleDelete(item.tag)}
-                className="rounded-lg px-3 py-2"
-                style={{ backgroundColor: colors.destructiveBg }}
-              >
-                <Text className="text-sm font-medium" style={{ color: colors.destructiveText }}>
-                  Delete
-                </Text>
-              </Pressable>
-            </View>
-          </ThemedSurface>
-        )}
-        ListEmptyComponent={
-          <Text className="text-center" style={{ color: colors.textMuted }}>
-            No tags yet.
-          </Text>
-        }
-      />
+      <Text className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
+        Tags ({flatTags.length})
+      </Text>
+      <TagsList items={flatTags} onEdit={handleEdit} onDelete={handleDelete} />
+      </ScrollView>
 
       <Modal
         visible={parentPickerOpen}

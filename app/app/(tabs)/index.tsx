@@ -1,26 +1,43 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
 
+import { ActiveSessionsList } from '@/components/ActiveSessionsList';
 import { ActionButton } from '@/components/ActionButton';
 import { EntryList } from '@/components/EntryList';
 import { TabScreenContainer } from '@/components/TabScreenContainer';
 import { TagDropdown } from '@/components/TagDropdown';
 import { ThemedSurface } from '@/components/ThemedSurface';
-import { TimerDisplay } from '@/components/TimerDisplay';
 import { getGeofenceById } from '@/db/client';
 import { useActiveSession } from '@/hooks/useActiveSession';
 import { useAppColors } from '@/hooks/useAppColors';
 import { useTags } from '@/hooks/useTags';
-import { formatTagName } from '@/utils/formatDuration';
 
 export default function TrackScreen() {
-  const { ready, session, todayEntries, startManual, stop } = useActiveSession();
+  const { ready, sessions, todayEntries, tick, startManual, stop } = useActiveSession();
   const { tags } = useTags();
   const colors = useAppColors();
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
 
-  const isRunning = !!session;
-  const activeGeofence = session?.geofenceId ? getGeofenceById(session.geofenceId) : null;
+  void tick;
+
+  const geofenceNames = useMemo(() => {
+    const map = new Map<string, string>();
+    const ids = new Set<string>();
+
+    for (const session of sessions) {
+      if (session.geofenceId) ids.add(session.geofenceId);
+    }
+    for (const entry of todayEntries) {
+      if (entry.geofenceId) ids.add(entry.geofenceId);
+    }
+
+    for (const id of ids) {
+      const geofence = getGeofenceById(id);
+      if (geofence) map.set(id, geofence.name);
+    }
+
+    return map;
+  }, [sessions, todayEntries]);
 
   useEffect(() => {
     if (tags.length === 0) {
@@ -56,60 +73,37 @@ export default function TrackScreen() {
   return (
     <TabScreenContainer>
       <ScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-2">
-        <TimerDisplay startedAt={session?.startedAt ?? null} isRunning={isRunning} />
+        <ThemedSurface className="mb-6 p-4">
+          <Text className="mb-3 text-sm font-medium" style={{ color: colors.textMuted }}>
+            Start new session
+          </Text>
+          <TagDropdown tags={tags} selectedId={selectedTagId} onSelect={setSelectedTagId} />
+          <View className="mt-4">
+            <ActionButton label="Start" onPress={handleStart} size="lg" />
+          </View>
+        </ThemedSurface>
 
-        {session ? (
-          <ThemedSurface className="mb-4 p-4">
+        {sessions.length > 0 ? (
+          <View className="mb-4">
             <Text className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
-              Active session
+              Active ({sessions.length})
             </Text>
-            <View className="flex-row flex-wrap">
-              {session.tags.map((tag) => (
-                <Text
-                  key={tag.id}
-                  className="mr-2 text-base font-semibold"
-                  style={{ color: tag.color }}
-                >
-                  {formatTagName(tag.name)}
-                </Text>
-              ))}
-            </View>
-            {session.source === 'geofence' && activeGeofence ? (
-              <Text className="mt-2 text-sm" style={{ color: colors.textSecondary }}>
-                at {activeGeofence.name}
-              </Text>
-            ) : null}
-            <Text className="mt-2 text-xs uppercase tracking-wide" style={{ color: colors.textMuted }}>
-              {session.source === 'geofence' ? 'Location tracking' : session.source}
-            </Text>
-          </ThemedSurface>
+            <ActiveSessionsList sessions={sessions} geofenceNames={geofenceNames} onStop={stop} />
+          </View>
         ) : (
-          <ThemedSurface className="mb-4 p-4">
-            <Text className="mb-3 text-sm font-medium" style={{ color: colors.textMuted }}>
-              Activity
-            </Text>
-            <TagDropdown tags={tags} selectedId={selectedTagId} onSelect={setSelectedTagId} />
-          </ThemedSurface>
+          <Text className="mb-4 text-center text-sm" style={{ color: colors.textMuted }}>
+            No active sessions yet.
+          </Text>
         )}
 
-        <View className="mb-6 flex-row gap-3">
-          {!isRunning ? (
-            <ActionButton label="Start" onPress={handleStart} size="lg" className="flex-1" />
-          ) : (
-            <ActionButton
-              label="Stop"
-              onPress={stop}
-              variant="destructive"
-              size="lg"
-              className="flex-1"
-            />
-          )}
-        </View>
-
-        <Text className="mb-3 text-lg font-semibold" style={{ color: colors.textOnBg }}>
-          Today
+        <Text className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
+          Today ({todayEntries.length})
         </Text>
-        <EntryList entries={todayEntries} emptyMessage="No tracked time yet today." />
+        <EntryList
+          entries={todayEntries}
+          emptyMessage="No tracked time yet today."
+          geofenceNames={geofenceNames}
+        />
       </ScrollView>
     </TabScreenContainer>
   );

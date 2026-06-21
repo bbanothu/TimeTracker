@@ -488,26 +488,37 @@ export function deleteTag(id: string): void {
   enqueueSync('tag', id, 'delete', { id, user_id: userId });
 }
 
-export function getActiveSession(): ActiveSession | null {
+export function getActiveSessions(): ActiveSession[] {
   const userId = requireUserId();
-  const row = getDb().getFirstSync<{
+  const rows = getDb().getAllSync<{
     id: string;
     started_at: number;
     source: EntrySource;
     geofence_id: string | null;
-  }>('SELECT id, started_at, source, geofence_id FROM active_session WHERE user_id = ? LIMIT 1', [
-    userId,
-  ]);
+  }>(
+    'SELECT id, started_at, source, geofence_id FROM active_session WHERE user_id = ? ORDER BY started_at ASC',
+    [userId],
+  );
 
-  if (!row) return null;
-
-  return {
+  return rows.map((row) => ({
     id: row.id,
     startedAt: row.started_at,
     source: row.source,
     geofenceId: row.geofence_id,
     tags: loadTagsForSession(row.id),
-  };
+  }));
+}
+
+export function getActiveSession(): ActiveSession | null {
+  return getActiveSessions()[0] ?? null;
+}
+
+export function getActiveSessionById(sessionId: string): ActiveSession | null {
+  return getActiveSessions().find((session) => session.id === sessionId) ?? null;
+}
+
+export function getActiveSessionByGeofenceId(geofenceId: string): ActiveSession | null {
+  return getActiveSessions().find((session) => session.geofenceId === geofenceId) ?? null;
 }
 
 export function startSession(
@@ -517,8 +528,11 @@ export function startSession(
 ): ActiveSession {
   const userId = requireUserId();
   const database = getDb();
-  const existing = getActiveSession();
-  if (existing) stopSession(Date.now());
+
+  if (geofenceId) {
+    const existing = getActiveSessionByGeofenceId(geofenceId);
+    if (existing) return existing;
+  }
 
   const session: ActiveSession = {
     id: createId(),
@@ -544,8 +558,8 @@ export function startSession(
   return session;
 }
 
-export function stopSession(endedAt: number = Date.now()): TimeEntry | null {
-  const session = getActiveSession();
+export function stopSession(sessionId: string, endedAt: number = Date.now()): TimeEntry | null {
+  const session = getActiveSessionById(sessionId);
   if (!session) return null;
 
   const userId = requireUserId();

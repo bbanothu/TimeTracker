@@ -2,7 +2,8 @@ import { DEFAULT_TAGS } from '@/theme/colors';
 import { supabase } from '@/lib/supabase';
 import type { ActiveSession, EntrySource, Geofence, Tag, TimeEntry } from '@/types';
 
-const SESSION_KEY = 'timetracker-active-session';
+const SESSION_KEY = 'timetracker-active-sessions';
+const LEGACY_SESSION_KEY = 'timetracker-active-session';
 
 type TagRow = {
   id: string;
@@ -263,21 +264,33 @@ export async function deleteGeofence(userId: string, id: string): Promise<void> 
   if (error) throw error;
 }
 
-export function loadActiveSession(): ActiveSession | null {
+export function loadActiveSessions(): ActiveSession[] {
   try {
     const raw = sessionStorage.getItem(SESSION_KEY);
-    return raw ? (JSON.parse(raw) as ActiveSession) : null;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? (parsed as ActiveSession[]) : [];
+    }
+
+    const legacy = sessionStorage.getItem(LEGACY_SESSION_KEY);
+    if (!legacy) return [];
+
+    const session = JSON.parse(legacy) as ActiveSession;
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify([session]));
+    sessionStorage.removeItem(LEGACY_SESSION_KEY);
+    return [session];
   } catch {
-    return null;
+    return [];
   }
 }
 
-export function saveActiveSession(session: ActiveSession | null): void {
-  if (!session) {
+export function saveActiveSessions(sessions: ActiveSession[]): void {
+  if (sessions.length === 0) {
     sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(LEGACY_SESSION_KEY);
     return;
   }
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessions));
 }
 
 export function exportEntriesCsv(entries: TimeEntry[], geofenceNames: Map<string, string>): string {

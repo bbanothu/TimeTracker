@@ -1,5 +1,7 @@
 import {
   getActiveSession,
+  getActiveSessionByGeofenceId,
+  getActiveSessions,
   getTodayEntries,
   startSession,
   stopSession,
@@ -7,7 +9,9 @@ import {
 import type { ActiveSession, EntrySource, TimeEntry } from '@/types';
 
 export const timerService = {
+  getActiveSessions,
   getActiveSession,
+  getActiveSessionByGeofenceId,
   getTodayEntries,
 
   startManual(tagIds: string[]): ActiveSession {
@@ -21,8 +25,8 @@ export const timerService = {
     return startSession([tagId], 'geofence', geofenceId);
   },
 
-  stop(): TimeEntry | null {
-    return stopSession();
+  stop(sessionId: string): TimeEntry | null {
+    return stopSession(sessionId);
   },
 };
 

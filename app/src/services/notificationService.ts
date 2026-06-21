@@ -89,7 +89,10 @@ export async function dismissGeofenceNotification(geofenceId: string): Promise<v
 
 function handleStopTracking(geofenceId?: string): void {
   try {
-    timerService.stop();
+    const session = geofenceId ? timerService.getActiveSessionByGeofenceId(geofenceId) : null;
+    if (!session) return;
+
+    timerService.stop(session.id);
     notifyDataRefresh();
     const userId = getCurrentUserId();
     if (userId) {
