@@ -41,10 +41,10 @@ export function TrendChart({ buckets, height = 220 }: TrendChartProps) {
       {points.map(({ x, y, bucket }) => (
         <g key={bucket.label}>
           <circle cx={x} cy={y} r={4} fill={colors.chartPrimary} />
-          <text x={x} y={y - 10} textAnchor="middle" fontSize={10} fill={colors.textSecondary}>
+          <text x={x} y={y - 10} textAnchor="middle" fontSize={12} fill={colors.textSecondary}>
             {formatDurationLong(bucket.durationMs)}
           </text>
-          <text x={x} y={height - 8} textAnchor="middle" fontSize={10} fill={colors.textMuted}>
+          <text x={x} y={height - 8} textAnchor="middle" fontSize={12} fill={colors.textMuted}>
             {bucket.label}
           </text>
         </g>

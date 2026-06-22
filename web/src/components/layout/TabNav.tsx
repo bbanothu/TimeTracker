@@ -7,7 +7,7 @@ const tabs = [
   { to: '/tags', label: 'Tags', icon: '🏷' },
   { to: '/map', label: 'Map', icon: '📍' },
   { to: '/stats', label: 'Stats', icon: '📊' },
-  { to: '/history', label: 'History', icon: '📋' },
+  { to: '/goals', label: 'Goals', icon: '🎯' },
 ];
 
 export function TabNav() {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Text } from 'react-native';
 
+import { AppBackground } from '@/components/AppBackground';
 import { EntryList } from '@/components/EntryList';
 import { HistoryFilters } from '@/components/HistoryFilters';
 import { TabScrollView } from '@/components/TabScrollView';
@@ -63,9 +64,11 @@ export default function HistoryScreen() {
 
   if (!ready) {
     return (
-      <TabScreenContainer className="items-center justify-center">
-        <Text style={{ color: colors.textMuted }}>Loading...</Text>
-      </TabScreenContainer>
+      <AppBackground>
+        <TabScreenContainer className="items-center justify-center">
+          <Text style={{ color: colors.textMuted }}>Loading...</Text>
+        </TabScreenContainer>
+      </AppBackground>
     );
   }
 
@@ -74,21 +77,23 @@ export default function HistoryScreen() {
     : 'Nothing recorded yet.';
 
   return (
-    <TabScreenContainer>
-      <TabScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-2">
-        <HistoryFilters tags={tags} geofences={geofences} filters={filters} onChange={setFilters} />
+    <AppBackground>
+      <TabScreenContainer>
+        <TabScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-2">
+          <HistoryFilters tags={tags} geofences={geofences} filters={filters} onChange={setFilters} />
 
-        <Text className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
-          {filteredEntries.length} of {entries.length} records
-        </Text>
-        <EntryList
-          entries={filteredEntries}
-          emptyMessage={emptyMessage}
-          geofenceNames={geofenceNames}
-          showDate
-          onDelete={handleDelete}
-        />
-      </TabScrollView>
-    </TabScreenContainer>
+          <Text className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
+            {filteredEntries.length} of {entries.length} records
+          </Text>
+          <EntryList
+            entries={filteredEntries}
+            emptyMessage={emptyMessage}
+            geofenceNames={geofenceNames}
+            showDate
+            onDelete={handleDelete}
+          />
+        </TabScrollView>
+      </TabScreenContainer>
+    </AppBackground>
   );
 }

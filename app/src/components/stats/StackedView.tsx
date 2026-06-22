@@ -23,7 +23,7 @@ export function StackedView({ summary }: StackedViewProps) {
       return {
         ...item,
         topLabelComponent: () => (
-          <Text style={{ color: colors.chartText, fontSize: 10, textAlign: 'center' }}>
+          <Text style={{ color: colors.chartText, fontSize: 12, textAlign: 'center' }}>
             {formatDurationLong(totalMs)}
           </Text>
         ),
@@ -57,8 +57,8 @@ export function StackedView({ summary }: StackedViewProps) {
             overflowTop={24}
             yAxisExtraHeight={24}
             topLabelContainerStyle={{ marginBottom: 4 }}
-            yAxisTextStyle={{ color: colors.chartText, fontSize: 10 }}
-            xAxisLabelTextStyle={{ color: colors.chartText, fontSize: 10 }}
+            yAxisTextStyle={{ color: colors.chartText, fontSize: 12 }}
+            xAxisLabelTextStyle={{ color: colors.chartText, fontSize: 12 }}
           />
           <TagLegend items={summary.byTag} />
         </>

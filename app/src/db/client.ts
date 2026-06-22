@@ -14,6 +14,7 @@ import type {
   EntrySource,
   Geofence,
   Tag,
+  TagDailyGoal,
   TimeEntry,
 } from '@/types';
 import { wouldCreateCycle } from '@/utils/tagTree';
@@ -93,6 +94,25 @@ function migrateTagsToV4(database: SQLite.SQLiteDatabase): void {
   database.execSync(
     'ALTER TABLE tags ADD COLUMN include_in_analytics INTEGER NOT NULL DEFAULT 1',
   );
+}
+
+function migrateToV5(database: SQLite.SQLiteDatabase): void {
+  const table = database.getFirstSync<{ name: string }>(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'tag_daily_goals'",
+  );
+  if (table) return;
+
+  database.execSync(`
+    CREATE TABLE tag_daily_goals (
+      id TEXT PRIMARY KEY NOT NULL,
+      user_id TEXT NOT NULL,
+      tag_id TEXT NOT NULL,
+      target_minutes INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
+      UNIQUE (user_id, tag_id)
+    );
+  `);
 }
 
 function validateSiblingName(
@@ -272,6 +292,7 @@ export function initDatabase(userId: string): void {
   // Existing v2 databases have a tags table without parent_id; migrate before index creation.
   migrateTagsToV3(database);
   migrateTagsToV4(database);
+  migrateToV5(database);
   database.execSync(TAGS_V3_INDEX_SQL);
 
   const versionRow = database.getFirstSync<{ value: string }>(
@@ -302,6 +323,9 @@ export function initDatabase(userId: string): void {
       }
       if (storedVersion < 4) {
         migrateTagsToV4(database);
+      }
+      if (storedVersion < 5) {
+        migrateToV5(database);
       }
       database.runSync('UPDATE meta SET value = ? WHERE key = ?', [
         String(SCHEMA_VERSION),
@@ -374,6 +398,7 @@ export function upsertTagFromRemote(tag: {
       duplicate.id,
     ]);
     database.runSync('UPDATE geofences SET tag_id = ? WHERE tag_id = ?', [tag.id, duplicate.id]);
+    database.runSync('UPDATE tag_daily_goals SET tag_id = ? WHERE tag_id = ?', [tag.id, duplicate.id]);
     database.runSync('UPDATE tags SET parent_id = ? WHERE parent_id = ?', [tag.id, duplicate.id]);
     database.runSync('DELETE FROM tags WHERE id = ?', [duplicate.id]);
     database.execSync('PRAGMA foreign_keys = ON');
@@ -995,6 +1020,117 @@ export function deleteGeofence(id: string): void {
 
 export function getEnabledGeofences(): Geofence[] {
   return getAllGeofences().filter((g) => g.enabled);
+}
+
+function rowToGoal(row: {
+  id: string;
+  tag_id: string;
+  target_minutes: number;
+}): TagDailyGoal {
+  return {
+    id: row.id,
+    tagId: row.tag_id,
+    targetMinutes: row.target_minutes,
+  };
+}
+
+export function getGoals(): TagDailyGoal[] {
+  const userId = requireUserId();
+  return getDb()
+    .getAllSync<{ id: string; tag_id: string; target_minutes: number }>(
+      'SELECT id, tag_id, target_minutes FROM tag_daily_goals WHERE user_id = ? ORDER BY tag_id ASC',
+      [userId],
+    )
+    .map(rowToGoal);
+}
+
+export function getGoalByTagId(tagId: string): TagDailyGoal | null {
+  const userId = requireUserId();
+  const row = getDb().getFirstSync<{ id: string; tag_id: string; target_minutes: number }>(
+    'SELECT id, tag_id, target_minutes FROM tag_daily_goals WHERE user_id = ? AND tag_id = ?',
+    [userId, tagId],
+  );
+  return row ? rowToGoal(row) : null;
+}
+
+export function setGoal(tagId: string, targetMinutes: number): TagDailyGoal {
+  const userId = requireUserId();
+  if (!Number.isInteger(targetMinutes) || targetMinutes < 1 || targetMinutes > 1440) {
+    throw new Error('Target must be between 1 and 1440 minutes');
+  }
+
+  const tag = getAllTags().find((item) => item.id === tagId);
+  if (!tag) throw new Error('Tag not found');
+  if (tag.parentId !== null) throw new Error('Goals can only be set on top-level categories');
+
+  const ts = nowMs();
+  const existing = getGoalByTagId(tagId);
+  const id = existing?.id ?? createId();
+
+  getDb().runSync(
+    `INSERT INTO tag_daily_goals (id, user_id, tag_id, target_minutes, updated_at)
+     VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT(user_id, tag_id) DO UPDATE SET
+       target_minutes = excluded.target_minutes,
+       updated_at = excluded.updated_at`,
+    [id, userId, tagId, targetMinutes, ts],
+  );
+
+  enqueueSync('goal', id, 'upsert', {
+    id,
+    user_id: userId,
+    tag_id: tagId,
+    target_minutes: targetMinutes,
+    updated_at: new Date(ts).toISOString(),
+  });
+
+  const goal = getGoalByTagId(tagId);
+  if (!goal) throw new Error('Failed to save goal');
+  return goal;
+}
+
+export function removeGoal(tagId: string): void {
+  const userId = requireUserId();
+  const existing = getGoalByTagId(tagId);
+  if (!existing) return;
+
+  getDb().runSync('DELETE FROM tag_daily_goals WHERE user_id = ? AND tag_id = ?', [
+    userId,
+    tagId,
+  ]);
+  enqueueSync('goal', existing.id, 'delete', { id: existing.id, user_id: userId });
+}
+
+export function upsertGoalFromRemote(goal: {
+  id: string;
+  user_id: string;
+  tag_id: string;
+  target_minutes: number;
+  updated_at: string;
+}): void {
+  const updatedAt = new Date(goal.updated_at).getTime();
+  const existing = getDb().getFirstSync<{ updated_at: number }>(
+    'SELECT updated_at FROM tag_daily_goals WHERE user_id = ? AND tag_id = ?',
+    [goal.user_id, goal.tag_id],
+  );
+  if (existing && existing.updated_at >= updatedAt) return;
+
+  getDb().runSync(
+    `INSERT INTO tag_daily_goals (id, user_id, tag_id, target_minutes, updated_at)
+     VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT(user_id, tag_id) DO UPDATE SET
+       id = excluded.id,
+       target_minutes = excluded.target_minutes,
+       updated_at = excluded.updated_at`,
+    [goal.id, goal.user_id, goal.tag_id, goal.target_minutes, updatedAt],
+  );
+}
+
+export function deleteGoalLocally(id: string): void {
+  getDb().runSync('DELETE FROM tag_daily_goals WHERE id = ? AND user_id = ?', [
+    id,
+    requireUserId(),
+  ]);
 }
 
 export function hasPendingSync(): boolean {

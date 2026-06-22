@@ -69,8 +69,8 @@ export function OverviewView({ summary }: ChartViewProps) {
             yAxisThickness={0}
             noOfSections={4}
             maxValue={Math.max(...barData.map((item) => item.value), 60)}
-            yAxisTextStyle={{ color: colors.chartText, fontSize: 10 }}
-            xAxisLabelTextStyle={{ color: colors.chartText, fontSize: 10 }}
+            yAxisTextStyle={{ color: colors.chartText, fontSize: 12 }}
+            xAxisLabelTextStyle={{ color: colors.chartText, fontSize: 12 }}
           />
         )}
       </ThemedSurface>
@@ -89,7 +89,7 @@ export function BarsView({ summary }: ChartViewProps) {
         numberOfLines={2}
         style={{
           color: colors.chartText,
-          fontSize: 10,
+          fontSize: 12,
           textAlign: 'center',
           width: 64,
         }}
@@ -126,7 +126,7 @@ export function BarsView({ summary }: ChartViewProps) {
               overflowTop={8}
               yAxisExtraHeight={40}
               topLabelContainerStyle={{ width: 64, marginBottom: 6 }}
-              yAxisTextStyle={{ color: colors.chartText, fontSize: 10 }}
+              yAxisTextStyle={{ color: colors.chartText, fontSize: 12 }}
               xAxisLabelTextStyle={{ height: 0, opacity: 0 }}
             />
           </View>
@@ -152,8 +152,8 @@ export function BarsView({ summary }: ChartViewProps) {
             yAxisThickness={0}
             noOfSections={4}
             maxValue={Math.max(...lineData.map((item) => item.value), 60)}
-            yAxisTextStyle={{ color: colors.chartText, fontSize: 10 }}
-            xAxisLabelTextStyle={{ color: colors.chartText, fontSize: 10 }}
+            yAxisTextStyle={{ color: colors.chartText, fontSize: 12 }}
+            xAxisLabelTextStyle={{ color: colors.chartText, fontSize: 12 }}
           />
         )}
       </ThemedSurface>

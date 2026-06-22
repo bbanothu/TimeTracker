@@ -4,9 +4,7 @@ import type { ComponentProps } from 'react';
 
 import { AppBackground } from '@/components/AppBackground';
 import { ProfileButton } from '@/components/ProfileButton';
-import { TimerProvider } from '@/hooks/useActiveSession';
 import { useAppColors } from '@/hooks/useAppColors';
-import { TagsProvider } from '@/hooks/useTags';
 import { getAppHeaderOptions, getTabBarStyle } from '@/navigation/headerOptions';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
@@ -96,17 +94,17 @@ function TabsNavigator() {
         }}
       />
       <Tabs.Screen
-        name="history"
+        name="goals"
         options={{
-          title: 'History',
-          tabBarLabel: 'History',
+          title: 'Goals',
+          tabBarLabel: 'Goals',
           tabBarIcon: ({ color, size, focused }) => (
             <TabIcon
               focused={focused}
               color={color}
               size={size}
-              active="list"
-              inactive="list-outline"
+              active="flag"
+              inactive="flag-outline"
             />
           ),
         }}
@@ -118,11 +116,7 @@ function TabsNavigator() {
 export default function TabLayout() {
   return (
     <AppBackground>
-      <TimerProvider>
-        <TagsProvider>
-          <TabsNavigator />
-        </TagsProvider>
-      </TimerProvider>
+      <TabsNavigator />
     </AppBackground>
   );
 }

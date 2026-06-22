@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 import { EntryList } from '@/components/ui/EntryList';
 import { HistoryFilters } from '@/components/ui/HistoryFilters';
@@ -48,7 +48,7 @@ export function HistoryPage() {
   }, [user]);
 
   useEffect(() => {
-    if (!ready || location.pathname !== '/history') return;
+    if (!ready || location.pathname !== '/profile/history') return;
     loadEntries().catch(console.error);
   }, [ready, location.pathname, entriesRevision, loadEntries]);
 
@@ -92,9 +92,15 @@ export function HistoryPage() {
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold" style={{ color: colors.headerText }}>
-        History
-      </h1>
+      <div className="mb-4 flex items-center justify-between">
+        <Link to="/profile" className="text-sm font-semibold" style={{ color: colors.textMuted }}>
+          ← Back
+        </Link>
+        <h1 className="text-2xl font-bold" style={{ color: colors.headerText }}>
+          History
+        </h1>
+        <span className="w-10" />
+      </div>
 
       {error ? <p className="mb-3 text-sm text-rose-500">{error}</p> : null}
 

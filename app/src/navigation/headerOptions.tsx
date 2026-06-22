@@ -24,7 +24,7 @@ export function getAppHeaderOptions(colors: AppColors) {
     headerTintColor: colors.headerText,
     headerTitleStyle: {
       fontWeight: '700' as const,
-      fontSize: 20,
+      fontSize: 22,
       color: colors.headerText,
     },
     headerShadowVisible: false,

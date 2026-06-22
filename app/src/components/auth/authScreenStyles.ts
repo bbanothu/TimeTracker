@@ -15,7 +15,7 @@ export const authScreenStyles = StyleSheet.create({
   },
   kicker: {
     color: 'rgba(255,255,255,0.75)',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
@@ -23,15 +23,15 @@ export const authScreenStyles = StyleSheet.create({
   },
   title: {
     color: '#FFFFFF',
-    fontSize: 40,
+    fontSize: 44,
     fontWeight: '800',
     letterSpacing: -0.5,
     marginBottom: 8,
   },
   subtitle: {
     color: 'rgba(255,255,255,0.8)',
-    fontSize: 16,
-    lineHeight: 22,
+    fontSize: 18,
+    lineHeight: 24,
   },
   card: {
     overflow: 'hidden',
@@ -45,13 +45,13 @@ export const authScreenStyles = StyleSheet.create({
   },
   cardTitle: {
     color: '#FFFFFF',
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '700',
     marginBottom: 6,
   },
   cardHint: {
     color: 'rgba(255,255,255,0.65)',
-    fontSize: 14,
+    fontSize: 16,
     marginBottom: 18,
   },
   buttonWrap: {
@@ -67,7 +67,7 @@ export const authScreenStyles = StyleSheet.create({
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
   },
   linkWrap: {
@@ -76,7 +76,7 @@ export const authScreenStyles = StyleSheet.create({
   },
   linkText: {
     color: 'rgba(255,255,255,0.9)',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
   },
 });

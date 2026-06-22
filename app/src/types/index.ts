@@ -8,6 +8,12 @@ export interface Tag {
   includeInAnalytics: boolean;
 }
 
+export interface TagDailyGoal {
+  id: string;
+  tagId: string;
+  targetMinutes: number;
+}
+
 export interface TimeEntry {
   id: string;
   startedAt: number;

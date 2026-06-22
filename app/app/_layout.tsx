@@ -6,8 +6,10 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 
+import { TimerProvider } from '@/hooks/useActiveSession';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
 import { useAppColors } from '@/hooks/useAppColors';
+import { TagsProvider } from '@/hooks/useTags';
 import { ThemeProvider, useTheme } from '@/hooks/useTheme';
 import { getAppHeaderOptions } from '@/navigation/headerOptions';
 import {
@@ -59,20 +61,34 @@ function RootNavigator() {
   return (
     <>
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(auth)" options={{ title: '' }} />
-        <Stack.Screen name="(tabs)" options={{ title: '' }} />
-        <Stack.Screen
-          name="profile"
-          options={{
-            headerShown: true,
-            title: 'Account',
-            headerBackTitle: '',
-            headerBackButtonDisplayMode: 'minimal',
-            ...getAppHeaderOptions(colors),
-          }}
-        />
-      </Stack>
+      <TimerProvider>
+        <TagsProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(auth)" options={{ title: '' }} />
+            <Stack.Screen name="(tabs)" options={{ title: '' }} />
+            <Stack.Screen
+              name="profile"
+              options={{
+                headerShown: true,
+                title: 'Account',
+                headerBackTitle: '',
+                headerBackButtonDisplayMode: 'minimal',
+                ...getAppHeaderOptions(colors),
+              }}
+            />
+            <Stack.Screen
+              name="history"
+              options={{
+                headerShown: true,
+                title: 'History',
+                headerBackTitle: '',
+                headerBackButtonDisplayMode: 'minimal',
+                ...getAppHeaderOptions(colors),
+              }}
+            />
+          </Stack>
+        </TagsProvider>
+      </TimerProvider>
     </>
   );
 }

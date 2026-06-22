@@ -15,7 +15,7 @@ const EMPTY_SUMMARY: StatsSummary = {
   bucketTagBreakdown: [],
 };
 
-export function useStats(initialPeriod: PeriodType = 'week') {
+export function useStats(initialPeriod: PeriodType = 'day') {
   const { ready, entriesRevision } = useActiveSession();
   const [period, setPeriod] = useState<PeriodType>(initialPeriod);
   const [anchorDate, setAnchorDate] = useState(new Date());

@@ -9,7 +9,7 @@ import { AppDataProviders } from '@/routes/AppDataProviders';
 export function ProtectedLayout() {
   const { user, loading } = useAuth();
   const location = useLocation();
-  const hideTabNav = location.pathname === '/profile';
+  const hideTabNav = location.pathname.startsWith('/profile');
 
   if (loading) {
     return (

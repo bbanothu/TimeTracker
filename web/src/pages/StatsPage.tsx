@@ -42,7 +42,7 @@ export function StatsPage() {
   const colors = useAppColors();
   const { user } = useAuth();
   const { visualization, setVisualization, ready: vizReady } = useStatsVisualization();
-  const [period, setPeriod] = useState<PeriodType>('week');
+  const [period, setPeriod] = useState<PeriodType>('day');
   const [anchorDate, setAnchorDate] = useState(new Date());
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [geofences, setGeofences] = useState<Geofence[]>([]);

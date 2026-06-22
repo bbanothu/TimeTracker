@@ -8,7 +8,7 @@ import { useStatsVisualization } from '@/hooks/useStatsVisualization';
 import { Text } from 'react-native';
 
 export default function StatsScreen() {
-  const { ready, period, setPeriod, anchorDate, summary, shift } = useStats('week');
+  const { ready, period, setPeriod, anchorDate, summary, shift } = useStats('day');
   const { visualization, setVisualization, ready: vizReady } = useStatsVisualization();
 
   if (!ready || !vizReady) {

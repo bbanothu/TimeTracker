@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 
+import { useGoals } from '@/contexts/GoalsContext';
 import { useProfilePhoto } from '@/contexts/ProfilePhotoContext';
 import { useTags } from '@/contexts/TagsContext';
 import { useTimer } from '@/contexts/TimerContext';
@@ -20,6 +21,7 @@ interface RefreshContextValue {
 const RefreshContext = createContext<RefreshContextValue | null>(null);
 
 export function RefreshProvider({ children }: { children: ReactNode }) {
+  const { refresh: refreshGoals } = useGoals();
   const { refresh: refreshTags } = useTags();
   const { refresh: refreshTimer } = useTimer();
   const { refresh: refreshPhoto } = useProfilePhoto();
@@ -28,12 +30,12 @@ export function RefreshProvider({ children }: { children: ReactNode }) {
   const refreshAll = useCallback(async () => {
     setRefreshing(true);
     try {
-      await Promise.all([refreshTags(), refreshTimer(), refreshPhoto()]);
+      await Promise.all([refreshTags(), refreshGoals(), refreshTimer(), refreshPhoto()]);
       notifyDataRefresh();
     } finally {
       setRefreshing(false);
     }
-  }, [refreshTags, refreshTimer, refreshPhoto]);
+  }, [refreshTags, refreshGoals, refreshTimer, refreshPhoto]);
 
   const value = useMemo(
     () => ({ refreshing, refreshAll }),

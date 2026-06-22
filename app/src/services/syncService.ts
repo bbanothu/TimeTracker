@@ -8,6 +8,7 @@ import {
   setLastPulledAt,
   upsertEntryFromRemote,
   upsertGeofenceFromRemote,
+  upsertGoalFromRemote,
   upsertTagFromRemote,
 } from '@/db/client';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
@@ -126,6 +127,14 @@ async function pushInternal(userId: string): Promise<boolean> {
           });
           if (error) throw error;
         }
+      } else if (item.entityType === 'goal') {
+        if (item.operation === 'delete') {
+          const { error } = await supabase.from('tag_daily_goals').delete().eq('id', item.entityId);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('tag_daily_goals').upsert(item.payload);
+          if (error) throw error;
+        }
       }
 
       removeSyncQueueItem(item.id);
@@ -147,7 +156,7 @@ async function pullInternal(userId: string, options: SyncOptions = {}): Promise<
     ? new Date(0).toISOString()
     : new Date(Math.max(0, lastPulledAt - 5000)).toISOString();
 
-  const [tagsResult, entriesResult, geofencesResult] = await Promise.all([
+  const [tagsResult, entriesResult, geofencesResult, goalsResult] = await Promise.all([
     supabase
       .from('tags')
       .select('*')
@@ -166,11 +175,20 @@ async function pullInternal(userId: string, options: SyncOptions = {}): Promise<
       .eq('user_id', userId)
       .gt('updated_at', sinceIso)
       .order('updated_at', { ascending: true }),
+    supabase
+      .from('tag_daily_goals')
+      .select('*')
+      .eq('user_id', userId)
+      .gt('updated_at', sinceIso)
+      .order('updated_at', { ascending: true }),
   ]);
 
   if (tagsResult.error) throw tagsResult.error;
   if (entriesResult.error) throw entriesResult.error;
   if (geofencesResult.error) throw geofencesResult.error;
+  if (goalsResult.error) {
+    console.warn('Goals sync unavailable:', goalsResult.error.message);
+  }
 
   let maxRemoteUpdatedAt = lastPulledAt;
   const bumpCursor = (updatedAt: string) => {
@@ -220,10 +238,18 @@ async function pullInternal(userId: string, options: SyncOptions = {}): Promise<
     });
   }
 
+  if (!goalsResult.error) {
+    for (const goal of goalsResult.data ?? []) {
+      bumpCursor(goal.updated_at);
+      upsertGoalFromRemote(goal);
+    }
+  }
+
   const pulledCount =
     (tagsResult.data?.length ?? 0) +
     (entriesResult.data?.length ?? 0) +
-    (geofencesResult.data?.length ?? 0);
+    (geofencesResult.data?.length ?? 0) +
+    (goalsResult.error ? 0 : (goalsResult.data?.length ?? 0));
 
   if (pulledCount > 0 || options.fullPull) {
     setLastPulledAt(maxRemoteUpdatedAt);

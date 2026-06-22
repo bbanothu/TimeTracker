@@ -143,6 +143,21 @@ export function ProfilePage() {
 
       <ThemedSurface className="mb-4 p-4">
         <h2 className="mb-3 font-semibold" style={{ color: colors.text }}>
+          Activity
+        </h2>
+        <p className="mb-4 text-sm" style={{ color: colors.textMuted }}>
+          Browse and delete past time entries.
+        </p>
+        <ActionButton
+          label="View history"
+          variant="secondary"
+          className="w-full"
+          onClick={() => navigate('/profile/history')}
+        />
+      </ThemedSurface>
+
+      <ThemedSurface className="mb-4 p-4">
+        <h2 className="mb-3 font-semibold" style={{ color: colors.text }}>
           Password
         </h2>
         <form onSubmit={handlePassword} className="space-y-3">

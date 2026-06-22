@@ -262,6 +262,16 @@ export default function ProfileScreen() {
 
           <ThemedSurface className="mb-4 p-4">
             <Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>
+              Activity
+            </Text>
+            <Text className="mb-4 text-sm" style={{ color: colors.textMuted }}>
+              Browse and delete past time entries.
+            </Text>
+            <ActionButton label="View history" onPress={() => router.push('/history')} variant="secondary" />
+          </ThemedSurface>
+
+          <ThemedSurface className="mb-4 p-4">
+            <Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>
               Password
             </Text>
             <TextInput

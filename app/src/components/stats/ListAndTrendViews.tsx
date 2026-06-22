@@ -117,8 +117,8 @@ export function ListView({ summary }: ChartViewProps) {
             yAxisThickness={0}
             noOfSections={4}
             maxValue={Math.max(...lineData.map((item) => item.value), 60)}
-            yAxisTextStyle={{ color: colors.chartText, fontSize: 10 }}
-            xAxisLabelTextStyle={{ color: colors.chartText, fontSize: 10 }}
+            yAxisTextStyle={{ color: colors.chartText, fontSize: 12 }}
+            xAxisLabelTextStyle={{ color: colors.chartText, fontSize: 12 }}
           />
         )}
       </ThemedSurface>
@@ -161,8 +161,8 @@ export function TrendView({ summary }: ChartViewProps) {
             textColor={colors.chartText}
             textFontSize={10}
             textShiftY={-8}
-            yAxisTextStyle={{ color: colors.chartText, fontSize: 10 }}
-            xAxisLabelTextStyle={{ color: colors.chartText, fontSize: 10 }}
+            yAxisTextStyle={{ color: colors.chartText, fontSize: 12 }}
+            xAxisLabelTextStyle={{ color: colors.chartText, fontSize: 12 }}
           />
           <TagLegend items={summary.byTag} />
         </>

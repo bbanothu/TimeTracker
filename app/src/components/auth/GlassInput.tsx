@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
   input: {
     paddingHorizontal: 16,
     paddingVertical: 14,
-    fontSize: 16,
+    fontSize: 18,
     color: '#FFFFFF',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
@@ -52,7 +52,7 @@ const androidStyles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.18)',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    fontSize: 16,
+    fontSize: 18,
     color: '#FFFFFF',
     backgroundColor: '#292524',
   },

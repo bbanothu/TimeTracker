@@ -1,6 +1,6 @@
 import { DEFAULT_TAGS } from '@/theme/colors';
 import { supabase } from '@/lib/supabase';
-import type { ActiveSession, EntrySource, Geofence, Tag, TimeEntry } from '@/types';
+import type { ActiveSession, EntrySource, Geofence, Tag, TagDailyGoal, TimeEntry } from '@/types';
 
 const SESSION_KEY = 'timetracker-active-sessions';
 const LEGACY_SESSION_KEY = 'timetracker-active-session';
@@ -175,6 +175,79 @@ export async function updateTag(
 
 export async function deleteTag(userId: string, id: string): Promise<void> {
   const { error } = await supabase.from('tags').delete().eq('id', id).eq('user_id', userId);
+  if (error) throw error;
+}
+
+type GoalRow = {
+  id: string;
+  tag_id: string;
+  target_minutes: number;
+};
+
+function mapGoal(row: GoalRow): TagDailyGoal {
+  return {
+    id: row.id,
+    tagId: row.tag_id,
+    targetMinutes: row.target_minutes,
+  };
+}
+
+export async function fetchGoals(userId: string): Promise<TagDailyGoal[]> {
+  const { data, error } = await supabase
+    .from('tag_daily_goals')
+    .select('id, tag_id, target_minutes')
+    .eq('user_id', userId)
+    .order('tag_id');
+
+  if (error) throw error;
+  return (data ?? []).map(mapGoal);
+}
+
+export async function upsertGoal(
+  userId: string,
+  tagId: string,
+  targetMinutes: number,
+): Promise<TagDailyGoal> {
+  if (!Number.isInteger(targetMinutes) || targetMinutes < 1 || targetMinutes > 1440) {
+    throw new Error('Target must be between 1 and 1440 minutes');
+  }
+
+  const { data: tag, error: tagError } = await supabase
+    .from('tags')
+    .select('id, parent_id')
+    .eq('id', tagId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (tagError) throw tagError;
+  if (!tag) throw new Error('Tag not found');
+  if (tag.parent_id !== null) throw new Error('Goals can only be set on top-level categories');
+
+  const { data, error } = await supabase
+    .from('tag_daily_goals')
+    .upsert(
+      {
+        user_id: userId,
+        tag_id: tagId,
+        target_minutes: targetMinutes,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,tag_id' },
+    )
+    .select('id, tag_id, target_minutes')
+    .single();
+
+  if (error) throw error;
+  return mapGoal(data);
+}
+
+export async function deleteGoal(userId: string, tagId: string): Promise<void> {
+  const { error } = await supabase
+    .from('tag_daily_goals')
+    .delete()
+    .eq('user_id', userId)
+    .eq('tag_id', tagId);
+
   if (error) throw error;
 }
 

@@ -1,9 +1,12 @@
 /** @type {import('tailwindcss').Config} */
+import fontSize from '../tailwind.fontSize.js';
+
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   darkMode: 'class',
   theme: {
     extend: {
+      fontSize,
       colors: {
         primary: {
           DEFAULT: '#047857',
