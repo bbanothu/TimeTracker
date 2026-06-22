@@ -1,0 +1,50 @@
+{
+  "name": "timetracker-electron",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TimeTracker desktop app (Electron shell around the web client)",
+  "main": "main.js",
+  "scripts": {
+    "dev": "concurrently -k \"npm run dev --prefix ../web\" \"wait-on http://localhost:5173 && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .\"",
+    "build:web": "cross-env ELECTRON=1 VITE_ELECTRON=true npm run build --prefix ../web",
+    "start": "npm run build:web && cross-env NODE_ENV=production electron .",
+    "pack": "npm run build:web && electron-builder --dir",
+    "dist": "npm run build:web && electron-builder"
+  },
+  "build": {
+    "appId": "com.timetracker.desktop",
+    "productName": "TimeTracker",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      {
+        "from": "../web/dist",
+        "to": "renderer"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": ["dmg", "zip"]
+    },
+    "win": {
+      "target": ["nsis"]
+    },
+    "linux": {
+      "target": ["AppImage"]
+    },
+    "dmg": {
+      "title": "TimeTracker"
+    }
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0",
+    "cross-env": "^7.0.3",
+    "electron": "^34.5.8",
+    "electron-builder": "^25.1.8",
+    "wait-on": "^8.0.3"
+  }
+}

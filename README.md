@@ -6,6 +6,7 @@ Track how you spend your time with tags, stats, and optional location-based auto
 |--------|----------|-------|
 | [`app/`](app/) | iOS & Android | Expo, React Native, Expo Router, SQLite |
 | [`web/`](web/) | Browser | Vite, React, Tailwind CSS |
+| [`electron/`](electron/) | macOS, Windows, Linux | Electron (wraps the web client) |
 
 ## Features
 
@@ -110,6 +111,68 @@ Open the URL shown in the terminal (typically `http://localhost:5173`).
 | `npm run dev` | Start the Vite dev server |
 | `npm run build` | Production build to `web/dist/` |
 | `npm run preview` | Preview the production build |
+
+## Desktop app (`electron/`)
+
+A native desktop window around the same web client and Supabase backend. No separate codebase — Electron loads the Vite app from `web/`.
+
+### Environment
+
+Use the same Supabase credentials as the web app:
+
+```bash
+cd web
+cp .env.example .env
+# add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+```
+
+### Install and run (development)
+
+```bash
+cd electron
+npm install
+npm run dev
+```
+
+This starts the Vite dev server and opens a desktop window. Hot reload works like the browser app.
+
+### Production run (local build)
+
+```bash
+cd electron
+npm run start
+```
+
+Builds the web app for Electron, then opens it in a desktop window.
+
+### Package installers
+
+**Before building:** ensure `web/.env` has your Supabase URL and anon key. Those values are baked into the app at build time.
+
+**Use your own icon:** replace `electron/build/icon.png` with a 1024×1024 PNG (or run `./scripts/set-icon.sh /path/to/icon.png` from `electron/`).
+
+```bash
+cd electron
+npm run dist
+```
+
+On macOS this produces:
+
+- `release/TimeTracker-1.0.0.dmg` — drag **TimeTracker** into **Applications**
+- `release/mac-arm64/TimeTracker.app` — the app bundle (open directly or copy to Applications)
+
+After installing, launch **TimeTracker** from Applications or Spotlight like any other app.
+
+**First launch on macOS:** if macOS blocks the app (“unidentified developer”), right-click the app → **Open** → **Open** once. To avoid that long-term you’d need an Apple Developer certificate and notarization.
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Dev: Vite + Electron window with hot reload |
+| `npm run start` | Build web + run in Electron (no installer) |
+| `npm run pack` | Build web + unpackaged `.app` in `release/` (quick test) |
+| `npm run dist` | Build web + `.dmg` / `.zip` installer |
+
+Geofence auto-tracking is not available on desktop (same as web); you can still view the map and manage places.
 
 ## Auth
 

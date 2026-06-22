@@ -33,6 +33,19 @@ type GeofenceRow = {
   tags: TagRow | null;
 };
 
+const TAG_COLUMNS = 'id, name, color, parent_id, include_in_analytics';
+const TAG_COLUMNS_LEGACY = 'id, name, color, parent_id';
+const NESTED_TAG_COLUMNS = 'id, name, color, parent_id, include_in_analytics';
+const NESTED_TAG_COLUMNS_LEGACY = 'id, name, color, parent_id';
+
+function isMissingAnalyticsColumn(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  return (
+    error.code === '42703' ||
+    (typeof error.message === 'string' && error.message.includes('include_in_analytics'))
+  );
+}
+
 function mapTag(row: TagRow): Tag {
   return {
     id: row.id,
@@ -74,9 +87,19 @@ function mapGeofence(row: GeofenceRow): Geofence {
 export async function fetchTags(userId: string): Promise<Tag[]> {
   const { data, error } = await supabase
     .from('tags')
-    .select('id, name, color, parent_id, include_in_analytics')
+    .select(TAG_COLUMNS)
     .eq('user_id', userId)
     .order('name');
+
+  if (isMissingAnalyticsColumn(error)) {
+    const fallback = await supabase
+      .from('tags')
+      .select(TAG_COLUMNS_LEGACY)
+      .eq('user_id', userId)
+      .order('name');
+    if (fallback.error) throw fallback.error;
+    return (fallback.data ?? []).map(mapTag);
+  }
 
   if (error) throw error;
   return (data ?? []).map(mapTag);
@@ -96,7 +119,17 @@ export async function seedDefaultTags(userId: string): Promise<void> {
     updated_at: now,
   }));
 
-  const { error } = await supabase.from('tags').insert(rows);
+  let { error } = await supabase.from('tags').insert(rows);
+  if (isMissingAnalyticsColumn(error)) {
+    const legacyRows = DEFAULT_TAGS.map((tag) => ({
+      user_id: userId,
+      name: tag.name,
+      color: tag.color,
+      parent_id: null,
+      updated_at: now,
+    }));
+    ({ error } = await supabase.from('tags').insert(legacyRows));
+  }
   if (error) throw error;
 }
 
@@ -109,7 +142,7 @@ export async function createTag(
   const normalized = name.replace(/^#/, '').trim().toLowerCase();
   if (!normalized) throw new Error('Tag name is required');
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('tags')
     .insert({
       user_id: userId,
@@ -119,10 +152,25 @@ export async function createTag(
       include_in_analytics: true,
       updated_at: new Date().toISOString(),
     })
-    .select('id, name, color, parent_id, include_in_analytics')
+    .select(TAG_COLUMNS)
     .single();
 
+  if (isMissingAnalyticsColumn(error)) {
+    ({ data, error } = await supabase
+      .from('tags')
+      .insert({
+        user_id: userId,
+        name: normalized,
+        color,
+        parent_id: parentId,
+        updated_at: new Date().toISOString(),
+      })
+      .select(TAG_COLUMNS_LEGACY)
+      .single());
+  }
+
   if (error) throw error;
+  if (!data) throw new Error('Tag could not be created');
   return mapTag(data);
 }
 
@@ -139,10 +187,23 @@ export async function setTagIncludeInAnalytics(
     })
     .eq('id', id)
     .eq('user_id', userId)
-    .select('id, name, color, parent_id, include_in_analytics')
+    .select(TAG_COLUMNS)
     .single();
 
+  if (isMissingAnalyticsColumn(error)) {
+    const fallback = await supabase
+      .from('tags')
+      .select(TAG_COLUMNS_LEGACY)
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single();
+    if (fallback.error) throw fallback.error;
+    if (!fallback.data) throw new Error('Tag not found');
+    return mapTag(fallback.data);
+  }
+
   if (error) throw error;
+  if (!data) throw new Error('Tag not found');
   return mapTag(data);
 }
 
@@ -156,7 +217,7 @@ export async function updateTag(
   const normalized = name.replace(/^#/, '').trim().toLowerCase();
   if (!normalized) throw new Error('Tag name is required');
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('tags')
     .update({
       name: normalized,
@@ -166,10 +227,26 @@ export async function updateTag(
     })
     .eq('id', id)
     .eq('user_id', userId)
-    .select('id, name, color, parent_id, include_in_analytics')
+    .select(TAG_COLUMNS)
     .single();
 
+  if (isMissingAnalyticsColumn(error)) {
+    ({ data, error } = await supabase
+      .from('tags')
+      .update({
+        name: normalized,
+        color,
+        parent_id: parentId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select(TAG_COLUMNS_LEGACY)
+      .single());
+  }
+
   if (error) throw error;
+  if (!data) throw new Error('Tag could not be updated');
   return mapTag(data);
 }
 
@@ -252,34 +329,52 @@ export async function deleteGoal(userId: string, tagId: string): Promise<void> {
   if (error) throw error;
 }
 
-export async function fetchEntries(userId: string, startMs: number, endMs: number): Promise<TimeEntry[]> {
-  const { data, error } = await supabase
+async function fetchEntriesWithSelect(
+  userId: string,
+  nestedTagSelect: string,
+  filters?: { startMs: number; endMs: number },
+): Promise<TimeEntry[]> {
+  let query = supabase
     .from('time_entries')
     .select(
       `id, started_at, ended_at, source, geofence_id,
-       time_entry_tags(tag_id, tags(id, name, color, parent_id, include_in_analytics))`,
+       time_entry_tags(tag_id, tags(${nestedTagSelect}))`,
     )
-    .eq('user_id', userId)
-    .gt('ended_at', startMs)
-    .lt('started_at', endMs)
-    .order('started_at', { ascending: false });
+    .eq('user_id', userId);
 
-  if (error) throw error;
-  return (data ?? []).map((row) => mapEntry(row as unknown as EntryRow));
+  if (filters) {
+    query = query.gt('ended_at', filters.startMs).lt('started_at', filters.endMs);
+  }
+
+  const { data, error } = await query.order('started_at', { ascending: false });
+  if (!isMissingAnalyticsColumn(error)) {
+    if (error) throw error;
+    return (data ?? []).map((row) => mapEntry(row as unknown as EntryRow));
+  }
+
+  let legacyQuery = supabase
+    .from('time_entries')
+    .select(
+      `id, started_at, ended_at, source, geofence_id,
+       time_entry_tags(tag_id, tags(${NESTED_TAG_COLUMNS_LEGACY}))`,
+    )
+    .eq('user_id', userId);
+
+  if (filters) {
+    legacyQuery = legacyQuery.gt('ended_at', filters.startMs).lt('started_at', filters.endMs);
+  }
+
+  const fallback = await legacyQuery.order('started_at', { ascending: false });
+  if (fallback.error) throw fallback.error;
+  return (fallback.data ?? []).map((row) => mapEntry(row as unknown as EntryRow));
+}
+
+export async function fetchEntries(userId: string, startMs: number, endMs: number): Promise<TimeEntry[]> {
+  return fetchEntriesWithSelect(userId, NESTED_TAG_COLUMNS, { startMs, endMs });
 }
 
 export async function fetchAllEntries(userId: string): Promise<TimeEntry[]> {
-  const { data, error } = await supabase
-    .from('time_entries')
-    .select(
-      `id, started_at, ended_at, source, geofence_id,
-       time_entry_tags(tag_id, tags(id, name, color, parent_id, include_in_analytics))`,
-    )
-    .eq('user_id', userId)
-    .order('started_at', { ascending: false });
-
-  if (error) throw error;
-  return (data ?? []).map((row) => mapEntry(row as unknown as EntryRow));
+  return fetchEntriesWithSelect(userId, NESTED_TAG_COLUMNS);
 }
 
 export async function createTimeEntry(
@@ -346,10 +441,22 @@ export async function fetchGeofences(userId: string): Promise<Geofence[]> {
   const { data, error } = await supabase
     .from('geofences')
     .select(
-      'id, tag_id, name, latitude, longitude, radius_meters, enabled, tags(id, name, color, parent_id, include_in_analytics)',
+      `id, tag_id, name, latitude, longitude, radius_meters, enabled, tags(${NESTED_TAG_COLUMNS})`,
     )
     .eq('user_id', userId)
     .order('name');
+
+  if (isMissingAnalyticsColumn(error)) {
+    const fallback = await supabase
+      .from('geofences')
+      .select(
+        `id, tag_id, name, latitude, longitude, radius_meters, enabled, tags(${NESTED_TAG_COLUMNS_LEGACY})`,
+      )
+      .eq('user_id', userId)
+      .order('name');
+    if (fallback.error) throw fallback.error;
+    return (fallback.data ?? []).map((row) => mapGeofence(row as unknown as GeofenceRow));
+  }
 
   if (error) throw error;
   return (data ?? []).map((row) => mapGeofence(row as unknown as GeofenceRow));

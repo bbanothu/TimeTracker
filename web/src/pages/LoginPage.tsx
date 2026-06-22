@@ -1,4 +1,4 @@
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { FormEvent, useState } from 'react';
 
 import { AuthBackground } from '@/components/layout/AuthBackground';
@@ -8,6 +8,7 @@ import { isSupabaseConfigured } from '@/lib/supabase';
 
 export function LoginPage() {
   const colors = useAppColors();
+  const navigate = useNavigate();
   const { signIn, user } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,6 +28,7 @@ export function LoginPage() {
       setSubmitting(true);
       setError(null);
       await signIn(email.trim(), password);
+      navigate('/', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
