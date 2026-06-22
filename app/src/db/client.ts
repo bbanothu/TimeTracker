@@ -15,6 +15,7 @@ import type {
   Geofence,
   Tag,
   TagDailyGoal,
+  DailyGoalScore,
   TimeEntry,
 } from '@/types';
 import { wouldCreateCycle } from '@/utils/tagTree';
@@ -111,6 +112,24 @@ function migrateToV5(database: SQLite.SQLiteDatabase): void {
       updated_at INTEGER NOT NULL,
       FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
       UNIQUE (user_id, tag_id)
+    );
+  `);
+}
+
+function migrateToV6(database: SQLite.SQLiteDatabase): void {
+  const table = database.getFirstSync<{ name: string }>(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'daily_goal_scores'",
+  );
+  if (table) return;
+
+  database.execSync(`
+    CREATE TABLE daily_goal_scores (
+      id TEXT PRIMARY KEY NOT NULL,
+      user_id TEXT NOT NULL,
+      date_key TEXT NOT NULL,
+      score_percent INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      UNIQUE (user_id, date_key)
     );
   `);
 }
@@ -293,6 +312,7 @@ export function initDatabase(userId: string): void {
   migrateTagsToV3(database);
   migrateTagsToV4(database);
   migrateToV5(database);
+  migrateToV6(database);
   database.execSync(TAGS_V3_INDEX_SQL);
 
   const versionRow = database.getFirstSync<{ value: string }>(
@@ -326,6 +346,9 @@ export function initDatabase(userId: string): void {
       }
       if (storedVersion < 5) {
         migrateToV5(database);
+      }
+      if (storedVersion < 6) {
+        migrateToV6(database);
       }
       database.runSync('UPDATE meta SET value = ? WHERE key = ?', [
         String(SCHEMA_VERSION),
@@ -1098,7 +1121,11 @@ export function removeGoal(tagId: string): void {
     userId,
     tagId,
   ]);
-  enqueueSync('goal', existing.id, 'delete', { id: existing.id, user_id: userId });
+  enqueueSync('goal', existing.id, 'delete', {
+    id: existing.id,
+    user_id: userId,
+    tag_id: tagId,
+  });
 }
 
 export function upsertGoalFromRemote(goal: {
@@ -1131,6 +1158,97 @@ export function deleteGoalLocally(id: string): void {
     id,
     requireUserId(),
   ]);
+}
+
+function rowToDailyGoalScore(row: {
+  id: string;
+  date_key: string;
+  score_percent: number;
+}): DailyGoalScore {
+  return {
+    id: row.id,
+    dateKey: row.date_key,
+    scorePercent: row.score_percent,
+  };
+}
+
+export function getDailyGoalScores(): DailyGoalScore[] {
+  const userId = requireUserId();
+  return getDb()
+    .getAllSync<{ id: string; date_key: string; score_percent: number }>(
+      'SELECT id, date_key, score_percent FROM daily_goal_scores WHERE user_id = ? ORDER BY date_key DESC',
+      [userId],
+    )
+    .map(rowToDailyGoalScore);
+}
+
+export function getDailyGoalScoreByDateKey(dateKey: string): DailyGoalScore | null {
+  const userId = requireUserId();
+  const row = getDb().getFirstSync<{ id: string; date_key: string; score_percent: number }>(
+    'SELECT id, date_key, score_percent FROM daily_goal_scores WHERE user_id = ? AND date_key = ?',
+    [userId, dateKey],
+  );
+  return row ? rowToDailyGoalScore(row) : null;
+}
+
+export function saveDailyGoalScore(dateKey: string, scorePercent: number): DailyGoalScore {
+  const userId = requireUserId();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+    throw new Error('Invalid date key');
+  }
+  if (!Number.isInteger(scorePercent) || scorePercent < 0) {
+    throw new Error('Invalid score');
+  }
+
+  const ts = nowMs();
+  const existing = getDailyGoalScoreByDateKey(dateKey);
+  const id = existing?.id ?? createId();
+
+  getDb().runSync(
+    `INSERT INTO daily_goal_scores (id, user_id, date_key, score_percent, updated_at)
+     VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT(user_id, date_key) DO UPDATE SET
+       score_percent = excluded.score_percent,
+       updated_at = excluded.updated_at`,
+    [id, userId, dateKey, scorePercent, ts],
+  );
+
+  enqueueSync('daily_score', id, 'upsert', {
+    id,
+    user_id: userId,
+    date_key: dateKey,
+    score_percent: scorePercent,
+    updated_at: new Date(ts).toISOString(),
+  });
+
+  const saved = getDailyGoalScoreByDateKey(dateKey);
+  if (!saved) throw new Error('Failed to save daily goal score');
+  return saved;
+}
+
+export function upsertDailyGoalScoreFromRemote(score: {
+  id: string;
+  user_id: string;
+  date_key: string;
+  score_percent: number;
+  updated_at: string;
+}): void {
+  const updatedAt = new Date(score.updated_at).getTime();
+  const existing = getDb().getFirstSync<{ updated_at: number }>(
+    'SELECT updated_at FROM daily_goal_scores WHERE user_id = ? AND date_key = ?',
+    [score.user_id, score.date_key],
+  );
+  if (existing && existing.updated_at >= updatedAt) return;
+
+  getDb().runSync(
+    `INSERT INTO daily_goal_scores (id, user_id, date_key, score_percent, updated_at)
+     VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT(user_id, date_key) DO UPDATE SET
+       id = excluded.id,
+       score_percent = excluded.score_percent,
+       updated_at = excluded.updated_at`,
+    [score.id, score.user_id, score.date_key, score.score_percent, updatedAt],
+  );
 }
 
 export function hasPendingSync(): boolean {

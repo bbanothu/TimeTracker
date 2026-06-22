@@ -4,20 +4,22 @@ import { useAppColors } from '@/hooks/useAppColors';
 import type { PeriodType } from '@/types';
 import { formatPeriodLabel } from '@/utils/periodBounds';
 
+const PERIODS: PeriodType[] = ['day', 'week', 'month'];
+
 interface PeriodSelectorProps {
   period: PeriodType;
   anchorDate: Date;
   onPeriodChange: (period: PeriodType) => void;
   onShift: (delta: number) => void;
+  onProgressPress?: () => void;
 }
-
-const PERIODS: PeriodType[] = ['day', 'week', 'month'];
 
 export function PeriodSelector({
   period,
   anchorDate,
   onPeriodChange,
   onShift,
+  onProgressPress,
 }: PeriodSelectorProps) {
   const colors = useAppColors();
 
@@ -45,6 +47,20 @@ export function PeriodSelector({
             </Pressable>
           );
         })}
+        {onProgressPress ? (
+          <Pressable
+            onPress={onProgressPress}
+            className="flex-1 rounded-lg py-2"
+            style={{ backgroundColor: 'transparent' }}
+          >
+            <Text
+              className="text-center text-sm font-semibold"
+              style={{ color: colors.textMuted }}
+            >
+              Progress
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
 
       <View className="flex-row items-center justify-between">

@@ -1,5 +1,6 @@
 import { initDatabase, isDatabaseReady, seedLocalDefaultTagsIfEmpty } from '@/db/client';
 import { syncGeofencingTask } from '@/services/geofenceService';
+import { runDailyGoalScoreSnapshot } from '@/services/dailyGoalScoreService';
 import { syncProfilePhotoFromCloud } from '@/services/profilePhotoService';
 import { setupNotifications } from '@/services/notificationService';
 import { syncService, waitForNetwork } from '@/services/syncService';
@@ -34,6 +35,7 @@ export async function initializeAppData(userId: string): Promise<void> {
     }
 
     seedLocalDefaultTagsIfEmpty();
+    runDailyGoalScoreSnapshot(userId);
 
     try {
       await syncGeofencingTask();

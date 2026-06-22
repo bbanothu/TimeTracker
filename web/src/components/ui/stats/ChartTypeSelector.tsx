@@ -23,7 +23,7 @@ export function ChartTypeSelector({ visualization, onChange }: ChartTypeSelector
         Visualization
       </p>
       <div
-        className="inline-flex overflow-x-auto rounded-xl border p-1"
+        className="grid grid-cols-4 gap-1 rounded-xl border p-1"
         style={{ backgroundColor: colors.glass, borderColor: colors.glassBorder }}
       >
         {OPTIONS.map((item) => {
@@ -33,7 +33,7 @@ export function ChartTypeSelector({ visualization, onChange }: ChartTypeSelector
               key={item.value}
               type="button"
               onClick={() => onChange(item.value)}
-              className="shrink-0 rounded-lg px-3 py-2 text-sm font-semibold"
+              className="rounded-lg px-2 py-2 text-sm font-semibold"
               style={{
                 backgroundColor: selected ? colors.selectedBg : 'transparent',
                 color: selected ? colors.selectedText : colors.textMuted,

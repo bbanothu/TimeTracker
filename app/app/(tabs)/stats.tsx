@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { StatsCharts } from '@/components/StatsCharts';
 import { ChartTypeSelector } from '@/components/ChartTypeSelector';
 import { PeriodSelector } from '@/components/PeriodSelector';
@@ -8,6 +9,7 @@ import { useStatsVisualization } from '@/hooks/useStatsVisualization';
 import { Text } from 'react-native';
 
 export default function StatsScreen() {
+  const router = useRouter();
   const { ready, period, setPeriod, anchorDate, summary, shift } = useStats('day');
   const { visualization, setVisualization, ready: vizReady } = useStatsVisualization();
 
@@ -27,6 +29,15 @@ export default function StatsScreen() {
           anchorDate={anchorDate}
           onPeriodChange={setPeriod}
           onShift={shift}
+          onProgressPress={() =>
+            router.push({
+              pathname: '/progress',
+              params: {
+                anchorDate: anchorDate.toISOString(),
+                period,
+              },
+            })
+          }
         />
         <ChartTypeSelector visualization={visualization} onChange={setVisualization} />
         <StatsCharts summary={summary} visualization={visualization} scrollEnabled={false} />

@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { ChartTypeSelector } from '@/components/ui/stats/ChartTypeSelector';
@@ -40,6 +41,7 @@ function VisualizationContent({
 
 export function StatsPage() {
   const colors = useAppColors();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { visualization, setVisualization, ready: vizReady } = useStatsVisualization();
   const [period, setPeriod] = useState<PeriodType>('day');
@@ -90,21 +92,36 @@ export function StatsPage() {
       </h1>
 
       <ThemedSurface className="mb-4 p-4">
-        <div className="mb-3 flex flex-wrap gap-2">
+        <div
+          className="mb-3 grid grid-cols-4 gap-1 rounded-xl p-1"
+          style={{ backgroundColor: colors.glass, borderColor: colors.glassBorder, borderWidth: 1 }}
+        >
           {(['day', 'week', 'month'] as PeriodType[]).map((item) => (
             <button
               key={item}
               type="button"
               onClick={() => setPeriod(item)}
-              className="rounded-lg px-3 py-2 text-sm font-semibold capitalize"
+              className="rounded-lg px-2 py-2 text-sm font-semibold capitalize"
               style={{
-                backgroundColor: period === item ? colors.selectedBg : colors.secondaryBg,
+                backgroundColor: period === item ? colors.selectedBg : 'transparent',
                 color: period === item ? colors.selectedText : colors.textMuted,
               }}
             >
               {item}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() =>
+              navigate(
+                `/stats/progress?date=${encodeURIComponent(anchorDate.toISOString())}&period=${period}`,
+              )
+            }
+            className="rounded-lg px-2 py-2 text-sm font-semibold"
+            style={{ color: colors.textMuted }}
+          >
+            Progress
+          </button>
         </div>
         <div className="flex items-center justify-between gap-3">
           <button type="button" onClick={() => setAnchorDate(shiftPeriod(anchorDate, period, -1))}>

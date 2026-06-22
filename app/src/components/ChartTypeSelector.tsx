@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { useAppColors } from '@/hooks/useAppColors';
 import type { StatsVisualization } from '@/types';
@@ -27,35 +27,29 @@ export function ChartTypeSelector({ visualization, onChange }: ChartTypeSelector
       >
         Visualization
       </Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingRight: 8 }}
+      <View
+        className="flex-row rounded-xl p-1"
+        style={{ backgroundColor: colors.glass, borderColor: colors.glassBorder, borderWidth: 1 }}
       >
-        <View
-          className="flex-row rounded-xl p-1"
-          style={{ backgroundColor: colors.glass, borderColor: colors.glassBorder, borderWidth: 1 }}
-        >
-          {OPTIONS.map((item) => {
-            const selected = visualization === item.value;
-            return (
-              <Pressable
-                key={item.value}
-                onPress={() => onChange(item.value)}
-                className="rounded-lg px-3 py-2"
-                style={{ backgroundColor: selected ? colors.selectedBg : 'transparent' }}
+        {OPTIONS.map((item) => {
+          const selected = visualization === item.value;
+          return (
+            <Pressable
+              key={item.value}
+              onPress={() => onChange(item.value)}
+              className="flex-1 rounded-lg py-2"
+              style={{ backgroundColor: selected ? colors.selectedBg : 'transparent' }}
+            >
+              <Text
+                className="text-center text-sm font-semibold"
+                style={{ color: selected ? colors.selectedText : colors.textMuted }}
               >
-                <Text
-                  className="text-center text-sm font-semibold"
-                  style={{ color: selected ? colors.selectedText : colors.textMuted }}
-                >
-                  {item.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </ScrollView>
+                {item.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }

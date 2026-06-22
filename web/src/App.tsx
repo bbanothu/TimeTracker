@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { GoalProgressPage } from '@/pages/GoalProgressPage';
 import { GoalsPage } from '@/pages/GoalsPage';
 import { HistoryPage } from '@/pages/HistoryPage';
 import { LoginPage } from '@/pages/LoginPage';
@@ -26,6 +27,7 @@ export function App() {
               <Route path="tags" element={<TagsPage />} />
               <Route path="map" element={<MapPage />} />
               <Route path="stats" element={<StatsPage />} />
+              <Route path="stats/progress" element={<GoalProgressPage />} />
               <Route path="goals" element={<GoalsPage />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="profile/history" element={<HistoryPage />} />

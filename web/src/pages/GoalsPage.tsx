@@ -52,8 +52,8 @@ export function GoalsPage() {
         Goals
       </h1>
       <p className="mb-4 text-sm" style={{ color: colors.textMuted }}>
-        Set daily targets for your top-level categories. Time tracked on sub-tags counts toward the
-        parent.
+        Set daily targets for your top-level categories. Saved targets stay on your account and apply
+        every day until you change them. Time tracked on sub-tags counts toward the parent.
       </p>
       <GoalsList
         categories={categories}

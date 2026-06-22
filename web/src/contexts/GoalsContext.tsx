@@ -52,7 +52,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
 
   const saveGoal = useCallback(
     async (tagId: string, targetMinutes: number) => {
-      if (!user) return;
+      if (!user) throw new Error('Sign in to save goals');
       const saved = await upsertGoal(user.id, tagId, targetMinutes);
       setGoals((current) => {
         const without = current.filter((goal) => goal.tagId !== tagId);
@@ -64,7 +64,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
 
   const clearGoal = useCallback(
     async (tagId: string) => {
-      if (!user) return;
+      if (!user) throw new Error('Sign in to save goals');
       await deleteGoal(user.id, tagId);
       setGoals((current) => current.filter((goal) => goal.tagId !== tagId));
     },

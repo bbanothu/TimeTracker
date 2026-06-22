@@ -86,6 +86,16 @@ function RootNavigator() {
                 ...getAppHeaderOptions(colors),
               }}
             />
+            <Stack.Screen
+              name="progress"
+              options={{
+                headerShown: true,
+                title: 'Progress',
+                headerBackTitle: '',
+                headerBackButtonDisplayMode: 'minimal',
+                ...getAppHeaderOptions(colors),
+              }}
+            />
           </Stack>
         </TagsProvider>
       </TimerProvider>

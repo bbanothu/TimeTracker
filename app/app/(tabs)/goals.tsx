@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Text } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { Dimensions, Keyboard, Platform, Text, type ScrollView } from 'react-native';
 
 import { GoalsList } from '@/components/GoalsList';
 import { TabScrollView } from '@/components/TabScrollView';
@@ -11,8 +11,13 @@ import { useTags } from '@/hooks/useTags';
 import { computeCategoryDurationsToday } from '@/utils/goalProgress';
 import { getPeriodBounds } from '@/utils/periodBounds';
 
+const KEYBOARD_GAP = 12;
+
 export default function GoalsScreen() {
   const colors = useAppColors();
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollYRef = useRef(0);
+  const keyboardHeightRef = useRef(Platform.OS === 'ios' ? 320 : 280);
   const { tags } = useTags();
   const { goals, ready: goalsReady, saveGoal, clearGoal } = useGoals();
   const { ready, todayEntries, sessions, tick } = useActiveSession();
@@ -34,6 +39,39 @@ export default function GoalsScreen() {
     );
   }, [todayEntries, tags, sessions, tick]);
 
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, (event) => {
+      keyboardHeightRef.current = event.endCoordinates.height;
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      keyboardHeightRef.current = Platform.OS === 'ios' ? 320 : 280;
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  const scrollInputIntoView = useCallback((layout: { y: number; height: number }) => {
+    const scroll = scrollRef.current;
+    if (!scroll) return;
+
+    const windowHeight = Dimensions.get('window').height;
+    const visibleBottom = windowHeight - keyboardHeightRef.current - KEYBOARD_GAP;
+    const inputBottom = layout.y + layout.height;
+
+    if (inputBottom > visibleBottom) {
+      scroll.scrollTo({
+        y: scrollYRef.current + (inputBottom - visibleBottom),
+        animated: true,
+      });
+    }
+  }, []);
+
   if (!ready || !goalsReady) {
     return (
       <TabScreenContainer className="items-center justify-center">
@@ -44,10 +82,20 @@ export default function GoalsScreen() {
 
   return (
     <TabScreenContainer>
-      <TabScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-2">
+      <TabScrollView
+        ref={scrollRef}
+        className="flex-1"
+        contentContainerClassName="px-4 pb-8 pt-2"
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+        scrollEventThrottle={16}
+        onScroll={(event) => {
+          scrollYRef.current = event.nativeEvent.contentOffset.y;
+        }}
+      >
         <Text className="mb-4 text-sm" style={{ color: colors.textMuted }}>
-          Set daily targets for your top-level categories. Time tracked on sub-tags counts toward
-          the parent.
+          Set daily targets for your top-level categories. Saved targets stay on your account and
+          apply every day until you change them. Time tracked on sub-tags counts toward the parent.
         </Text>
         <GoalsList
           categories={categories}
@@ -55,6 +103,7 @@ export default function GoalsScreen() {
           progressByTagId={progressByTagId}
           onSaveGoal={saveGoal}
           onClearGoal={clearGoal}
+          onInputFocus={scrollInputIntoView}
         />
       </TabScrollView>
     </TabScreenContainer>

@@ -34,13 +34,22 @@ function GoalTargetInputs({
   const initial = splitMinutes(targetMinutes ?? 0);
   const [hours, setHours] = useState(String(initial.hours));
   const [minutes, setMinutes] = useState(String(initial.minutes));
-  const [saving, setSaving] = useState(false);
+  const [buttonState, setButtonState] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const next = splitMinutes(targetMinutes ?? 0);
     setHours(String(next.hours));
     setMinutes(String(next.minutes));
+    setButtonState('idle');
+    setError(null);
   }, [targetMinutes]);
+
+  useEffect(() => {
+    if (buttonState !== 'saved') return;
+    const timer = setTimeout(() => setButtonState('idle'), 2000);
+    return () => clearTimeout(timer);
+  }, [buttonState]);
 
   const inputStyle = {
     backgroundColor: colors.inputBg,
@@ -48,60 +57,101 @@ function GoalTargetInputs({
     color: colors.text,
   };
 
-  const commit = async () => {
+  const parseDraft = () => {
     const parsedHours = Math.max(0, parseInt(hours, 10) || 0);
     const parsedMinutes = Math.max(0, Math.min(59, parseInt(minutes, 10) || 0));
-    const total = parsedHours * 60 + parsedMinutes;
+    return parsedHours * 60 + parsedMinutes;
+  };
 
-    setSaving(true);
+  const commit = async () => {
+    const total = parseDraft();
+
+    setButtonState('saving');
+    setError(null);
     try {
       if (total <= 0) {
-        if (targetMinutes !== null) await onClearGoal(tagId);
+        if (targetMinutes !== null) {
+          await onClearGoal(tagId);
+          setButtonState('saved');
+        } else {
+          setButtonState('idle');
+          setError('Enter a target time first');
+        }
         return;
       }
 
-      if (targetMinutes === total) return;
       await onSaveGoal(tagId, total);
-    } finally {
-      setSaving(false);
+      setButtonState('saved');
+    } catch (err) {
+      setButtonState('idle');
+      setError(err instanceof Error ? err.message : 'Save failed');
     }
   };
 
   return (
-    <div className="mt-2 flex items-center gap-2">
-      <span className="text-xs font-medium" style={{ color: colors.textMuted }}>
-        Target
-      </span>
-      <input
-        value={hours}
-        onChange={(event) => setHours(event.target.value)}
-        onBlur={() => {
-          commit().catch(console.error);
-        }}
-        disabled={saving}
-        inputMode="numeric"
-        maxLength={2}
-        className="w-12 rounded-lg border px-2 py-1.5 text-center text-sm"
-        style={inputStyle}
-      />
-      <span className="text-xs" style={{ color: colors.textMuted }}>
-        h
-      </span>
-      <input
-        value={minutes}
-        onChange={(event) => setMinutes(event.target.value)}
-        onBlur={() => {
-          commit().catch(console.error);
-        }}
-        disabled={saving}
-        inputMode="numeric"
-        maxLength={2}
-        className="w-12 rounded-lg border px-2 py-1.5 text-center text-sm"
-        style={inputStyle}
-      />
-      <span className="text-xs" style={{ color: colors.textMuted }}>
-        m
-      </span>
+    <div className="mt-2">
+      <div className="flex items-center justify-between gap-3">
+        <div className="inline-flex items-center gap-2">
+          <input
+            value={hours}
+            onChange={(event) => {
+              setHours(event.target.value);
+              setButtonState('idle');
+              setError(null);
+            }}
+            disabled={buttonState === 'saving'}
+            inputMode="numeric"
+            maxLength={2}
+            className="w-12 rounded-lg border px-2 py-1.5 text-center text-sm"
+            style={inputStyle}
+          />
+          <span className="text-xs" style={{ color: colors.textMuted }}>
+            h
+          </span>
+          <input
+            value={minutes}
+            onChange={(event) => {
+              setMinutes(event.target.value);
+              setButtonState('idle');
+              setError(null);
+            }}
+            disabled={buttonState === 'saving'}
+            inputMode="numeric"
+            maxLength={2}
+            className="w-12 rounded-lg border px-2 py-1.5 text-center text-sm"
+            style={inputStyle}
+          />
+          <span className="text-xs" style={{ color: colors.textMuted }}>
+            m
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            commit().catch(console.error);
+          }}
+          disabled={buttonState === 'saving'}
+          className="inline-flex min-w-[4.5rem] shrink-0 items-center justify-center rounded-lg px-3 py-1.5 text-xs font-semibold disabled:opacity-100"
+          style={{
+            backgroundColor: colors.primary,
+            color: colors.textOnPrimary,
+          }}
+        >
+          {buttonState === 'saving' ? (
+            <span
+              className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-r-transparent"
+              aria-hidden
+            />
+          ) : (
+            (buttonState === 'saved' ? 'Saved' : 'Save')
+          )}
+        </button>
+      </div>
+      {error ? (
+        <p className="mt-1.5 text-right text-xs font-medium" style={{ color: colors.destructive }}>
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

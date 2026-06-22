@@ -14,6 +14,12 @@ export interface TagDailyGoal {
   targetMinutes: number;
 }
 
+export interface DailyGoalScore {
+  id: string;
+  dateKey: string;
+  scorePercent: number;
+}
+
 export interface TimeEntry {
   id: string;
   startedAt: number;

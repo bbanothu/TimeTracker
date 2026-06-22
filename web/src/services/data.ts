@@ -234,11 +234,12 @@ export async function upsertGoal(
       },
       { onConflict: 'user_id,tag_id' },
     )
-    .select('id, tag_id, target_minutes')
-    .single();
+    .select('id, tag_id, target_minutes');
 
   if (error) throw error;
-  return mapGoal(data);
+  const row = data?.[0];
+  if (!row) throw new Error('Goal could not be saved');
+  return mapGoal(row);
 }
 
 export async function deleteGoal(userId: string, tagId: string): Promise<void> {

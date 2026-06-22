@@ -5,6 +5,7 @@ import { subscribeDataRefresh } from '@/lib/dataRefresh';
 import { initializeAppData, isDatabaseReady } from '@/services/appInitService';
 import { dismissGeofenceNotification } from '@/services/notificationService';
 import { pushChangesInBackground } from '@/services/syncScheduler';
+import { startDailyGoalScoreScheduler } from '@/services/dailyGoalScoreService';
 import { timerService } from '@/services/timerService';
 import type { ActiveSession, TimeEntry } from '@/types';
 
@@ -69,6 +70,11 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     if (!ready) return;
     return subscribeDataRefresh(refresh);
   }, [ready, refresh]);
+
+  useEffect(() => {
+    if (!ready || !user) return;
+    return startDailyGoalScoreScheduler(user.id);
+  }, [ready, user?.id]);
 
   useEffect(() => {
     if (sessions.length === 0) return;

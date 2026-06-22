@@ -2,10 +2,12 @@ import NetInfo from '@react-native-community/netinfo';
 import { Platform } from 'react-native';
 
 import {
+  getAllTags,
   getLastPulledAt,
   getSyncQueue,
   removeSyncQueueItem,
   setLastPulledAt,
+  upsertDailyGoalScoreFromRemote,
   upsertEntryFromRemote,
   upsertGeofenceFromRemote,
   upsertGoalFromRemote,
@@ -13,6 +15,35 @@ import {
 } from '@/db/client';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import type { EntrySource } from '@/types';
+
+async function upsertTagToRemote(payload: Record<string, unknown>): Promise<void> {
+  const { error } = await supabase.from('tags').upsert(payload);
+  if (
+    error?.code === 'PGRST204' &&
+    typeof error.message === 'string' &&
+    error.message.includes('include_in_analytics')
+  ) {
+    const { include_in_analytics: _ignored, ...rest } = payload;
+    const { error: retryError } = await supabase.from('tags').upsert(rest);
+    if (retryError) throw retryError;
+    return;
+  }
+  if (error) throw error;
+}
+
+async function ensureTagExistsForGoal(userId: string, tagId: string): Promise<void> {
+  const tag = getAllTags().find((item) => item.id === tagId);
+  if (!tag) return;
+
+  await upsertTagToRemote({
+    id: tag.id,
+    user_id: userId,
+    name: tag.name,
+    color: tag.color,
+    parent_id: tag.parentId,
+    updated_at: new Date().toISOString(),
+  });
+}
 
 async function isOnline(): Promise<boolean> {
   const state = await NetInfo.fetch();
@@ -70,8 +101,7 @@ async function pushInternal(userId: string): Promise<boolean> {
           const { error } = await supabase.from('tags').delete().eq('id', item.entityId);
           if (error) throw error;
         } else {
-          const { error } = await supabase.from('tags').upsert(item.payload);
-          if (error) throw error;
+          await upsertTagToRemote(item.payload);
         }
       } else if (item.entityType === 'entry') {
         if (item.operation === 'delete') {
@@ -132,7 +162,17 @@ async function pushInternal(userId: string): Promise<boolean> {
           const { error } = await supabase.from('tag_daily_goals').delete().eq('id', item.entityId);
           if (error) throw error;
         } else {
-          const { error } = await supabase.from('tag_daily_goals').upsert(item.payload);
+          const { error } = await supabase.from('tag_daily_goals').upsert(item.payload, {
+            onConflict: 'user_id,tag_id',
+          });
+          if (error) throw error;
+        }
+      } else if (item.entityType === 'daily_score') {
+        if (item.operation === 'delete') {
+          const { error } = await supabase.from('daily_goal_scores').delete().eq('id', item.entityId);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('daily_goal_scores').upsert(item.payload);
           if (error) throw error;
         }
       }
@@ -140,11 +180,37 @@ async function pushInternal(userId: string): Promise<boolean> {
       removeSyncQueueItem(item.id);
     } catch (error) {
       console.warn('Sync push failed for', item.entityType, item.entityId, error);
-      break;
+      return false;
     }
   }
 
   return true;
+}
+
+export async function pushGoalForTag(userId: string, tagId: string): Promise<void> {
+  if (!isSupabaseConfigured) return;
+  if (!(await isOnline())) {
+    throw new Error('No internet connection');
+  }
+
+  await ensureTagExistsForGoal(userId, tagId);
+
+  const pending = getSyncQueue().filter(
+    (item) => item.entityType === 'goal' && item.payload.tag_id === tagId,
+  );
+
+  for (const item of pending) {
+    if (item.operation === 'delete') {
+      const { error } = await supabase.from('tag_daily_goals').delete().eq('id', item.entityId);
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabase.from('tag_daily_goals').upsert(item.payload, {
+        onConflict: 'user_id,tag_id',
+      });
+      if (error) throw new Error(error.message);
+    }
+    removeSyncQueueItem(item.id);
+  }
 }
 
 async function pullInternal(userId: string, options: SyncOptions = {}): Promise<boolean> {
@@ -156,7 +222,7 @@ async function pullInternal(userId: string, options: SyncOptions = {}): Promise<
     ? new Date(0).toISOString()
     : new Date(Math.max(0, lastPulledAt - 5000)).toISOString();
 
-  const [tagsResult, entriesResult, geofencesResult, goalsResult] = await Promise.all([
+  const [tagsResult, entriesResult, geofencesResult, goalsResult, scoresResult] = await Promise.all([
     supabase
       .from('tags')
       .select('*')
@@ -181,6 +247,12 @@ async function pullInternal(userId: string, options: SyncOptions = {}): Promise<
       .eq('user_id', userId)
       .gt('updated_at', sinceIso)
       .order('updated_at', { ascending: true }),
+    supabase
+      .from('daily_goal_scores')
+      .select('*')
+      .eq('user_id', userId)
+      .gt('updated_at', sinceIso)
+      .order('updated_at', { ascending: true }),
   ]);
 
   if (tagsResult.error) throw tagsResult.error;
@@ -188,6 +260,9 @@ async function pullInternal(userId: string, options: SyncOptions = {}): Promise<
   if (geofencesResult.error) throw geofencesResult.error;
   if (goalsResult.error) {
     console.warn('Goals sync unavailable:', goalsResult.error.message);
+  }
+  if (scoresResult.error) {
+    console.warn('Daily goal scores sync unavailable:', scoresResult.error.message);
   }
 
   let maxRemoteUpdatedAt = lastPulledAt;
@@ -245,11 +320,19 @@ async function pullInternal(userId: string, options: SyncOptions = {}): Promise<
     }
   }
 
+  if (!scoresResult.error) {
+    for (const score of scoresResult.data ?? []) {
+      bumpCursor(score.updated_at);
+      upsertDailyGoalScoreFromRemote(score);
+    }
+  }
+
   const pulledCount =
     (tagsResult.data?.length ?? 0) +
     (entriesResult.data?.length ?? 0) +
     (geofencesResult.data?.length ?? 0) +
-    (goalsResult.error ? 0 : (goalsResult.data?.length ?? 0));
+    (goalsResult.error ? 0 : (goalsResult.data?.length ?? 0)) +
+    (scoresResult.error ? 0 : (scoresResult.data?.length ?? 0));
 
   if (pulledCount > 0 || options.fullPull) {
     setLastPulledAt(maxRemoteUpdatedAt);
@@ -295,4 +378,4 @@ export async function uploadToCloud(userId: string): Promise<SyncResult> {
   });
 }
 
-export const syncService = { push, pull, sync, uploadToCloud };
+export const syncService = { push, pull, sync, uploadToCloud, pushGoalForTag };

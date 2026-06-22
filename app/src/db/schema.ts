@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 export const MIGRATION_SQL = `
 CREATE TABLE IF NOT EXISTS tags (
@@ -88,6 +88,15 @@ CREATE TABLE IF NOT EXISTS tag_daily_goals (
   FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
   UNIQUE (user_id, tag_id)
 );
+
+CREATE TABLE IF NOT EXISTS daily_goal_scores (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  date_key TEXT NOT NULL,
+  score_percent INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  UNIQUE (user_id, date_key)
+);
 `;
 
 export const DEFAULT_TAGS = [
@@ -96,7 +105,7 @@ export const DEFAULT_TAGS = [
   { name: 'sleep', color: '#8B5CF6' },
 ] as const;
 
-export type SyncEntityType = 'tag' | 'entry' | 'geofence' | 'goal';
+export type SyncEntityType = 'tag' | 'entry' | 'geofence' | 'goal' | 'daily_score';
 export type SyncOperation = 'upsert' | 'delete';
 
 export const TAGS_V3_INDEX_SQL = `

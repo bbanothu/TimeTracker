@@ -4,7 +4,8 @@ import { getGoals, removeGoal, setGoal } from '@/db/client';
 import { useActiveSession } from '@/hooks/useActiveSession';
 import { useAuth } from '@/hooks/useAuth';
 import { subscribeDataRefresh } from '@/lib/dataRefresh';
-import { pushChangesInBackground } from '@/services/syncScheduler';
+import { isSupabaseConfigured } from '@/lib/supabase';
+import { syncService } from '@/services/syncService';
 import type { TagDailyGoal } from '@/types';
 
 export function useGoals() {
@@ -27,22 +28,32 @@ export function useGoals() {
   }, []);
 
   const saveGoal = useCallback(
-    (tagId: string, targetMinutes: number) => {
+    async (tagId: string, targetMinutes: number) => {
+      if (!user?.id) throw new Error('Sign in to save goals');
+
       const saved = setGoal(tagId, targetMinutes);
       setGoals((current) => {
         const without = current.filter((goal) => goal.tagId !== tagId);
         return [...without, saved].sort((a, b) => a.tagId.localeCompare(b.tagId));
       });
-      pushChangesInBackground(user?.id);
+
+      if (!isSupabaseConfigured) return;
+
+      await syncService.pushGoalForTag(user.id, tagId);
     },
     [user?.id],
   );
 
   const clearGoal = useCallback(
-    (tagId: string) => {
+    async (tagId: string) => {
+      if (!user?.id) throw new Error('Sign in to save goals');
+
       removeGoal(tagId);
       setGoals((current) => current.filter((goal) => goal.tagId !== tagId));
-      pushChangesInBackground(user?.id);
+
+      if (!isSupabaseConfigured) return;
+
+      await syncService.pushGoalForTag(user.id, tagId);
     },
     [user?.id],
   );

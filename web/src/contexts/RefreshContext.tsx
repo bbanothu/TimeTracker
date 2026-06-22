@@ -7,11 +7,13 @@ import {
   type ReactNode,
 } from 'react';
 
+import { useAuth } from '@/contexts/AuthContext';
 import { useGoals } from '@/contexts/GoalsContext';
 import { useProfilePhoto } from '@/contexts/ProfilePhotoContext';
 import { useTags } from '@/contexts/TagsContext';
 import { useTimer } from '@/contexts/TimerContext';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
+import { snapshotDailyGoalScores } from '@/services/dailyGoalScoreService';
 
 interface RefreshContextValue {
   refreshing: boolean;
@@ -21,8 +23,9 @@ interface RefreshContextValue {
 const RefreshContext = createContext<RefreshContextValue | null>(null);
 
 export function RefreshProvider({ children }: { children: ReactNode }) {
-  const { refresh: refreshGoals } = useGoals();
-  const { refresh: refreshTags } = useTags();
+  const { user } = useAuth();
+  const { tags, refresh: refreshTags } = useTags();
+  const { goals, refresh: refreshGoals } = useGoals();
   const { refresh: refreshTimer } = useTimer();
   const { refresh: refreshPhoto } = useProfilePhoto();
   const [refreshing, setRefreshing] = useState(false);
@@ -31,11 +34,14 @@ export function RefreshProvider({ children }: { children: ReactNode }) {
     setRefreshing(true);
     try {
       await Promise.all([refreshTags(), refreshGoals(), refreshTimer(), refreshPhoto()]);
+      if (user) {
+        await snapshotDailyGoalScores(user.id, tags, undefined, goals);
+      }
       notifyDataRefresh();
     } finally {
       setRefreshing(false);
     }
-  }, [refreshTags, refreshGoals, refreshTimer, refreshPhoto]);
+  }, [refreshTags, refreshGoals, refreshTimer, refreshPhoto, user, tags, goals]);
 
   const value = useMemo(
     () => ({ refreshing, refreshAll }),

@@ -1,5 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Text, TextInput, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAppColors } from '@/hooks/useAppColors';
@@ -10,8 +17,9 @@ interface GoalsListProps {
   categories: Tag[];
   goals: TagDailyGoal[];
   progressByTagId: Map<string, number>;
-  onSaveGoal: (tagId: string, targetMinutes: number) => void;
-  onClearGoal: (tagId: string) => void;
+  onSaveGoal: (tagId: string, targetMinutes: number) => void | Promise<void>;
+  onClearGoal: (tagId: string) => void | Promise<void>;
+  onInputFocus?: (layout: { y: number; height: number }) => void;
 }
 
 function splitMinutes(totalMinutes: number): { hours: number; minutes: number } {
@@ -25,72 +33,162 @@ function GoalTargetInputs({
   targetMinutes,
   onSaveGoal,
   onClearGoal,
+  onInputFocus,
 }: {
   tagId: string;
   targetMinutes: number | null;
-  onSaveGoal: (tagId: string, targetMinutes: number) => void;
-  onClearGoal: (tagId: string) => void;
+  onSaveGoal: (tagId: string, targetMinutes: number) => void | Promise<void>;
+  onClearGoal: (tagId: string) => void | Promise<void>;
+  onInputFocus?: (layout: { y: number; height: number }) => void;
 }) {
   const colors = useAppColors();
+  const rowRef = useRef<View>(null);
   const initial = splitMinutes(targetMinutes ?? 0);
   const [hours, setHours] = useState(String(initial.hours));
   const [minutes, setMinutes] = useState(String(initial.minutes));
+  const [buttonState, setButtonState] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const next = splitMinutes(targetMinutes ?? 0);
     setHours(String(next.hours));
     setMinutes(String(next.minutes));
+    setButtonState('idle');
+    setError(null);
   }, [targetMinutes]);
 
+  useEffect(() => {
+    if (buttonState !== 'saved') return;
+    const timer = setTimeout(() => setButtonState('idle'), 2000);
+    return () => clearTimeout(timer);
+  }, [buttonState]);
+
   const inputStyle = {
-    backgroundColor: colors.inputBg,
-    borderColor: colors.inputBorder,
+    width: 36,
+    height: 32,
+    paddingHorizontal: 4,
+    paddingVertical: 0,
+    fontSize: 14,
+    fontWeight: '600' as const,
+    textAlign: 'center' as const,
     color: colors.text,
+    ...(Platform.OS === 'android' ? { includeFontPadding: false, textAlignVertical: 'center' as const } : {}),
   };
 
-  const commit = () => {
+  const unitStyle = {
+    color: colors.textMuted,
+    fontSize: 14,
+    lineHeight: 32,
+  };
+
+  const parseDraft = () => {
     const parsedHours = Math.max(0, parseInt(hours, 10) || 0);
     const parsedMinutes = Math.max(0, Math.min(59, parseInt(minutes, 10) || 0));
-    const total = parsedHours * 60 + parsedMinutes;
+    return parsedHours * 60 + parsedMinutes;
+  };
 
-    if (total <= 0) {
-      if (targetMinutes !== null) onClearGoal(tagId);
-      return;
+  const handleInputFocus = () => {
+    if (!onInputFocus) return;
+
+    const delay = Platform.OS === 'ios' ? 100 : 0;
+    setTimeout(() => {
+      rowRef.current?.measureInWindow((_x, y, _width, height) => {
+        onInputFocus({ y, height });
+      });
+    }, delay);
+  };
+
+  const commit = async () => {
+    const total = parseDraft();
+
+    setButtonState('saving');
+    setError(null);
+    try {
+      if (total <= 0) {
+        if (targetMinutes !== null) {
+          await onClearGoal(tagId);
+          setButtonState('saved');
+        } else {
+          setButtonState('idle');
+          setError('Enter a target time first');
+        }
+        return;
+      }
+
+      await onSaveGoal(tagId, total);
+      setButtonState('saved');
+    } catch (err) {
+      setButtonState('idle');
+      setError(err instanceof Error ? err.message : 'Save failed');
     }
-
-    if (targetMinutes === total) return;
-    onSaveGoal(tagId, total);
   };
 
   return (
-    <View className="mt-2 flex-row items-center gap-2">
-      <Text className="text-xs font-medium" style={{ color: colors.textMuted }}>
-        Target
-      </Text>
-      <TextInput
-        value={hours}
-        onChangeText={setHours}
-        onBlur={commit}
-        keyboardType="number-pad"
-        maxLength={2}
-        className="w-12 rounded-lg border px-2 py-1.5 text-center text-sm"
-        style={inputStyle}
-      />
-      <Text className="text-xs" style={{ color: colors.textMuted }}>
-        h
-      </Text>
-      <TextInput
-        value={minutes}
-        onChangeText={setMinutes}
-        onBlur={commit}
-        keyboardType="number-pad"
-        maxLength={2}
-        className="w-12 rounded-lg border px-2 py-1.5 text-center text-sm"
-        style={inputStyle}
-      />
-      <Text className="text-xs" style={{ color: colors.textMuted }}>
-        m
-      </Text>
+    <View ref={rowRef} className="mt-2">
+      <View className="flex-row items-center justify-between gap-3">
+        <View
+          className="flex-row items-center overflow-hidden rounded-lg border"
+          style={{
+            backgroundColor: colors.inputBg,
+            borderColor: colors.inputBorder,
+          }}
+        >
+          <TextInput
+            value={hours}
+            onChangeText={(value) => {
+              setHours(value);
+              setButtonState('idle');
+              setError(null);
+            }}
+            onFocus={handleInputFocus}
+            keyboardType="number-pad"
+            maxLength={2}
+            editable={buttonState !== 'saving'}
+            style={[inputStyle, { paddingLeft: 8 }]}
+          />
+          <Text className="pr-2 font-medium" style={unitStyle}>
+            h
+          </Text>
+          <View className="h-5 w-px" style={{ backgroundColor: colors.inputBorder }} />
+          <TextInput
+            value={minutes}
+            onChangeText={(value) => {
+              setMinutes(value);
+              setButtonState('idle');
+              setError(null);
+            }}
+            onFocus={handleInputFocus}
+            keyboardType="number-pad"
+            maxLength={2}
+            editable={buttonState !== 'saving'}
+            style={inputStyle}
+          />
+          <Text className="px-2 font-medium" style={unitStyle}>
+            m
+          </Text>
+        </View>
+        <Pressable
+          onPress={() => {
+            commit().catch(console.error);
+          }}
+          disabled={buttonState === 'saving'}
+          className="h-8 min-w-[4.5rem] items-center justify-center rounded-lg px-3"
+          style={{ backgroundColor: colors.primary }}
+        >
+          {buttonState === 'saving' ? (
+            <ActivityIndicator size="small" color={colors.textOnPrimary} />
+          ) : (
+            <Text className="text-xs font-semibold" style={{ color: colors.textOnPrimary }}>
+              {buttonState === 'saved' ? 'Saved' : 'Save'}
+            </Text>
+          )}
+        </Pressable>
+      </View>
+      {error ? (
+        <Text className="mt-1.5 text-right text-xs font-medium" style={{ color: colors.destructive }}>
+          {error}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -101,6 +199,7 @@ export function GoalsList({
   progressByTagId,
   onSaveGoal,
   onClearGoal,
+  onInputFocus,
 }: GoalsListProps) {
   const colors = useAppColors();
   const goalsByTagId = useMemo(
@@ -150,6 +249,7 @@ export function GoalsList({
               targetMinutes={targetMinutes}
               onSaveGoal={onSaveGoal}
               onClearGoal={onClearGoal}
+              onInputFocus={onInputFocus}
             />
 
             {targetMs > 0 ? (
