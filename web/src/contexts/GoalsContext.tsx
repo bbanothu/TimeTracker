@@ -9,7 +9,7 @@ import {
 } from 'react';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { subscribeDataRefresh } from '@/lib/dataRefresh';
+import { notifyDataRefresh, subscribeDataRefresh } from '@/lib/dataRefresh';
 import { deleteGoal, fetchGoals, upsertGoal } from '@/services/data';
 import type { TagDailyGoal } from '@/types';
 
@@ -58,6 +58,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
         const without = current.filter((goal) => goal.tagId !== tagId);
         return [...without, saved].sort((a, b) => a.tagId.localeCompare(b.tagId));
       });
+      notifyDataRefresh();
     },
     [user],
   );
@@ -67,6 +68,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
       if (!user) throw new Error('Sign in to save goals');
       await deleteGoal(user.id, tagId);
       setGoals((current) => current.filter((goal) => goal.tagId !== tagId));
+      notifyDataRefresh();
     },
     [user],
   );

@@ -1,9 +1,12 @@
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { getAllEntries, getAllGeofences } from '@/db/client';
 import { useActiveSession } from '@/hooks/useActiveSession';
+import { useAuth } from '@/hooks/useAuth';
+import { fetchFriendEntries, fetchFriendGeofences } from '@/services/friendsService';
 import { getStatsSummary } from '@/services/statsService';
-import type { PeriodType, StatsSummary } from '@/types';
+import type { Geofence, PeriodType, StatsSummary, TimeEntry } from '@/types';
 
 const EMPTY_SUMMARY: StatsSummary = {
   totalMs: 0,
@@ -15,11 +18,17 @@ const EMPTY_SUMMARY: StatsSummary = {
   bucketTagBreakdown: [],
 };
 
-export function useStats(initialPeriod: PeriodType = 'day') {
+export function useStats(initialPeriod: PeriodType = 'day', subjectUserId?: string | null) {
+  const { user } = useAuth();
   const { ready, entriesRevision } = useActiveSession();
   const [period, setPeriod] = useState<PeriodType>(initialPeriod);
   const [anchorDate, setAnchorDate] = useState(new Date());
   const [focusRevision, setFocusRevision] = useState(0);
+  const [entries, setEntries] = useState<TimeEntry[]>([]);
+  const [geofences, setGeofences] = useState<Geofence[]>([]);
+  const [dataLoading, setDataLoading] = useState(false);
+
+  const isSelf = !subjectUserId || subjectUserId === user?.id;
 
   useFocusEffect(
     useCallback(() => {
@@ -27,9 +36,39 @@ export function useStats(initialPeriod: PeriodType = 'day') {
     }, []),
   );
 
+  const loadData = useCallback(async () => {
+    if (!ready) return;
+
+    if (isSelf) {
+      setEntries(getAllEntries());
+      setGeofences(getAllGeofences());
+      return;
+    }
+
+    setDataLoading(true);
+    try {
+      const [nextEntries, nextGeofences] = await Promise.all([
+        fetchFriendEntries(subjectUserId),
+        fetchFriendGeofences(subjectUserId),
+      ]);
+      setEntries(nextEntries);
+      setGeofences(nextGeofences);
+    } catch (error) {
+      console.error(error);
+      setEntries([]);
+      setGeofences([]);
+    } finally {
+      setDataLoading(false);
+    }
+  }, [ready, isSelf, subjectUserId]);
+
+  useEffect(() => {
+    loadData().catch(console.error);
+  }, [loadData, entriesRevision, focusRevision]);
+
   const summary: StatsSummary = useMemo(
-    () => (ready ? getStatsSummary(anchorDate, period) : EMPTY_SUMMARY),
-    [ready, anchorDate, period, entriesRevision, focusRevision],
+    () => (ready && !dataLoading ? getStatsSummary(anchorDate, period, entries, geofences) : EMPTY_SUMMARY),
+    [ready, dataLoading, anchorDate, period, entries, geofences],
   );
 
   const shift = useCallback(
@@ -45,5 +84,14 @@ export function useStats(initialPeriod: PeriodType = 'day') {
     [period],
   );
 
-  return { ready, period, setPeriod, anchorDate, setAnchorDate, summary, shift };
+  return {
+    ready: ready && !dataLoading,
+    period,
+    setPeriod,
+    anchorDate,
+    setAnchorDate,
+    summary,
+    shift,
+    isViewingFriend: !isSelf,
+  };
 }

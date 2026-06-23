@@ -77,6 +77,16 @@ function RootNavigator() {
               }}
             />
             <Stack.Screen
+              name="friends"
+              options={{
+                headerShown: true,
+                title: 'Friends',
+                headerBackTitle: '',
+                headerBackButtonDisplayMode: 'minimal',
+                ...getAppHeaderOptions(colors),
+              }}
+            />
+            <Stack.Screen
               name="history"
               options={{
                 headerShown: true,

@@ -1,5 +1,6 @@
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -20,6 +21,7 @@ import { useAppColors } from '@/hooks/useAppColors';
 import { useScreenTopPadding } from '@/hooks/useScreenTopPadding';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
 import { clearTrackedData, exportTrackedDataCsv } from '@/services/dataService';
+import { fetchIncomingPendingCount } from '@/services/friendsService';
 import { getLastAutoSyncAt, performManualSync } from '@/services/syncScheduler';
 
 export default function ProfileScreen() {
@@ -36,6 +38,19 @@ export default function ProfileScreen() {
   const [clearing, setClearing] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
+  const [pendingFriendCount, setPendingFriendCount] = useState(0);
+
+  const loadPendingCount = useCallback(() => {
+    fetchIncomingPendingCount()
+      .then(setPendingFriendCount)
+      .catch(() => undefined);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadPendingCount();
+    }, [loadPendingCount]),
+  );
 
   useEffect(() => {
     setEmail(user?.email ?? '');
@@ -259,6 +274,24 @@ export default function ProfileScreen() {
               disabled={savingEmail || email.trim() === user?.email}
             />
           </ThemedSurface> */}
+
+          <ThemedSurface className="mb-4 p-4">
+            <Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>
+              Friends
+            </Text>
+            <Text className="mb-4 text-sm" style={{ color: colors.textMuted }}>
+              Add friends by email and share your stats with each other.
+            </Text>
+            <ActionButton
+              label={
+                pendingFriendCount > 0
+                  ? `Manage friends (${pendingFriendCount})`
+                  : 'Manage friends'
+              }
+              onPress={() => router.push('/friends')}
+              variant="secondary"
+            />
+          </ThemedSurface>
 
           <ThemedSurface className="mb-4 p-4">
             <Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>

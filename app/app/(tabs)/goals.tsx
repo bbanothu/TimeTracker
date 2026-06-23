@@ -9,6 +9,7 @@ import { useAppColors } from '@/hooks/useAppColors';
 import { useGoals } from '@/hooks/useGoals';
 import { useTags } from '@/hooks/useTags';
 import { computeCategoryDurationsToday } from '@/utils/goalProgress';
+import { goalCategories } from '@/utils/tagAnalytics';
 import { getPeriodBounds } from '@/utils/periodBounds';
 
 const KEYBOARD_GAP = 12;
@@ -19,13 +20,10 @@ export default function GoalsScreen() {
   const scrollYRef = useRef(0);
   const keyboardHeightRef = useRef(Platform.OS === 'ios' ? 320 : 280);
   const { tags } = useTags();
-  const { goals, ready: goalsReady, saveGoal, clearGoal } = useGoals();
+  const { goals, ready: goalsReady, saveGoal } = useGoals();
   const { ready, todayEntries, sessions, tick } = useActiveSession();
 
-  const categories = useMemo(
-    () => tags.filter((tag) => tag.parentId === null).sort((a, b) => a.name.localeCompare(b.name)),
-    [tags],
-  );
+  const categories = useMemo(() => goalCategories(tags), [tags]);
 
   const progressByTagId = useMemo(() => {
     const { start, end } = getPeriodBounds(new Date(), 'day');
@@ -102,7 +100,6 @@ export default function GoalsScreen() {
           goals={goals}
           progressByTagId={progressByTagId}
           onSaveGoal={saveGoal}
-          onClearGoal={clearGoal}
           onInputFocus={scrollInputIntoView}
         />
       </TabScrollView>

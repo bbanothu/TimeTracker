@@ -48,6 +48,22 @@ export interface Geofence {
   tag?: Tag;
 }
 
+export type FriendshipStatus = 'pending' | 'accepted' | 'declined';
+
+export interface FriendshipOtherUser {
+  userId: string;
+  email: string;
+  displayName: string | null;
+}
+
+export interface Friendship {
+  id: string;
+  requesterId: string;
+  addresseeId: string;
+  status: FriendshipStatus;
+  otherUser: FriendshipOtherUser;
+}
+
 export type PeriodType = 'day' | 'week' | 'month';
 
 export type StatsVisualization = 'overview' | 'bars' | 'list' | 'stacked' | 'trend';

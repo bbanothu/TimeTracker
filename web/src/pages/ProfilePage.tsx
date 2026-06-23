@@ -1,5 +1,5 @@
-import { FormEvent, useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 import { ActionButton } from '@/components/ui/ActionButton';
 import { DarkModeToggle } from '@/components/ui/DarkModeToggle';
@@ -16,16 +16,31 @@ import {
   fetchAllEntries,
   fetchGeofences,
 } from '@/services/data';
+import { fetchIncomingPendingCount } from '@/services/friendsService';
 
 export function ProfilePage() {
   const colors = useAppColors();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, signOut, updatePassword } = useAuth();
   const { refreshAll, refreshing } = useRefresh();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pendingFriendCount, setPendingFriendCount] = useState(0);
+
+  const loadPendingCount = useCallback(() => {
+    fetchIncomingPendingCount()
+      .then(setPendingFriendCount)
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (location.pathname === '/profile') {
+      loadPendingCount();
+    }
+  }, [location.pathname, loadPendingCount]);
 
   if (!user) return <Navigate to="/login" replace />;
 
@@ -140,6 +155,35 @@ export function ProfilePage() {
 
       {message ? <p className="mb-3 text-sm text-emerald-600">{message}</p> : null}
       {error ? <p className="mb-3 text-sm text-rose-500">{error}</p> : null}
+
+      <ThemedSurface className="mb-4 p-4">
+        <h2 className="mb-3 font-semibold" style={{ color: colors.text }}>
+          Friends
+        </h2>
+        <p className="mb-4 text-sm" style={{ color: colors.textMuted }}>
+          Add friends by email and share your stats with each other.
+        </p>
+        <button
+          type="button"
+          onClick={() => navigate('/profile/friends')}
+          className="flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left"
+          style={{ borderColor: colors.glassBorder, backgroundColor: colors.secondaryBg }}
+        >
+          <span className="font-semibold" style={{ color: colors.text }}>
+            Manage friends
+          </span>
+          {pendingFriendCount > 0 ? (
+            <span
+              className="min-w-[1.5rem] rounded-full px-2 py-0.5 text-center text-xs font-bold text-white"
+              style={{ backgroundColor: colors.primaryBright }}
+            >
+              {pendingFriendCount}
+            </span>
+          ) : (
+            <span style={{ color: colors.textMuted }}>→</span>
+          )}
+        </button>
+      </ThemedSurface>
 
       <ThemedSurface className="mb-4 p-4">
         <h2 className="mb-3 font-semibold" style={{ color: colors.text }}>

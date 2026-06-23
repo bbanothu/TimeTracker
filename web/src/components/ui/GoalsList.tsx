@@ -10,7 +10,6 @@ interface GoalsListProps {
   goals: TagDailyGoal[];
   progressByTagId: Map<string, number>;
   onSaveGoal: (tagId: string, targetMinutes: number) => Promise<void>;
-  onClearGoal: (tagId: string) => Promise<void>;
 }
 
 function splitMinutes(totalMinutes: number): { hours: number; minutes: number } {
@@ -23,12 +22,10 @@ function GoalTargetInputs({
   tagId,
   targetMinutes,
   onSaveGoal,
-  onClearGoal,
 }: {
   tagId: string;
   targetMinutes: number | null;
   onSaveGoal: (tagId: string, targetMinutes: number) => Promise<void>;
-  onClearGoal: (tagId: string) => Promise<void>;
 }) {
   const colors = useAppColors();
   const initial = splitMinutes(targetMinutes ?? 0);
@@ -150,7 +147,6 @@ export function GoalsList({
   goals,
   progressByTagId,
   onSaveGoal,
-  onClearGoal,
 }: GoalsListProps) {
   const colors = useAppColors();
   const goalsByTagId = useMemo(
@@ -204,7 +200,6 @@ export function GoalsList({
               tagId={tag.id}
               targetMinutes={targetMinutes}
               onSaveGoal={onSaveGoal}
-              onClearGoal={onClearGoal}
             />
 
             {hasTarget ? (

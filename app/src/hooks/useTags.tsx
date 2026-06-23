@@ -3,7 +3,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { createTag, deleteTag, getAllTags, setTagIncludeInAnalytics, updateTag } from '@/db/client';
 import { useActiveSession } from '@/hooks/useActiveSession';
 import { useAuth } from '@/hooks/useAuth';
-import { subscribeDataRefresh } from '@/lib/dataRefresh';
+import { notifyDataRefresh, subscribeDataRefresh } from '@/lib/dataRefresh';
 import { pushChangesInBackground } from '@/services/syncScheduler';
 import type { Tag } from '@/types';
 
@@ -40,6 +40,7 @@ export function TagsProvider({ children }: { children: React.ReactNode }) {
 
   const syncAfterMutation = useCallback(() => {
     refresh();
+    notifyDataRefresh();
     pushChangesInBackground(user?.id);
   }, [refresh, user?.id]);
 

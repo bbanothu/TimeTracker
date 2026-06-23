@@ -11,7 +11,7 @@ import { useAppColors } from '@/hooks/useAppColors';
 import { useTags } from '@/hooks/useTags';
 import { TAG_COLOR_OPTIONS } from '@/theme/colors';
 import type { Tag } from '@/types';
-import { flattenTags, getEligibleParents } from '@/utils/tagTree';
+import { flattenTags, getEligibleParents, wouldCreateCycle } from '@/utils/tagTree';
 import { formatTagName } from '@/utils/formatDuration';
 
 export default function TagsScreen() {
@@ -23,6 +23,7 @@ export default function TagsScreen() {
   const [parentPickerOpen, setParentPickerOpen] = useState(false);
   const [tagFormOpen, setTagFormOpen] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const tagFormScrollRef = useRef<ScrollViewType>(null);
 
   const flatTags = useMemo(() => flattenTags(tags), [tags]);
@@ -37,9 +38,10 @@ export default function TagsScreen() {
 
   const resetForm = () => {
     setName('');
-    setColor(colors.primary);
+    setColor(TAG_COLOR_OPTIONS[0]);
     setParentId(null);
     setEditingTag(null);
+    setError(null);
   };
 
   const closeTagForm = () => {
@@ -55,14 +57,18 @@ export default function TagsScreen() {
 
   const handleSave = () => {
     try {
+      setError(null);
+      if (editingTag && parentId && wouldCreateCycle(editingTag.id, parentId, tags)) {
+        throw new Error('That parent would create a cycle');
+      }
       if (editingTag) {
         editTag(editingTag.id, name, color, parentId);
       } else {
         addTag(name, color, parentId);
       }
       closeTagForm();
-    } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Could not save tag');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save tag');
     }
   };
 
@@ -71,6 +77,7 @@ export default function TagsScreen() {
     setName(tag.name);
     setColor(tag.color);
     setParentId(tag.parentId);
+    setError(null);
     setTagFormOpen(true);
   };
 
@@ -229,6 +236,11 @@ export default function TagsScreen() {
                   />
                 ))}
               </ScrollView>
+              {error ? (
+                <Text className="mt-3 text-sm font-medium" style={{ color: colors.destructive }}>
+                  {error}
+                </Text>
+              ) : null}
               <ActionButton
                 label={editingTag ? 'Update' : 'Add tag'}
                 onPress={handleSave}

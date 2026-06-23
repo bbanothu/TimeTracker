@@ -9,7 +9,7 @@ import {
 } from 'react';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { subscribeDataRefresh } from '@/lib/dataRefresh';
+import { notifyDataRefresh, subscribeDataRefresh } from '@/lib/dataRefresh';
 import {
   createTag,
   deleteTag,
@@ -64,40 +64,45 @@ export function TagsProvider({ children }: { children: ReactNode }) {
     });
   }, [user, refresh]);
 
+  const afterMutation = useCallback(async () => {
+    await refresh();
+    notifyDataRefresh();
+  }, [refresh]);
+
   const addTag = useCallback(
     async (name: string, color: string, parentId: string | null = null) => {
       if (!user) return;
       await createTag(user.id, name, color, parentId);
-      await refresh();
+      await afterMutation();
     },
-    [user, refresh],
+    [user, afterMutation],
   );
 
   const editTag = useCallback(
     async (id: string, name: string, color: string, parentId?: string | null) => {
       if (!user) return;
       await updateTag(user.id, id, name, color, parentId ?? null);
-      await refresh();
+      await afterMutation();
     },
-    [user, refresh],
+    [user, afterMutation],
   );
 
   const removeTag = useCallback(
     async (id: string) => {
       if (!user) return;
       await deleteTag(user.id, id);
-      await refresh();
+      await afterMutation();
     },
-    [user, refresh],
+    [user, afterMutation],
   );
 
   const toggleTagAnalytics = useCallback(
     async (id: string, includeInAnalytics: boolean) => {
       if (!user) return;
       await setTagIncludeInAnalytics(user.id, id, includeInAnalytics);
-      await refresh();
+      await afterMutation();
     },
-    [user, refresh],
+    [user, afterMutation],
   );
 
   const value = useMemo(

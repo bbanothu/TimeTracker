@@ -18,7 +18,6 @@ interface GoalsListProps {
   goals: TagDailyGoal[];
   progressByTagId: Map<string, number>;
   onSaveGoal: (tagId: string, targetMinutes: number) => void | Promise<void>;
-  onClearGoal: (tagId: string) => void | Promise<void>;
   onInputFocus?: (layout: { y: number; height: number }) => void;
 }
 
@@ -32,13 +31,11 @@ function GoalTargetInputs({
   tagId,
   targetMinutes,
   onSaveGoal,
-  onClearGoal,
   onInputFocus,
 }: {
   tagId: string;
   targetMinutes: number | null;
   onSaveGoal: (tagId: string, targetMinutes: number) => void | Promise<void>;
-  onClearGoal: (tagId: string) => void | Promise<void>;
   onInputFocus?: (layout: { y: number; height: number }) => void;
 }) {
   const colors = useAppColors();
@@ -187,7 +184,6 @@ export function GoalsList({
   goals,
   progressByTagId,
   onSaveGoal,
-  onClearGoal,
   onInputFocus,
 }: GoalsListProps) {
   const colors = useAppColors();
@@ -239,7 +235,6 @@ export function GoalsList({
               tagId={tag.id}
               targetMinutes={targetMinutes}
               onSaveGoal={onSaveGoal}
-              onClearGoal={onClearGoal}
               onInputFocus={onInputFocus}
             />
 

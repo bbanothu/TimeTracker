@@ -12,6 +12,7 @@ interface PeriodSelectorProps {
   onPeriodChange: (period: PeriodType) => void;
   onShift: (delta: number) => void;
   onProgressPress?: () => void;
+  progressDisabled?: boolean;
 }
 
 export function PeriodSelector({
@@ -20,6 +21,7 @@ export function PeriodSelector({
   onPeriodChange,
   onShift,
   onProgressPress,
+  progressDisabled = false,
 }: PeriodSelectorProps) {
   const colors = useAppColors();
 
@@ -47,19 +49,30 @@ export function PeriodSelector({
             </Pressable>
           );
         })}
-        {onProgressPress ? (
-          <Pressable
-            onPress={onProgressPress}
-            className="flex-1 rounded-lg py-2"
-            style={{ backgroundColor: 'transparent' }}
-          >
-            <Text
-              className="text-center text-sm font-semibold"
-              style={{ color: colors.textMuted }}
+        {onProgressPress || progressDisabled ? (
+          progressDisabled ? (
+            <View className="flex-1 rounded-lg py-2" style={{ opacity: 0.45 }}>
+              <Text
+                className="text-center text-sm font-semibold"
+                style={{ color: colors.textMuted }}
+              >
+                Progress
+              </Text>
+            </View>
+          ) : (
+            <Pressable
+              onPress={onProgressPress}
+              className="flex-1 rounded-lg py-2"
+              style={{ backgroundColor: 'transparent' }}
             >
-              Progress
-            </Text>
-          </Pressable>
+              <Text
+                className="text-center text-sm font-semibold"
+                style={{ color: colors.textMuted }}
+              >
+                Progress
+              </Text>
+            </Pressable>
+          )
         ) : null}
       </View>
 

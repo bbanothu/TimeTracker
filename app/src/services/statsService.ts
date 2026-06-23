@@ -1,9 +1,18 @@
 import { addDays, addWeeks, endOfDay, endOfWeek, format, startOfDay, startOfWeek } from 'date-fns';
 
-import { getEntriesBetween, getGeofenceById } from '@/db/client';
 import { getPeriodBounds } from '@/utils/periodBounds';
 import { analyticsIncludedTags, analyticsVisibleDurationMs } from '@/utils/tagAnalytics';
-import type { PeriodType, StatsSummary, Tag, TagDuration, BucketDuration, BucketTagBreakdown, GeofenceDuration } from '@/types';
+import type {
+  Geofence,
+  GeofenceDuration,
+  PeriodType,
+  StatsSummary,
+  Tag,
+  TagDuration,
+  TimeEntry,
+  BucketDuration,
+  BucketTagBreakdown,
+} from '@/types';
 
 function clipDuration(startMs: number, endMs: number, rangeStart: number, rangeEnd: number): number {
   const clippedStart = Math.max(startMs, rangeStart);
@@ -12,7 +21,7 @@ function clipDuration(startMs: number, endMs: number, rangeStart: number, rangeE
 }
 
 function aggregateByTag(
-  entries: ReturnType<typeof getEntriesBetween>,
+  entries: TimeEntry[],
   rangeStart: number,
   rangeEnd: number,
 ): TagDuration[] {
@@ -38,10 +47,12 @@ function aggregateByTag(
 }
 
 function aggregateByGeofence(
-  entries: ReturnType<typeof getEntriesBetween>,
+  entries: TimeEntry[],
+  geofences: Geofence[],
   rangeStart: number,
   rangeEnd: number,
 ): GeofenceDuration[] {
+  const names = new Map(geofences.map((g) => [g.id, g.name]));
   const totals = new Map<string, GeofenceDuration>();
 
   for (const entry of entries) {
@@ -55,10 +66,9 @@ function aggregateByGeofence(
       continue;
     }
 
-    const geofence = getGeofenceById(entry.geofenceId);
     totals.set(entry.geofenceId, {
       geofenceId: entry.geofenceId,
-      name: geofence?.name ?? 'Unknown place',
+      name: names.get(entry.geofenceId) ?? 'Unknown place',
       durationMs: duration,
     });
   }
@@ -66,12 +76,7 @@ function aggregateByGeofence(
   return Array.from(totals.values()).sort((a, b) => b.durationMs - a.durationMs);
 }
 
-function buildDayBuckets(
-  anchor: Date,
-  entries: ReturnType<typeof getEntriesBetween>,
-  rangeStart: number,
-  rangeEnd: number,
-) {
+function buildDayBuckets(anchor: Date, entries: TimeEntry[]) {
   const weekStart = startOfWeek(anchor, { weekStartsOn: 1 });
   const buckets = [];
 
@@ -99,10 +104,7 @@ function buildDayBuckets(
   return buckets;
 }
 
-function buildWeekBuckets(
-  anchor: Date,
-  entries: ReturnType<typeof getEntriesBetween>,
-) {
+function buildWeekBuckets(anchor: Date, entries: TimeEntry[]) {
   const monthStart = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
   const buckets = [];
   let weekStart = startOfWeek(monthStart, { weekStartsOn: 1 });
@@ -136,7 +138,7 @@ function buildWeekBuckets(
 
 function buildBucketTagBreakdown(
   buckets: BucketDuration[],
-  entries: ReturnType<typeof getEntriesBetween>,
+  entries: TimeEntry[],
 ): BucketTagBreakdown[] {
   return buckets.map((bucket) => {
     const tagTotals = new Map<string, { tag: Tag; durationMs: number }>();
@@ -167,14 +169,21 @@ function buildBucketTagBreakdown(
   });
 }
 
-export function getStatsSummary(anchor: Date, period: PeriodType): StatsSummary {
+export function getStatsSummary(
+  anchor: Date,
+  period: PeriodType,
+  entries: TimeEntry[],
+  geofences: Geofence[],
+): StatsSummary {
   const { start, end } = getPeriodBounds(anchor, period);
   const rangeStart = start.getTime();
   const rangeEnd = end.getTime();
-  const entries = getEntriesBetween(rangeStart, rangeEnd);
-  const byTag = aggregateByTag(entries, rangeStart, rangeEnd);
-  const byGeofence = aggregateByGeofence(entries, rangeStart, rangeEnd);
-  const totalMs = entries.reduce(
+  const filtered = entries.filter(
+    (entry) => entry.endedAt > rangeStart && entry.startedAt < rangeEnd,
+  );
+  const byTag = aggregateByTag(filtered, rangeStart, rangeEnd);
+  const byGeofence = aggregateByGeofence(filtered, geofences, rangeStart, rangeEnd);
+  const totalMs = filtered.reduce(
     (sum, entry) =>
       sum +
       analyticsVisibleDurationMs(
@@ -187,9 +196,9 @@ export function getStatsSummary(anchor: Date, period: PeriodType): StatsSummary 
 
   const buckets =
     period === 'week'
-      ? buildDayBuckets(anchor, entries, rangeStart, rangeEnd)
+      ? buildDayBuckets(anchor, filtered)
       : period === 'month'
-        ? buildWeekBuckets(anchor, entries)
+        ? buildWeekBuckets(anchor, filtered)
         : [
             {
               label: format(anchor, 'EEE'),
@@ -201,12 +210,12 @@ export function getStatsSummary(anchor: Date, period: PeriodType): StatsSummary 
 
   return {
     totalMs,
-    entryCount: entries.length,
+    entryCount: filtered.length,
     topTag,
     byTag,
     byGeofence,
     buckets,
-    bucketTagBreakdown: buildBucketTagBreakdown(buckets, entries),
+    bucketTagBreakdown: buildBucketTagBreakdown(buckets, filtered),
   };
 }
 

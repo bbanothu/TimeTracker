@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { getGoals, removeGoal, setGoal } from '@/db/client';
 import { useActiveSession } from '@/hooks/useActiveSession';
 import { useAuth } from '@/hooks/useAuth';
-import { subscribeDataRefresh } from '@/lib/dataRefresh';
+import { notifyDataRefresh, subscribeDataRefresh } from '@/lib/dataRefresh';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { syncService } from '@/services/syncService';
 import type { TagDailyGoal } from '@/types';
@@ -36,6 +36,7 @@ export function useGoals() {
         const without = current.filter((goal) => goal.tagId !== tagId);
         return [...without, saved].sort((a, b) => a.tagId.localeCompare(b.tagId));
       });
+      notifyDataRefresh();
 
       if (!isSupabaseConfigured) return;
 
@@ -50,6 +51,7 @@ export function useGoals() {
 
       removeGoal(tagId);
       setGoals((current) => current.filter((goal) => goal.tagId !== tagId));
+      notifyDataRefresh();
 
       if (!isSupabaseConfigured) return;
 

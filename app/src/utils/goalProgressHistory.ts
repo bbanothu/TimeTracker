@@ -2,6 +2,7 @@ import { addDays, endOfDay, format, parse, startOfDay } from 'date-fns';
 
 import type { ActiveSession, PeriodType, Tag, TagDailyGoal, TimeEntry } from '@/types';
 import { computeCategoryDurationsToday } from '@/utils/goalProgress';
+import { isTagIncludedInAnalytics } from '@/utils/tagAnalytics';
 import { getPeriodBounds } from '@/utils/periodBounds';
 
 export interface DailyGoalScore {
@@ -35,7 +36,8 @@ export function computeDailyAverageScore(
 
   const goalsByTagId = new Map(goals.map((goal) => [goal.tagId, goal]));
   const categoriesWithGoals = tags.filter(
-    (tag) => tag.parentId === null && goalsByTagId.has(tag.id),
+    (tag) =>
+      tag.parentId === null && goalsByTagId.has(tag.id) && isTagIncludedInAnalytics(tag),
   );
 
   if (categoriesWithGoals.length === 0) return null;
