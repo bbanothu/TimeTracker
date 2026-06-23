@@ -9,6 +9,7 @@ interface EntryListProps {
   emptyMessage?: string;
   geofenceNames?: Map<string, string>;
   showDate?: boolean;
+  onEdit?: (entry: TimeEntry) => void;
   onDelete?: (entryId: string) => void;
 }
 
@@ -35,6 +36,20 @@ function formatTimeRange(startedAt: number, endedAt: number, showDate: boolean):
   return `${startDate} ${startTime} – ${endDate} ${endTime}`;
 }
 
+function EditIcon({ color }: { color: string }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function DeleteIcon({ color }: { color: string }) {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -55,6 +70,7 @@ export function EntryList({
   emptyMessage = 'No entries yet',
   geofenceNames,
   showDate = false,
+  onEdit,
   onDelete,
 }: EntryListProps) {
   const colors = useAppColors();
@@ -108,6 +124,17 @@ export function EntryList({
             <span className="shrink-0 text-sm font-medium tabular-nums" style={{ color: colors.textSecondary }}>
               {formatDurationLong(duration)}
             </span>
+            {onEdit ? (
+              <button
+                type="button"
+                aria-label={`Edit ${tagLabel}`}
+                title="Edit"
+                onClick={() => onEdit(entry)}
+                className="shrink-0 rounded p-1 transition hover:opacity-80"
+              >
+                <EditIcon color={colors.textMuted} />
+              </button>
+            ) : null}
             {onDelete ? (
               <button
                 type="button"

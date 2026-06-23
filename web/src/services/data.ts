@@ -1,5 +1,10 @@
 import { DEFAULT_TAGS } from '@/theme/colors';
 import { supabase } from '@/lib/supabase';
+import {
+  applyTagAnalyticsPrefs,
+  clearTagAnalyticsPref,
+  saveTagAnalyticsPref,
+} from '@/lib/tagAnalyticsPrefs';
 import type { ActiveSession, EntrySource, Geofence, Tag, TagDailyGoal, TimeEntry } from '@/types';
 
 const SESSION_KEY = 'timetracker-active-sessions';
@@ -98,11 +103,11 @@ export async function fetchTags(userId: string): Promise<Tag[]> {
       .eq('user_id', userId)
       .order('name');
     if (fallback.error) throw fallback.error;
-    return (fallback.data ?? []).map(mapTag);
+    return applyTagAnalyticsPrefs(userId, (fallback.data ?? []).map(mapTag));
   }
 
   if (error) throw error;
-  return (data ?? []).map(mapTag);
+  return applyTagAnalyticsPrefs(userId, (data ?? []).map(mapTag));
 }
 
 export async function seedDefaultTags(userId: string): Promise<void> {
@@ -191,6 +196,7 @@ export async function setTagIncludeInAnalytics(
     .single();
 
   if (isMissingAnalyticsColumn(error)) {
+    saveTagAnalyticsPref(userId, id, includeInAnalytics);
     const fallback = await supabase
       .from('tags')
       .select(TAG_COLUMNS_LEGACY)
@@ -199,11 +205,12 @@ export async function setTagIncludeInAnalytics(
       .single();
     if (fallback.error) throw fallback.error;
     if (!fallback.data) throw new Error('Tag not found');
-    return mapTag(fallback.data);
+    return { ...mapTag(fallback.data), includeInAnalytics };
   }
 
   if (error) throw error;
   if (!data) throw new Error('Tag not found');
+  clearTagAnalyticsPref(userId, id);
   return mapTag(data);
 }
 
@@ -285,8 +292,8 @@ export async function upsertGoal(
   tagId: string,
   targetMinutes: number,
 ): Promise<TagDailyGoal> {
-  if (!Number.isInteger(targetMinutes) || targetMinutes < 1 || targetMinutes > 1440) {
-    throw new Error('Target must be between 1 and 1440 minutes');
+  if (!Number.isInteger(targetMinutes) || targetMinutes < 0 || targetMinutes > 1440) {
+    throw new Error('Target must be between 0 and 1440 minutes');
   }
 
   const { data: tag, error: tagError } = await supabase
@@ -424,6 +431,49 @@ export async function deleteTimeEntry(userId: string, entryId: string): Promise<
 
   const { error } = await supabase.from('time_entries').delete().eq('id', entryId).eq('user_id', userId);
   if (error) throw error;
+}
+
+export async function updateTimeEntry(
+  userId: string,
+  entryId: string,
+  input: {
+    startedAt: number;
+    endedAt: number;
+    tagIds: string[];
+  },
+): Promise<void> {
+  if (input.tagIds.length === 0) throw new Error('Select at least one tag');
+  if (input.endedAt <= input.startedAt) throw new Error('End must be after start');
+  if (input.endedAt > Date.now()) throw new Error('End cannot be in the future');
+
+  const { error: entryError } = await supabase
+    .from('time_entries')
+    .update({
+      started_at: input.startedAt,
+      ended_at: input.endedAt,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', entryId)
+    .eq('user_id', userId);
+  if (entryError) throw entryError;
+
+  const { error: deleteTagsError } = await supabase
+    .from('time_entry_tags')
+    .delete()
+    .eq('entry_id', entryId)
+    .eq('user_id', userId);
+  if (deleteTagsError) throw deleteTagsError;
+
+  if (input.tagIds.length > 0) {
+    const { error: linkError } = await supabase.from('time_entry_tags').insert(
+      input.tagIds.map((tagId) => ({
+        entry_id: entryId,
+        tag_id: tagId,
+        user_id: userId,
+      })),
+    );
+    if (linkError) throw linkError;
+  }
 }
 
 export async function deleteAllEntries(userId: string): Promise<number> {

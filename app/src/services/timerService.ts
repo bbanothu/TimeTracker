@@ -1,4 +1,5 @@
 import {
+  createManualEntry,
   getActiveSession,
   getActiveSessionByGeofenceId,
   getActiveSessions,
@@ -27,6 +28,10 @@ export const timerService = {
 
   stop(sessionId: string): TimeEntry | null {
     return stopSession(sessionId);
+  },
+
+  addManualEntry(tagIds: string[], startedAt: number, endedAt: number): TimeEntry {
+    return createManualEntry(tagIds, startedAt, endedAt);
   },
 };
 

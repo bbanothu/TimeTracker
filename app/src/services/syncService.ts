@@ -16,19 +16,22 @@ import {
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import type { EntrySource } from '@/types';
 
-async function upsertTagToRemote(payload: Record<string, unknown>): Promise<void> {
+async function upsertTagToRemote(payload: Record<string, unknown>): Promise<boolean> {
   const { error } = await supabase.from('tags').upsert(payload);
   if (
     error?.code === 'PGRST204' &&
     typeof error.message === 'string' &&
     error.message.includes('include_in_analytics')
   ) {
-    const { include_in_analytics: _ignored, ...rest } = payload;
-    const { error: retryError } = await supabase.from('tags').upsert(rest);
-    if (retryError) throw retryError;
-    return;
+    const { include_in_analytics: _ignored, updated_at: _updatedAt, ...rest } = payload;
+    if (Object.keys(rest).length > 0) {
+      const { error: retryError } = await supabase.from('tags').upsert(rest);
+      if (retryError) throw retryError;
+    }
+    return false;
   }
   if (error) throw error;
+  return true;
 }
 
 async function ensureTagExistsForGoal(userId: string, tagId: string): Promise<void> {
@@ -41,6 +44,7 @@ async function ensureTagExistsForGoal(userId: string, tagId: string): Promise<vo
     name: tag.name,
     color: tag.color,
     parent_id: tag.parentId,
+    include_in_analytics: tag.includeInAnalytics,
     updated_at: new Date().toISOString(),
   });
 }
@@ -101,7 +105,10 @@ async function pushInternal(userId: string): Promise<boolean> {
           const { error } = await supabase.from('tags').delete().eq('id', item.entityId);
           if (error) throw error;
         } else {
-          await upsertTagToRemote(item.payload);
+          const fullySynced = await upsertTagToRemote(item.payload);
+          if (!fullySynced) {
+            continue;
+          }
         }
       } else if (item.entityType === 'entry') {
         if (item.operation === 'delete') {

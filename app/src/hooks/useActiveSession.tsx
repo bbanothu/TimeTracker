@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { useAuth } from '@/hooks/useAuth';
-import { subscribeDataRefresh } from '@/lib/dataRefresh';
+import { notifyDataRefresh, subscribeDataRefresh } from '@/lib/dataRefresh';
 import { initializeAppData, isDatabaseReady } from '@/services/appInitService';
 import { dismissGeofenceNotification } from '@/services/notificationService';
 import { pushChangesInBackground } from '@/services/syncScheduler';
@@ -18,6 +18,7 @@ interface TimerContextValue {
   refresh: () => void;
   startManual: (tagIds: string[]) => void;
   stop: (sessionId: string) => void;
+  addManualEntry: (tagIds: string[], startedAt: number, endedAt: number) => void;
 }
 
 const TimerContext = createContext<TimerContextValue | null>(null);
@@ -105,6 +106,18 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     [refresh, user],
   );
 
+  const addManualEntry = useCallback(
+    (tagIds: string[], startedAt: number, endedAt: number) => {
+      timerService.addManualEntry(tagIds, startedAt, endedAt);
+      refresh();
+      notifyDataRefresh();
+      if (user) {
+        pushChangesInBackground(user.id);
+      }
+    },
+    [refresh, user],
+  );
+
   const value = useMemo(
     () => ({
       ready,
@@ -115,8 +128,9 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
       refresh,
       startManual,
       stop,
+      addManualEntry,
     }),
-    [ready, sessions, todayEntries, entriesRevision, tick, refresh, startManual, stop],
+    [ready, sessions, todayEntries, entriesRevision, tick, refresh, startManual, stop, addManualEntry],
   );
 
   return <TimerContext.Provider value={value}>{children}</TimerContext.Provider>;

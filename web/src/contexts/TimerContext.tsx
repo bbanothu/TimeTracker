@@ -9,7 +9,7 @@ import {
 } from 'react';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { subscribeDataRefresh } from '@/lib/dataRefresh';
+import { notifyDataRefresh, subscribeDataRefresh } from '@/lib/dataRefresh';
 import {
   createTimeEntry,
   fetchEntries,
@@ -26,6 +26,7 @@ interface TimerContextValue {
   tick: number;
   startManual: (tagIds: string[]) => void;
   stop: (sessionId: string) => Promise<void>;
+  addManualEntry: (tagIds: string[], startedAt: number, endedAt: number) => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -121,6 +122,27 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     [user, sessions, refresh],
   );
 
+  const addManualEntry = useCallback(
+    async (tagIds: string[], startedAt: number, endedAt: number) => {
+      if (!user) throw new Error('Sign in to add sessions');
+      if (tagIds.length === 0) throw new Error('Select at least one tag');
+      if (endedAt <= startedAt) throw new Error('End must be after start');
+      if (endedAt > Date.now()) throw new Error('End cannot be in the future');
+
+      await createTimeEntry(user.id, {
+        startedAt,
+        endedAt,
+        source: 'manual',
+        geofenceId: null,
+        tagIds,
+      });
+
+      notifyDataRefresh();
+      await refresh();
+    },
+    [user, refresh],
+  );
+
   const value = useMemo(
     () => ({
       ready,
@@ -130,9 +152,10 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       tick,
       startManual,
       stop,
+      addManualEntry,
       refresh,
     }),
-    [ready, sessions, todayEntries, entriesRevision, tick, startManual, stop, refresh],
+    [ready, sessions, todayEntries, entriesRevision, tick, startManual, stop, addManualEntry, refresh],
   );
 
   return <TimerContext.Provider value={value}>{children}</TimerContext.Provider>;

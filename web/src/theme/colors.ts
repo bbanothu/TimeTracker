@@ -125,12 +125,19 @@ export const darkColors: AppColors = {
 
 export const TAG_COLOR_OPTIONS = [
   '#059669',
-  '#D97706',
-  '#DC2626',
-  '#9333EA',
-  '#DB2777',
+  '#65A30D',
+  '#0D9488',
   '#0891B2',
+  '#D97706',
+  '#EA580C',
   '#CA8A04',
+  '#DC2626',
+  '#E11D48',
+  '#DB2777',
+  '#C026D3',
+  '#9333EA',
+  '#7C3AED',
+  '#44403C',
 ] as const;
 
 export const DEFAULT_TAGS = [

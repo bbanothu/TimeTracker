@@ -11,6 +11,7 @@ interface EntryListProps {
   emptyMessage?: string;
   geofenceNames?: Map<string, string>;
   showDate?: boolean;
+  onEdit?: (entry: TimeEntry) => void;
   onDelete?: (entryId: string) => void;
 }
 
@@ -42,6 +43,7 @@ export function EntryList({
   emptyMessage = 'No entries yet',
   geofenceNames,
   showDate = false,
+  onEdit,
   onDelete,
 }: EntryListProps) {
   const colors = useAppColors();
@@ -95,6 +97,17 @@ export function EntryList({
             <Text className="shrink-0 text-sm font-medium tabular-nums" style={{ color: colors.textSecondary }}>
               {formatDurationLong(duration)}
             </Text>
+            {onEdit ? (
+              <Pressable
+                onPress={() => onEdit(entry)}
+                accessibilityRole="button"
+                accessibilityLabel={`Edit ${tagLabel}`}
+                hitSlop={8}
+                className="shrink-0 p-1"
+              >
+                <Ionicons name="create-outline" size={18} color={colors.textMuted} />
+              </Pressable>
+            ) : null}
             {onDelete ? (
               <Pressable
                 onPress={() => {

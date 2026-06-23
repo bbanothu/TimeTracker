@@ -59,6 +59,7 @@ function FilterChip({
 
 export function HistoryFilters({ tags, geofences, filters, onChange }: HistoryFiltersProps) {
   const colors = useAppColors();
+  const [expanded, setExpanded] = useState(false);
   const [picker, setPicker] = useState<PickerKind>(null);
   const flatTags = useMemo(() => flattenTags(tags), [tags]);
 
@@ -67,89 +68,112 @@ export function HistoryFilters({ tags, geofences, filters, onChange }: HistoryFi
 
   return (
     <>
-      <ThemedSurface className="mb-4 p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <p className="text-sm font-medium" style={{ color: colors.textMuted }}>
-            Filters
-          </p>
-          {hasActiveHistoryFilters(filters) ? (
+      {expanded ? (
+        <ThemedSurface className="mb-4 p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <p className="text-sm font-medium" style={{ color: colors.textMuted }}>
+                Filters
+              </p>
+              {hasActiveHistoryFilters(filters) ? (
+                <button
+                  type="button"
+                  onClick={() => onChange(defaultHistoryFilters)}
+                  className="text-xs font-semibold"
+                  style={{ color: colors.primary }}
+                >
+                  Clear all
+                </button>
+              ) : null}
+            </div>
             <button
               type="button"
-              onClick={() => onChange(defaultHistoryFilters)}
-              className="text-xs font-semibold"
-              style={{ color: colors.primary }}
+              aria-label="Hide filters"
+              onClick={() => setExpanded(false)}
+              className="rounded-full p-1 transition hover:opacity-80"
+              style={{ color: colors.textMuted }}
             >
-              Clear all
-            </button>
-          ) : null}
-        </div>
-
-        <p className="mb-2 text-xs font-medium" style={{ color: colors.textMuted }}>
-          Date
-        </p>
-        <div className="mb-3 flex overflow-x-auto pb-1">
-          {DATE_PRESETS.map((preset) => (
-            <FilterChip
-              key={preset}
-              label={getHistoryDatePresetLabel(preset)}
-              active={filters.datePreset === preset}
-              onClick={() => onChange({ ...filters, datePreset: preset })}
-            />
-          ))}
-        </div>
-
-        <p className="mb-2 text-xs font-medium" style={{ color: colors.textMuted }}>
-          Source
-        </p>
-        <div className="mb-3 flex overflow-x-auto pb-1">
-          {SOURCE_OPTIONS.map((option) => (
-            <FilterChip
-              key={option.value}
-              label={option.label}
-              active={filters.source === option.value}
-              onClick={() => onChange({ ...filters, source: option.value })}
-            />
-          ))}
-        </div>
-
-        <div className="flex gap-2">
-          <div className="min-w-0 flex-1">
-            <p className="mb-2 text-xs font-medium" style={{ color: colors.textMuted }}>
-              Tag
-            </p>
-            <button
-              type="button"
-              onClick={() => setPicker('tag')}
-              className="flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-left text-sm"
-              style={{ backgroundColor: colors.inputBgSolid, borderColor: colors.inputBorder, color: colors.text }}
-            >
-              <span className="truncate">{selectedTag ? formatTagName(selectedTag.name) : 'All tags'}</span>
-              <span className="shrink-0" style={{ color: colors.textMuted }}>
-                ▾
-              </span>
+              ✕
             </button>
           </div>
 
-          {geofences.length > 0 ? (
+          <p className="mb-2 text-xs font-medium" style={{ color: colors.textMuted }}>
+            Date
+          </p>
+          <div className="mb-3 flex overflow-x-auto pb-1">
+            {DATE_PRESETS.map((preset) => (
+              <FilterChip
+                key={preset}
+                label={getHistoryDatePresetLabel(preset)}
+                active={filters.datePreset === preset}
+                onClick={() => onChange({ ...filters, datePreset: preset })}
+              />
+            ))}
+          </div>
+
+          <p className="mb-2 text-xs font-medium" style={{ color: colors.textMuted }}>
+            Source
+          </p>
+          <div className="mb-3 flex overflow-x-auto pb-1">
+            {SOURCE_OPTIONS.map((option) => (
+              <FilterChip
+                key={option.value}
+                label={option.label}
+                active={filters.source === option.value}
+                onClick={() => onChange({ ...filters, source: option.value })}
+              />
+            ))}
+          </div>
+
+          <div className="flex gap-2">
             <div className="min-w-0 flex-1">
               <p className="mb-2 text-xs font-medium" style={{ color: colors.textMuted }}>
-                Place
+                Tag
               </p>
               <button
                 type="button"
-                onClick={() => setPicker('place')}
+                onClick={() => setPicker('tag')}
                 className="flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-left text-sm"
                 style={{ backgroundColor: colors.inputBgSolid, borderColor: colors.inputBorder, color: colors.text }}
               >
-                <span className="truncate">{selectedGeofence ? selectedGeofence.name : 'All places'}</span>
+                <span className="truncate">{selectedTag ? formatTagName(selectedTag.name) : 'All tags'}</span>
                 <span className="shrink-0" style={{ color: colors.textMuted }}>
                   ▾
                 </span>
               </button>
             </div>
-          ) : null}
-        </div>
-      </ThemedSurface>
+
+            {geofences.length > 0 ? (
+              <div className="min-w-0 flex-1">
+                <p className="mb-2 text-xs font-medium" style={{ color: colors.textMuted }}>
+                  Place
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setPicker('place')}
+                  className="flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-left text-sm"
+                  style={{ backgroundColor: colors.inputBgSolid, borderColor: colors.inputBorder, color: colors.text }}
+                >
+                  <span className="truncate">{selectedGeofence ? selectedGeofence.name : 'All places'}</span>
+                  <span className="shrink-0" style={{ color: colors.textMuted }}>
+                    ▾
+                  </span>
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </ThemedSurface>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="mb-4 text-sm font-semibold transition hover:opacity-80"
+          style={{ color: colors.primary }}
+        >
+          Show filters
+          {hasActiveHistoryFilters(filters) ? ' · active' : ''}
+        </button>
+      )}
 
       <BottomSheetModal
         visible={picker !== null}

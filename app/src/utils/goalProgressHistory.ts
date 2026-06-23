@@ -56,7 +56,8 @@ export function computeDailyAverageScore(
     const goal = goalsByTagId.get(tag.id)!;
     const actualMs = durations.get(tag.id) ?? 0;
     const targetMs = goal.targetMinutes * 60_000;
-    return targetMs > 0 ? (actualMs / targetMs) * 100 : 0;
+    if (targetMs === 0) return actualMs === 0 ? 100 : 0;
+    return (actualMs / targetMs) * 100;
   });
 
   const average = percents.reduce((sum, value) => sum + value, 0) / percents.length;

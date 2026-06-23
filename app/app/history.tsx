@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { Alert, Text } from 'react-native';
 
 import { AppBackground } from '@/components/AppBackground';
+import { EditEntryModal } from '@/components/EditEntryModal';
 import { EntryList } from '@/components/EntryList';
 import { HistoryFilters } from '@/components/HistoryFilters';
 import { TabScrollView } from '@/components/TabScrollView';
 import { TabScreenContainer } from '@/components/TabScreenContainer';
-import { deleteEntry, getAllEntries, getAllGeofences, getGeofenceById } from '@/db/client';
+import { deleteEntry, getAllEntries, getAllGeofences, getGeofenceById, updateEntry } from '@/db/client';
 import { useActiveSession } from '@/hooks/useActiveSession';
 import { useAppColors } from '@/hooks/useAppColors';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,6 +29,7 @@ export default function HistoryScreen() {
   const { ready, entriesRevision } = useActiveSession();
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [filters, setFilters] = useState<HistoryFilterState>(defaultHistoryFilters);
+  const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
   const geofences = useMemo(() => (ready ? getAllGeofences() : []), [ready, entriesRevision]);
 
   useEffect(() => {
@@ -62,6 +64,17 @@ export default function HistoryScreen() {
     }
   };
 
+  const handleSaveEdit = (
+    entryId: string,
+    tagIds: string[],
+    startedAt: number,
+    endedAt: number,
+  ) => {
+    updateEntry(entryId, tagIds, startedAt, endedAt);
+    notifyDataRefresh();
+    pushChangesInBackground(user?.id);
+  };
+
   if (!ready) {
     return (
       <AppBackground>
@@ -90,9 +103,18 @@ export default function HistoryScreen() {
             emptyMessage={emptyMessage}
             geofenceNames={geofenceNames}
             showDate
+            onEdit={setEditingEntry}
             onDelete={handleDelete}
           />
         </TabScrollView>
+
+        <EditEntryModal
+          visible={editingEntry !== null}
+          entry={editingEntry}
+          tags={tags}
+          onClose={() => setEditingEntry(null)}
+          onSave={handleSaveEdit}
+        />
       </TabScreenContainer>
     </AppBackground>
   );

@@ -69,17 +69,6 @@ function GoalTargetInputs({
     setButtonState('saving');
     setError(null);
     try {
-      if (total <= 0) {
-        if (targetMinutes !== null) {
-          await onClearGoal(tagId);
-          setButtonState('saved');
-        } else {
-          setButtonState('idle');
-          setError('Enter a target time first');
-        }
-        return;
-      }
-
       await onSaveGoal(tagId, total);
       setButtonState('saved');
     } catch (err) {
@@ -183,9 +172,11 @@ export function GoalsList({
         const goal = goalsByTagId.get(tag.id);
         const targetMinutes = goal?.targetMinutes ?? null;
         const todayMs = progressByTagId.get(tag.id) ?? 0;
-        const targetMs = targetMinutes ? targetMinutes * 60_000 : 0;
-        const ratio = targetMs > 0 ? Math.min(todayMs / targetMs, 1) : 0;
-        const overGoal = targetMs > 0 && todayMs > targetMs;
+        const hasTarget = targetMinutes !== null;
+        const targetMs = hasTarget ? targetMinutes * 60_000 : 0;
+        const ratio =
+          targetMs > 0 ? Math.min(todayMs / targetMs, 1) : todayMs > 0 ? 1 : 0;
+        const overGoal = hasTarget && (targetMs === 0 ? todayMs > 0 : todayMs > targetMs);
 
         return (
           <div
@@ -216,7 +207,7 @@ export function GoalsList({
               onClearGoal={onClearGoal}
             />
 
-            {targetMs > 0 ? (
+            {hasTarget ? (
               <div className="mt-3">
                 <div
                   className="h-2 overflow-hidden rounded-full"

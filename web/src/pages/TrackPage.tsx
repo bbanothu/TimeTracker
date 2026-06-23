@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
+import { AddManualSessionModal } from '@/components/ui/AddManualSessionModal';
 import { ActiveSessionsList } from '@/components/ui/ActiveSessionsList';
 import { ActionButton } from '@/components/ui/ActionButton';
 import { DarkModeToggle } from '@/components/ui/DarkModeToggle';
@@ -17,9 +18,10 @@ import { fetchGeofences } from '@/services/data';
 export function TrackPage() {
   const colors = useAppColors();
   const { user } = useAuth();
-  const { ready, sessions, todayEntries, tick, startManual, stop } = useTimer();
+  const { ready, sessions, todayEntries, tick, startManual, stop, addManualEntry } = useTimer();
   const { tags } = useTags();
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
+  const [manualModalOpen, setManualModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [geofenceNames, setGeofenceNames] = useState<Map<string, string>>(new Map());
 
@@ -98,9 +100,27 @@ export function TrackPage() {
       </div>
 
       <ThemedSurface className="mb-6 p-4">
-        <p className="mb-3 text-sm font-medium" style={{ color: colors.textMuted }}>
-          Start new session
-        </p>
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-sm font-medium" style={{ color: colors.textMuted }}>
+            Start new session
+          </p>
+          <button
+            type="button"
+            onClick={() => setManualModalOpen(true)}
+            aria-label="Add past session"
+            className="rounded-full p-1 transition hover:opacity-70"
+          >
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" stroke={colors.primary} strokeWidth="1.5" />
+              <path
+                d="M12 8v8M8 12h8"
+                stroke={colors.primary}
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        </div>
         <TagDropdown tags={tags} selectedId={selectedTagId} onSelect={setSelectedTagId} />
         {error ? <p className="mt-3 text-sm text-rose-500">{error}</p> : null}
         <div className="mt-4">
@@ -135,6 +155,13 @@ export function TrackPage() {
         entries={todayEntries}
         emptyMessage="No tracked time yet today."
         geofenceNames={geofenceNames}
+      />
+
+      <AddManualSessionModal
+        visible={manualModalOpen}
+        tags={tags}
+        onClose={() => setManualModalOpen(false)}
+        onSave={addManualEntry}
       />
     </div>
   );

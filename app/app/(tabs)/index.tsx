@@ -1,7 +1,9 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 
 import { ActiveSessionsList } from '@/components/ActiveSessionsList';
+import { AddManualSessionModal } from '@/components/AddManualSessionModal';
 import { ActionButton } from '@/components/ActionButton';
 import { EntryList } from '@/components/EntryList';
 import { TabScrollView } from '@/components/TabScrollView';
@@ -14,10 +16,12 @@ import { useAppColors } from '@/hooks/useAppColors';
 import { useTags } from '@/hooks/useTags';
 
 export default function TrackScreen() {
-  const { ready, sessions, todayEntries, tick, startManual, stop } = useActiveSession();
+  const { ready, sessions, todayEntries, tick, startManual, stop, addManualEntry } =
+    useActiveSession();
   const { tags } = useTags();
   const colors = useAppColors();
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
+  const [manualModalOpen, setManualModalOpen] = useState(false);
 
   void tick;
 
@@ -77,9 +81,19 @@ export default function TrackScreen() {
     <TabScreenContainer>
       <TabScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-2">
         <ThemedSurface className="mb-6 p-4">
-          <Text className="mb-3 text-sm font-medium" style={{ color: colors.textMuted }}>
-            Start new session
-          </Text>
+          <View className="mb-3 flex-row items-center justify-between">
+            <Text className="text-sm font-medium" style={{ color: colors.textMuted }}>
+              Start new session
+            </Text>
+            <Pressable
+              onPress={() => setManualModalOpen(true)}
+              accessibilityLabel="Add past session"
+              accessibilityRole="button"
+              className="rounded-full p-1 active:opacity-70"
+            >
+              <Ionicons name="add-circle-outline" size={26} color={colors.primary} />
+            </Pressable>
+          </View>
           <TagDropdown tags={tags} selectedId={selectedTagId} onSelect={setSelectedTagId} />
           <View className="mt-4">
             <ActionButton label="Start" onPress={handleStart} size="lg" />
@@ -108,6 +122,13 @@ export default function TrackScreen() {
           geofenceNames={geofenceNames}
         />
       </TabScrollView>
+
+      <AddManualSessionModal
+        visible={manualModalOpen}
+        tags={tags}
+        onClose={() => setManualModalOpen(false)}
+        onSave={addManualEntry}
+      />
     </TabScreenContainer>
   );
 }

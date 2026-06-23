@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useMemo, useRef } from 'react';
+import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
+  Keyboard,
   Modal,
   PanResponder,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -41,28 +43,31 @@ type BottomSheetScrollViewProps = ScrollViewProps & {
   maxHeightFraction?: number;
 };
 
-export function BottomSheetScrollView({
-  maxHeightFraction = 0.6,
-  contentContainerStyle,
-  children,
-  ...props
-}: BottomSheetScrollViewProps) {
-  const { height: windowHeight } = useWindowDimensions();
-  const scrollMaxHeight = getBottomSheetScrollHeight(windowHeight, maxHeightFraction);
+export const BottomSheetScrollView = forwardRef<ScrollView, BottomSheetScrollViewProps>(
+  function BottomSheetScrollView(
+    { maxHeightFraction = 0.6, contentContainerStyle, children, ...props },
+    ref,
+  ) {
+    const { height: windowHeight } = useWindowDimensions();
+    const scrollMaxHeight = getBottomSheetScrollHeight(windowHeight, maxHeightFraction);
 
-  return (
-    <ScrollView
-      style={{ maxHeight: scrollMaxHeight }}
-      nestedScrollEnabled
-      showsVerticalScrollIndicator
-      keyboardShouldPersistTaps="handled"
-      contentContainerStyle={contentContainerStyle}
-      {...props}
-    >
-      {children}
-    </ScrollView>
-  );
-}
+    return (
+      <ScrollView
+        ref={ref}
+        style={{ maxHeight: scrollMaxHeight }}
+        nestedScrollEnabled
+        showsVerticalScrollIndicator
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+        keyboardDismissMode="on-drag"
+        contentContainerStyle={contentContainerStyle}
+        {...props}
+      >
+        {children}
+      </ScrollView>
+    );
+  },
+);
 
 export function BottomSheetModal({
   visible,
@@ -74,11 +79,35 @@ export function BottomSheetModal({
 }: BottomSheetModalProps) {
   const colors = useAppColors();
   const { height: windowHeight } = useWindowDimensions();
-  const maxSheetHeight = Math.round(windowHeight * maxHeightFraction);
+  const [keyboardInset, setKeyboardInset] = useState(0);
+  const availableHeight = Math.max(windowHeight - keyboardInset, windowHeight * 0.4);
+  const maxSheetHeight = Math.round(availableHeight * maxHeightFraction);
   const maxContentHeight = maxSheetHeight - SHEET_HEADER_HEIGHT - SHEET_BOTTOM_PADDING;
   const translateY = useRef(new Animated.Value(0)).current;
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+
+  useEffect(() => {
+    if (!visible) {
+      setKeyboardInset(0);
+      return;
+    }
+
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, (event) => {
+      setKeyboardInset(event.endCoordinates.height);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setKeyboardInset(0);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [visible]);
 
   useEffect(() => {
     if (visible) {
@@ -92,7 +121,7 @@ export function BottomSheetModal({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: (_, gestureState) =>
           gestureState.dy > 2 && Math.abs(gestureState.dy) >= Math.abs(gestureState.dx),
-        onPanResponderTerminationRequest: () => false,
+        onPanResponderTerminationRequest: () => true,
         onPanResponderMove: (_, gestureState) => {
           if (gestureState.dy > 0) {
             translateY.setValue(gestureState.dy);
@@ -149,10 +178,11 @@ export function BottomSheetModal({
             backgroundColor: colors.surfaceSolid,
             transform: [{ translateY }],
             maxHeight: maxSheetHeight,
+            marginBottom: keyboardInset,
           }}
         >
-          <View {...panResponder.panHandlers} className="px-4 pb-2 pt-3">
-            <View className="mb-3 items-center">
+          <View className="px-4 pb-2 pt-3">
+            <View {...panResponder.panHandlers} className="mb-3 items-center py-2">
               <View
                 className="h-1 w-10 rounded-full"
                 style={{ backgroundColor: colors.textMuted, opacity: 0.45 }}

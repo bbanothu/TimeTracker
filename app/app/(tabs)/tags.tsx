@@ -1,13 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo, useState } from 'react';
-import { Alert, Pressable, Text, TextInput, View } from 'react-native';
+import { useMemo, useRef, useState } from 'react';
+import { Alert, Keyboard, Platform, Pressable, ScrollView, Text, TextInput, View, type ScrollView as ScrollViewType } from 'react-native';
 
 import { ActionButton } from '@/components/ActionButton';
 import { BottomSheetModal, BottomSheetScrollView } from '@/components/BottomSheetModal';
 import { TabScrollView } from '@/components/TabScrollView';
 import { TabScreenContainer } from '@/components/TabScreenContainer';
 import { TagsList } from '@/components/TagsList';
-import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAppColors } from '@/hooks/useAppColors';
 import { useTags } from '@/hooks/useTags';
 import { TAG_COLOR_OPTIONS } from '@/theme/colors';
@@ -22,7 +21,9 @@ export default function TagsScreen() {
   const [color, setColor] = useState<string>(TAG_COLOR_OPTIONS[0]);
   const [parentId, setParentId] = useState<string | null>(null);
   const [parentPickerOpen, setParentPickerOpen] = useState(false);
+  const [tagFormOpen, setTagFormOpen] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
+  const tagFormScrollRef = useRef<ScrollViewType>(null);
 
   const flatTags = useMemo(() => flattenTags(tags), [tags]);
   const parentOptions = useMemo(
@@ -41,6 +42,17 @@ export default function TagsScreen() {
     setEditingTag(null);
   };
 
+  const closeTagForm = () => {
+    resetForm();
+    setParentPickerOpen(false);
+    setTagFormOpen(false);
+  };
+
+  const openCreateForm = () => {
+    resetForm();
+    setTagFormOpen(true);
+  };
+
   const handleSave = () => {
     try {
       if (editingTag) {
@@ -48,7 +60,7 @@ export default function TagsScreen() {
       } else {
         addTag(name, color, parentId);
       }
-      resetForm();
+      closeTagForm();
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Could not save tag');
     }
@@ -59,12 +71,13 @@ export default function TagsScreen() {
     setName(tag.name);
     setColor(tag.color);
     setParentId(tag.parentId);
+    setTagFormOpen(true);
   };
 
   const handleDelete = (tag: Tag) => {
     try {
       removeTag(tag.id);
-      if (editingTag?.id === tag.id) resetForm();
+      if (editingTag?.id === tag.id) closeTagForm();
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Could not delete tag');
     }
@@ -73,65 +86,14 @@ export default function TagsScreen() {
   return (
     <TabScreenContainer className="px-4 pt-2">
       <TabScrollView className="flex-1" contentContainerClassName="pb-8">
-      <ThemedSurface className="mb-4 p-4">
-        <Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>
-          {editingTag ? 'Edit tag' : 'New tag'}
-        </Text>
-        <TextInput
-          value={name}
-          onChangeText={setName}
-          placeholder="work"
-          placeholderTextColor={colors.inputPlaceholder}
-          autoCapitalize="none"
-          className="mb-3 rounded-xl border px-4 py-3 text-base"
-          style={{
-            backgroundColor: colors.inputBg,
-            borderColor: colors.inputBorder,
-            color: colors.text,
-          }}
+        <ActionButton
+          label="Create new tag"
+          onPress={openCreateForm}
+          variant="secondary"
+          className="mb-4"
         />
-        <Text className="mb-2 text-sm" style={{ color: colors.textMuted }}>
-          Parent tag
-        </Text>
-        <Pressable
-          onPress={() => setParentPickerOpen(true)}
-          className="mb-3 flex-row items-center justify-between rounded-xl border px-4 py-3"
-          style={{ backgroundColor: colors.inputBg, borderColor: colors.inputBorder }}
-        >
-          <Text className="text-base" style={{ color: colors.text }}>
-            {selectedParentLabel}
-          </Text>
-          <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
-        </Pressable>
-        <Text className="mb-2 text-sm" style={{ color: colors.textMuted }}>
-          Color
-        </Text>
-        <View className="mb-4 flex-row flex-wrap">
-          {TAG_COLOR_OPTIONS.map((item) => (
-            <Pressable
-              key={item}
-              onPress={() => setColor(item)}
-              className={`mr-2 mb-2 h-10 w-10 rounded-full ${color === item ? 'border-2' : ''}`}
-              style={{
-                backgroundColor: item,
-                borderColor: color === item ? colors.text : 'transparent',
-              }}
-            />
-          ))}
-        </View>
-        <View className="flex-row gap-3">
-          <ActionButton
-            label={editingTag ? 'Update' : 'Add tag'}
-            onPress={handleSave}
-            className="flex-1"
-          />
-          {editingTag ? (
-            <ActionButton label="Cancel" onPress={resetForm} variant="secondary" />
-          ) : null}
-        </View>
-      </ThemedSurface>
 
-      <Text className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
+        <Text className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
         Tags ({flatTags.length})
       </Text>
       <TagsList
@@ -143,45 +105,136 @@ export default function TagsScreen() {
       </TabScrollView>
 
       <BottomSheetModal
-        visible={parentPickerOpen}
-        title="Select parent"
-        onClose={() => setParentPickerOpen(false)}
-        maxHeightFraction={0.5}
+        visible={tagFormOpen}
+        title={parentPickerOpen ? 'Select parent' : editingTag ? 'Edit tag' : 'New tag'}
+        onClose={() => {
+          if (parentPickerOpen) {
+            setParentPickerOpen(false);
+            return;
+          }
+          closeTagForm();
+        }}
+        maxHeightFraction={0.9}
       >
-        <BottomSheetScrollView maxHeightFraction={0.5} contentContainerStyle={{ paddingBottom: 8 }}>
-          <Pressable
-            onPress={() => {
-              setParentId(null);
-              setParentPickerOpen(false);
-            }}
-            className="mb-2 rounded-xl px-4 py-3"
-            style={{
-              backgroundColor: parentId === null ? colors.selectedBgSolid : colors.secondaryBgSolid,
-            }}
-          >
-            <Text className="text-base" style={{ color: colors.text }}>
-              None (top level)
-            </Text>
-          </Pressable>
-          {parentOptions.map((item) => (
-            <Pressable
-              key={item.tag.id}
-              onPress={() => {
-                setParentId(item.tag.id);
-                setParentPickerOpen(false);
-              }}
-              className="mb-2 rounded-xl px-4 py-3"
-              style={{
-                marginLeft: item.depth * 12,
-                backgroundColor:
-                  parentId === item.tag.id ? colors.selectedBgSolid : colors.secondaryBgSolid,
-              }}
-            >
-              <Text className="text-base" style={{ color: colors.text }}>
-                {formatTagName(item.path)}
+        <BottomSheetScrollView
+          ref={tagFormScrollRef}
+          maxHeightFraction={0.75}
+          contentContainerStyle={{ paddingBottom: 24 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          {parentPickerOpen ? (
+            <>
+              <Pressable
+                onPress={() => setParentPickerOpen(false)}
+                className="mb-3 flex-row items-center"
+              >
+                <Ionicons name="chevron-back" size={18} color={colors.primary} />
+                <Text className="ml-1 text-sm font-semibold" style={{ color: colors.primary }}>
+                  Back to tag
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setParentId(null);
+                  setParentPickerOpen(false);
+                }}
+                className="mb-2 rounded-xl px-4 py-3"
+                style={{
+                  backgroundColor:
+                    parentId === null ? colors.selectedBgSolid : colors.secondaryBgSolid,
+                }}
+              >
+                <Text className="text-base" style={{ color: colors.text }}>
+                  None (top level)
+                </Text>
+              </Pressable>
+              {parentOptions.map((item) => (
+                <Pressable
+                  key={item.tag.id}
+                  onPress={() => {
+                    setParentId(item.tag.id);
+                    setParentPickerOpen(false);
+                  }}
+                  className="mb-2 rounded-xl px-4 py-3"
+                  style={{
+                    marginLeft: item.depth * 12,
+                    backgroundColor:
+                      parentId === item.tag.id ? colors.selectedBgSolid : colors.secondaryBgSolid,
+                  }}
+                >
+                  <Text className="text-base" style={{ color: colors.text }}>
+                    {formatTagName(item.path)}
+                  </Text>
+                </Pressable>
+              ))}
+            </>
+          ) : (
+            <>
+              <Text className="mb-2 text-sm" style={{ color: colors.textMuted }}>
+                Name
               </Text>
-            </Pressable>
-          ))}
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                placeholder="work"
+                placeholderTextColor={colors.inputPlaceholder}
+                autoCapitalize="none"
+                className="mb-3 rounded-xl border px-4 py-3 text-base"
+                style={{
+                  backgroundColor: colors.inputBg,
+                  borderColor: colors.inputBorder,
+                  color: colors.text,
+                }}
+                onFocus={() => {
+                  const delay = Platform.OS === 'ios' ? 150 : 0;
+                  setTimeout(() => {
+                    tagFormScrollRef.current?.scrollTo({ y: 0, animated: true });
+                  }, delay);
+                }}
+              />
+              <Text className="mb-2 text-sm" style={{ color: colors.textMuted }}>
+                Parent tag
+              </Text>
+              <Pressable
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setParentPickerOpen(true);
+                }}
+                className="mb-3 flex-row items-center justify-between rounded-xl border px-4 py-3"
+                style={{ backgroundColor: colors.inputBg, borderColor: colors.inputBorder }}
+              >
+                <Text className="text-base" style={{ color: colors.text }}>
+                  {selectedParentLabel}
+                </Text>
+                <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
+              </Pressable>
+              <Text className="mb-2 text-sm" style={{ color: colors.textMuted }}>
+                Color
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                className="mb-4"
+                contentContainerStyle={{ gap: 8, paddingRight: 4 }}
+              >
+                {TAG_COLOR_OPTIONS.map((item) => (
+                  <Pressable
+                    key={item}
+                    onPress={() => setColor(item)}
+                    className={`h-10 w-10 rounded-full ${color === item ? 'border-2' : ''}`}
+                    style={{
+                      backgroundColor: item,
+                      borderColor: color === item ? colors.text : 'transparent',
+                    }}
+                  />
+                ))}
+              </ScrollView>
+              <ActionButton
+                label={editingTag ? 'Update' : 'Add tag'}
+                onPress={handleSave}
+              />
+            </>
+          )}
         </BottomSheetScrollView>
       </BottomSheetModal>
     </TabScreenContainer>

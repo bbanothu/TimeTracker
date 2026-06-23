@@ -3,7 +3,6 @@ import { FormEvent, useMemo, useState } from 'react';
 import { ActionButton } from '@/components/ui/ActionButton';
 import { BottomSheetModal, BottomSheetScroll } from '@/components/ui/BottomSheetModal';
 import { TagsList } from '@/components/ui/TagsList';
-import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { TAG_COLOR_OPTIONS } from '@/theme/colors';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { useTags } from '@/contexts/TagsContext';
@@ -18,6 +17,7 @@ export function TagsPage() {
   const [color, setColor] = useState<string>(TAG_COLOR_OPTIONS[0]);
   const [parentId, setParentId] = useState<string | null>(null);
   const [parentPickerOpen, setParentPickerOpen] = useState(false);
+  const [tagFormOpen, setTagFormOpen] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,6 +36,26 @@ export function TagsPage() {
     setColor(TAG_COLOR_OPTIONS[0]);
     setParentId(null);
     setEditingTag(null);
+    setError(null);
+  };
+
+  const closeTagForm = () => {
+    resetForm();
+    setParentPickerOpen(false);
+    setTagFormOpen(false);
+  };
+
+  const openCreateForm = () => {
+    resetForm();
+    setTagFormOpen(true);
+  };
+
+  const handleModalClose = () => {
+    if (parentPickerOpen) {
+      setParentPickerOpen(false);
+      return;
+    }
+    closeTagForm();
   };
 
   const handleSubmit = async (event: FormEvent) => {
@@ -47,7 +67,7 @@ export function TagsPage() {
       }
       if (editingTag) await editTag(editingTag.id, name, color, parentId);
       else await addTag(name, color, parentId);
-      resetForm();
+      closeTagForm();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save tag');
     }
@@ -58,13 +78,15 @@ export function TagsPage() {
     setName(tag.name);
     setColor(tag.color);
     setParentId(tag.parentId);
+    setError(null);
+    setTagFormOpen(true);
   };
 
   const handleDelete = async (tag: Tag) => {
     try {
       setError(null);
       await removeTag(tag.id);
-      if (editingTag?.id === tag.id) resetForm();
+      if (editingTag?.id === tag.id) closeTagForm();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not delete tag');
     }
@@ -80,52 +102,13 @@ export function TagsPage() {
         Tags
       </h1>
 
-      <ThemedSurface className="mb-4 p-4">
-        <h2 className="mb-3 text-base font-semibold" style={{ color: colors.text }}>
-          {editingTag ? 'Edit tag' : 'New tag'}
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="work"
-            className="w-full rounded-xl border px-4 py-3"
-            style={{ backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }}
-          />
-          <div>
-            <p className="mb-2 text-sm" style={{ color: colors.textMuted }}>
-              Parent tag
-            </p>
-            <button
-              type="button"
-              onClick={() => setParentPickerOpen(true)}
-              className="flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left"
-              style={{ backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }}
-            >
-              <span>{selectedParentLabel}</span>
-              <span style={{ color: colors.textMuted }}>▾</span>
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {TAG_COLOR_OPTIONS.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setColor(item)}
-                className={`h-10 w-10 rounded-full border-2 ${color === item ? 'border-stone-900 dark:border-white' : 'border-transparent'}`}
-                style={{ backgroundColor: item }}
-              />
-            ))}
-          </div>
-          {error ? <p className="text-sm text-rose-500">{error}</p> : null}
-          <div className="flex gap-3">
-            <ActionButton label={editingTag ? 'Update' : 'Add tag'} type="submit" className="flex-1" />
-            {editingTag ? (
-              <ActionButton label="Cancel" type="button" variant="secondary" onClick={resetForm} />
-            ) : null}
-          </div>
-        </form>
-      </ThemedSurface>
+      <ActionButton
+        label="Create new tag"
+        type="button"
+        variant="secondary"
+        onClick={openCreateForm}
+        className="mb-4 w-full"
+      />
 
       <p className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
         Tags ({flatTags.length})
@@ -142,47 +125,116 @@ export function TagsPage() {
       />
 
       <BottomSheetModal
-        visible={parentPickerOpen}
-        title="Select parent"
-        onClose={() => setParentPickerOpen(false)}
-        maxHeightFraction={0.5}
+        visible={tagFormOpen}
+        title={parentPickerOpen ? 'Select parent' : editingTag ? 'Edit tag' : 'New tag'}
+        onClose={handleModalClose}
+        maxHeightFraction={0.9}
       >
-        <BottomSheetScroll maxHeightFraction={0.42}>
-          <div className="space-y-2 pb-2">
-            <button
-              type="button"
-              onClick={() => {
-                setParentId(null);
-                setParentPickerOpen(false);
-              }}
-              className="w-full rounded-xl px-4 py-3 text-left"
-              style={{
-                backgroundColor: parentId === null ? colors.selectedBgSolid : colors.secondaryBgSolid,
-                color: colors.text,
-              }}
-            >
-              None (top level)
-            </button>
-            {parentOptions.map((item) => (
+        <BottomSheetScroll maxHeightFraction={0.75}>
+          {parentPickerOpen ? (
+            <div className="space-y-2 pb-2">
               <button
-                key={item.tag.id}
+                type="button"
+                onClick={() => setParentPickerOpen(false)}
+                className="mb-1 flex items-center text-sm font-semibold"
+                style={{ color: colors.primary }}
+              >
+                <span className="mr-1">‹</span> Back to tag
+              </button>
+              <button
                 type="button"
                 onClick={() => {
-                  setParentId(item.tag.id);
+                  setParentId(null);
                   setParentPickerOpen(false);
                 }}
                 className="w-full rounded-xl px-4 py-3 text-left"
                 style={{
-                  marginLeft: item.depth * 12,
-                  backgroundColor:
-                    parentId === item.tag.id ? colors.selectedBgSolid : colors.secondaryBgSolid,
+                  backgroundColor: parentId === null ? colors.selectedBgSolid : colors.secondaryBgSolid,
                   color: colors.text,
                 }}
               >
-                {formatTagName(item.path)}
+                None (top level)
               </button>
-            ))}
-          </div>
+              {parentOptions.map((item) => (
+                <button
+                  key={item.tag.id}
+                  type="button"
+                  onClick={() => {
+                    setParentId(item.tag.id);
+                    setParentPickerOpen(false);
+                  }}
+                  className="w-full rounded-xl px-4 py-3 text-left"
+                  style={{
+                    marginLeft: item.depth * 12,
+                    backgroundColor:
+                      parentId === item.tag.id ? colors.selectedBgSolid : colors.secondaryBgSolid,
+                    color: colors.text,
+                  }}
+                >
+                  {formatTagName(item.path)}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-3 pb-2">
+              <div>
+                <p className="mb-2 text-sm" style={{ color: colors.textMuted }}>
+                  Name
+                </p>
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="work"
+                  className="w-full rounded-xl border px-4 py-3"
+                  style={{
+                    backgroundColor: colors.inputBg,
+                    borderColor: colors.inputBorder,
+                    color: colors.text,
+                  }}
+                />
+              </div>
+              <div>
+                <p className="mb-2 text-sm" style={{ color: colors.textMuted }}>
+                  Parent tag
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setParentPickerOpen(true)}
+                  className="flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left"
+                  style={{
+                    backgroundColor: colors.inputBg,
+                    borderColor: colors.inputBorder,
+                    color: colors.text,
+                  }}
+                >
+                  <span>{selectedParentLabel}</span>
+                  <span style={{ color: colors.textMuted }}>▾</span>
+                </button>
+              </div>
+              <div>
+                <p className="mb-2 text-sm" style={{ color: colors.textMuted }}>
+                  Color
+                </p>
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {TAG_COLOR_OPTIONS.map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => setColor(item)}
+                      className={`h-10 w-10 shrink-0 rounded-full border-2 ${color === item ? 'border-stone-900 dark:border-white' : 'border-transparent'}`}
+                      style={{ backgroundColor: item }}
+                    />
+                  ))}
+                </div>
+              </div>
+              {error ? <p className="text-sm text-rose-500">{error}</p> : null}
+              <ActionButton
+                label={editingTag ? 'Update' : 'Add tag'}
+                type="submit"
+                className="w-full"
+              />
+            </form>
+          )}
         </BottomSheetScroll>
       </BottomSheetModal>
     </div>

@@ -399,7 +399,7 @@ export function upsertTagFromRemote(tag: {
   name: string;
   color: string;
   parent_id?: string | null;
-  include_in_analytics?: boolean;
+  include_in_analytics?: boolean | null;
   updated_at: string;
 }): void {
   const updatedAt = new Date(tag.updated_at).getTime();
@@ -427,7 +427,27 @@ export function upsertTagFromRemote(tag: {
     database.execSync('PRAGMA foreign_keys = ON');
   }
 
-  const includeInAnalytics = tag.include_in_analytics === false ? 0 : 1;
+  const existingLocal = database.getFirstSync<{ include_in_analytics: number }>(
+    'SELECT include_in_analytics FROM tags WHERE id = ? AND user_id = ?',
+    [tag.id, userId],
+  );
+
+  const pendingAnalytics = getSyncQueue()
+    .filter(
+      (item) =>
+        item.entityType === 'tag' && item.entityId === tag.id && item.operation === 'upsert',
+    )
+    .map((item) => item.payload.include_in_analytics)
+    .find((value): value is boolean => typeof value === 'boolean');
+
+  let includeInAnalytics: number;
+  if (pendingAnalytics !== undefined) {
+    includeInAnalytics = pendingAnalytics ? 1 : 0;
+  } else if (typeof tag.include_in_analytics === 'boolean') {
+    includeInAnalytics = tag.include_in_analytics ? 1 : 0;
+  } else {
+    includeInAnalytics = existingLocal?.include_in_analytics ?? 1;
+  }
 
   database.runSync(
     `INSERT INTO tags (id, user_id, name, color, parent_id, include_in_analytics, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -793,6 +813,131 @@ export function stopSession(sessionId: string, endedAt: number = Date.now()): Ti
   return entry;
 }
 
+export function createManualEntry(
+  tagIds: string[],
+  startedAt: number,
+  endedAt: number,
+): TimeEntry {
+  const userId = requireUserId();
+  if (tagIds.length === 0) throw new Error('Select at least one tag');
+  if (endedAt <= startedAt) throw new Error('End must be after start');
+  if (endedAt > Date.now()) throw new Error('End cannot be in the future');
+
+  const allTags = getAllTags();
+  const tags = tagIds
+    .map((tagId) => allTags.find((tag) => tag.id === tagId))
+    .filter((tag): tag is Tag => tag !== undefined);
+  if (tags.length === 0) throw new Error('Select at least one tag');
+
+  const database = getDb();
+  const ts = nowMs();
+  const entry: TimeEntry = {
+    id: createId(),
+    startedAt,
+    endedAt,
+    source: 'manual',
+    geofenceId: null,
+    tags,
+  };
+
+  database.runSync(
+    `INSERT INTO time_entries (id, user_id, started_at, ended_at, source, geofence_id, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [entry.id, userId, entry.startedAt, entry.endedAt, entry.source, entry.geofenceId, ts],
+  );
+
+  for (const tag of tags) {
+    database.runSync(
+      'INSERT INTO time_entry_tags (entry_id, tag_id, user_id) VALUES (?, ?, ?)',
+      [entry.id, tag.id, userId],
+    );
+  }
+
+  enqueueSync('entry', entry.id, 'upsert', {
+    id: entry.id,
+    user_id: userId,
+    started_at: entry.startedAt,
+    ended_at: entry.endedAt,
+    source: entry.source,
+    geofence_id: entry.geofenceId,
+    updated_at: new Date(ts).toISOString(),
+    tag_ids: tags.map((t) => t.id),
+  });
+
+  return entry;
+}
+
+export function updateEntry(
+  id: string,
+  tagIds: string[],
+  startedAt: number,
+  endedAt: number,
+): TimeEntry {
+  const userId = requireUserId();
+  if (tagIds.length === 0) throw new Error('Select at least one tag');
+  if (endedAt <= startedAt) throw new Error('End must be after start');
+  if (endedAt > Date.now()) throw new Error('End cannot be in the future');
+
+  const database = getDb();
+  const existing = database.getFirstSync<{
+    id: string;
+    started_at: number;
+    ended_at: number;
+    source: EntrySource;
+    geofence_id: string | null;
+  }>(
+    `SELECT id, started_at, ended_at, source, geofence_id
+     FROM time_entries
+     WHERE id = ? AND user_id = ?`,
+    [id, userId],
+  );
+  if (!existing) throw new Error('Entry not found');
+
+  const allTags = getAllTags();
+  const tags = tagIds
+    .map((tagId) => allTags.find((tag) => tag.id === tagId))
+    .filter((tag): tag is Tag => tag !== undefined);
+  if (tags.length === 0) throw new Error('Select at least one tag');
+
+  const ts = nowMs();
+  database.runSync(
+    `UPDATE time_entries
+     SET started_at = ?, ended_at = ?, updated_at = ?
+     WHERE id = ? AND user_id = ?`,
+    [startedAt, endedAt, ts, id, userId],
+  );
+
+  database.runSync('DELETE FROM time_entry_tags WHERE entry_id = ? AND user_id = ?', [id, userId]);
+  for (const tag of tags) {
+    database.runSync(
+      'INSERT INTO time_entry_tags (entry_id, tag_id, user_id) VALUES (?, ?, ?)',
+      [id, tag.id, userId],
+    );
+  }
+
+  const entry: TimeEntry = {
+    id,
+    startedAt,
+    endedAt,
+    source: existing.source,
+    geofenceId: existing.geofence_id,
+    tags,
+  };
+
+  enqueueSync('entry', id, 'upsert', {
+    id,
+    user_id: userId,
+    started_at: startedAt,
+    ended_at: endedAt,
+    source: existing.source,
+    geofence_id: existing.geofence_id,
+    updated_at: new Date(ts).toISOString(),
+    tag_ids: tags.map((t) => t.id),
+  });
+
+  return entry;
+}
+
 export function getEntriesBetween(startMs: number, endMs: number): TimeEntry[] {
   const userId = requireUserId();
   const rows = getDb().getAllSync<{
@@ -1078,8 +1223,8 @@ export function getGoalByTagId(tagId: string): TagDailyGoal | null {
 
 export function setGoal(tagId: string, targetMinutes: number): TagDailyGoal {
   const userId = requireUserId();
-  if (!Number.isInteger(targetMinutes) || targetMinutes < 1 || targetMinutes > 1440) {
-    throw new Error('Target must be between 1 and 1440 minutes');
+  if (!Number.isInteger(targetMinutes) || targetMinutes < 0 || targetMinutes > 1440) {
+    throw new Error('Target must be between 0 and 1440 minutes');
   }
 
   const tag = getAllTags().find((item) => item.id === tagId);

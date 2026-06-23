@@ -64,6 +64,7 @@ function FilterChip({
 
 export function HistoryFilters({ tags, geofences, filters, onChange }: HistoryFiltersProps) {
   const colors = useAppColors();
+  const [expanded, setExpanded] = useState(false);
   const [picker, setPicker] = useState<PickerKind>(null);
   const flatTags = useMemo(() => flattenTags(tags), [tags]);
 
@@ -75,84 +76,104 @@ export function HistoryFilters({ tags, geofences, filters, onChange }: HistoryFi
 
   return (
     <>
-      <ThemedSurface className="mb-4 p-4">
-        <View className="mb-3 flex-row items-center justify-between">
-          <Text className="text-sm font-medium" style={{ color: colors.textMuted }}>
-            Filters
-          </Text>
-          {hasActiveHistoryFilters(filters) ? (
-            <Pressable onPress={() => onChange(defaultHistoryFilters)}>
-              <Text className="text-xs font-semibold" style={{ color: colors.primary }}>
-                Clear all
+      {expanded ? (
+        <ThemedSurface className="mb-4 p-4">
+          <View className="mb-3 flex-row items-center justify-between">
+            <View className="flex-row items-center gap-3">
+              <Text className="text-sm font-medium" style={{ color: colors.textMuted }}>
+                Filters
               </Text>
-            </Pressable>
-          ) : null}
-        </View>
-
-        <Text className="mb-2 text-xs font-medium" style={{ color: colors.textMuted }}>
-          Date
-        </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-3">
-          {DATE_PRESETS.map((preset) => (
-            <FilterChip
-              key={preset}
-              label={getHistoryDatePresetLabel(preset)}
-              active={filters.datePreset === preset}
-              onPress={() => onChange({ ...filters, datePreset: preset })}
-            />
-          ))}
-        </ScrollView>
-
-        <Text className="mb-2 text-xs font-medium" style={{ color: colors.textMuted }}>
-          Source
-        </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-3">
-          {SOURCE_OPTIONS.map((option) => (
-            <FilterChip
-              key={option.value}
-              label={option.label}
-              active={filters.source === option.value}
-              onPress={() => onChange({ ...filters, source: option.value })}
-            />
-          ))}
-        </ScrollView>
-
-        <View className="flex-row gap-2">
-          <View className="flex-1">
-            <Text className="mb-2 text-xs font-medium" style={{ color: colors.textMuted }}>
-              Tag
-            </Text>
+              {hasActiveHistoryFilters(filters) ? (
+                <Pressable onPress={() => onChange(defaultHistoryFilters)}>
+                  <Text className="text-xs font-semibold" style={{ color: colors.primary }}>
+                    Clear all
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
             <Pressable
-              onPress={() => setPicker('tag')}
-              className="flex-row items-center justify-between rounded-xl border px-3 py-2.5"
-              style={{ backgroundColor: colors.inputBgSolid, borderColor: colors.inputBorder }}
+              onPress={() => setExpanded(false)}
+              accessibilityRole="button"
+              accessibilityLabel="Hide filters"
+              hitSlop={8}
+              className="rounded-full p-1"
             >
-              <Text className="flex-1 text-sm" style={{ color: colors.text }} numberOfLines={1}>
-                {tagLabel}
-              </Text>
-              <Ionicons name="chevron-down" size={16} color={colors.textMuted} />
+              <Ionicons name="close" size={20} color={colors.textMuted} />
             </Pressable>
           </View>
 
-          {geofences.length > 0 ? (
+          <Text className="mb-2 text-xs font-medium" style={{ color: colors.textMuted }}>
+            Date
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-3">
+            {DATE_PRESETS.map((preset) => (
+              <FilterChip
+                key={preset}
+                label={getHistoryDatePresetLabel(preset)}
+                active={filters.datePreset === preset}
+                onPress={() => onChange({ ...filters, datePreset: preset })}
+              />
+            ))}
+          </ScrollView>
+
+          <Text className="mb-2 text-xs font-medium" style={{ color: colors.textMuted }}>
+            Source
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-3">
+            {SOURCE_OPTIONS.map((option) => (
+              <FilterChip
+                key={option.value}
+                label={option.label}
+                active={filters.source === option.value}
+                onPress={() => onChange({ ...filters, source: option.value })}
+              />
+            ))}
+          </ScrollView>
+
+          <View className="flex-row gap-2">
             <View className="flex-1">
               <Text className="mb-2 text-xs font-medium" style={{ color: colors.textMuted }}>
-                Place
+                Tag
               </Text>
               <Pressable
-                onPress={() => setPicker('place')}
+                onPress={() => setPicker('tag')}
                 className="flex-row items-center justify-between rounded-xl border px-3 py-2.5"
                 style={{ backgroundColor: colors.inputBgSolid, borderColor: colors.inputBorder }}
               >
                 <Text className="flex-1 text-sm" style={{ color: colors.text }} numberOfLines={1}>
-                  {placeLabel}
+                  {tagLabel}
                 </Text>
                 <Ionicons name="chevron-down" size={16} color={colors.textMuted} />
               </Pressable>
             </View>
-          ) : null}
-        </View>
-      </ThemedSurface>
+
+            {geofences.length > 0 ? (
+              <View className="flex-1">
+                <Text className="mb-2 text-xs font-medium" style={{ color: colors.textMuted }}>
+                  Place
+                </Text>
+                <Pressable
+                  onPress={() => setPicker('place')}
+                  className="flex-row items-center justify-between rounded-xl border px-3 py-2.5"
+                  style={{ backgroundColor: colors.inputBgSolid, borderColor: colors.inputBorder }}
+                >
+                  <Text className="flex-1 text-sm" style={{ color: colors.text }} numberOfLines={1}>
+                    {placeLabel}
+                  </Text>
+                  <Ionicons name="chevron-down" size={16} color={colors.textMuted} />
+                </Pressable>
+              </View>
+            ) : null}
+          </View>
+        </ThemedSurface>
+      ) : (
+        <Pressable onPress={() => setExpanded(true)} className="mb-4 self-start active:opacity-70">
+          <Text className="text-sm font-semibold" style={{ color: colors.primary }}>
+            Show filters
+            {hasActiveHistoryFilters(filters) ? ' · active' : ''}
+          </Text>
+        </Pressable>
+      )}
 
       <BottomSheetModal
         visible={picker === 'tag'}

@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
+import { EditEntryModal } from '@/components/ui/EditEntryModal';
 import { EntryList } from '@/components/ui/EntryList';
 import { HistoryFilters } from '@/components/ui/HistoryFilters';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { useTags } from '@/contexts/TagsContext';
 import { useTimer } from '@/contexts/TimerContext';
-import { subscribeDataRefresh } from '@/lib/dataRefresh';
-import { deleteTimeEntry, fetchAllEntries, fetchGeofences } from '@/services/data';
+import { notifyDataRefresh, subscribeDataRefresh } from '@/lib/dataRefresh';
+import { deleteTimeEntry, fetchAllEntries, fetchGeofences, updateTimeEntry } from '@/services/data';
 import type { Geofence, TimeEntry } from '@/types';
 import {
   defaultHistoryFilters,
@@ -26,6 +27,7 @@ export function HistoryPage() {
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [geofences, setGeofences] = useState<Geofence[]>([]);
   const [filters, setFilters] = useState<HistoryFilterState>(defaultHistoryFilters);
+  const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,6 +84,20 @@ export function HistoryPage() {
     }
   };
 
+  const handleSaveEdit = async (
+    entryId: string,
+    tagIds: string[],
+    startedAt: number,
+    endedAt: number,
+  ) => {
+    if (!user) return;
+
+    await updateTimeEntry(user.id, entryId, { startedAt, endedAt, tagIds });
+    notifyDataRefresh();
+    await loadEntries();
+    await refresh();
+  };
+
   if (!ready || loading) {
     return <p style={{ color: colors.textMuted }}>Loading…</p>;
   }
@@ -114,7 +130,16 @@ export function HistoryPage() {
         emptyMessage={emptyMessage}
         geofenceNames={geofenceNames}
         showDate
+        onEdit={setEditingEntry}
         onDelete={handleDelete}
+      />
+
+      <EditEntryModal
+        visible={editingEntry !== null}
+        entry={editingEntry}
+        tags={tags}
+        onClose={() => setEditingEntry(null)}
+        onSave={handleSaveEdit}
       />
     </div>
   );
