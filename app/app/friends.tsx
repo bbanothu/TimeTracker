@@ -1,6 +1,5 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -29,7 +28,6 @@ import {
 import type { Friendship } from '@/types';
 
 export default function FriendsScreen() {
-  const router = useRouter();
   const topPadding = useScreenTopPadding(8);
   const colors = useAppColors();
   const [friendships, setFriendships] = useState<Friendship[]>([]);
@@ -296,12 +294,6 @@ export default function FriendsScreen() {
               </ThemedSurface>
             </>
           )}
-
-          <Pressable onPress={() => router.back()} className="py-3">
-            <Text className="text-center text-sm font-semibold" style={{ color: colors.textMuted }}>
-              Back to account
-            </Text>
-          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </AppBackground>

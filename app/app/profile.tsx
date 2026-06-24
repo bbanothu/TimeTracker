@@ -50,12 +50,9 @@ export default function ProfileScreen() {
     useCallback(() => {
       loadPendingCount();
       reloadProfile().catch(console.error);
+      getLastAutoSyncAt().then(setLastSyncedAt).catch(() => undefined);
     }, [loadPendingCount, reloadProfile]),
   );
-
-  useEffect(() => {
-    getLastAutoSyncAt().then(setLastSyncedAt).catch(() => undefined);
-  }, []);
 
   const handleSync = async () => {
     if (!user?.id) return;
@@ -231,7 +228,7 @@ export default function ProfileScreen() {
               },
               {
                 id: 'export',
-                label: 'Export to CSV',
+                label: 'Export CSV',
                 icon: 'export',
                 onPress: handleExportCsv,
                 loading: exporting,

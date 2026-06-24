@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { ChartTypeSelector } from '@/components/ui/stats/ChartTypeSelector';
@@ -13,6 +13,7 @@ import { StatsPersonSelector } from '@/components/ui/stats/StatsPersonSelector';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppColors } from '@/contexts/ThemeContext';
+import { useTimer } from '@/contexts/TimerContext';
 import { useStatsVisualization } from '@/hooks/useStatsVisualization';
 import { subscribeDataRefresh } from '@/lib/dataRefresh';
 import { fetchAllEntries, fetchGeofences } from '@/services/data';
@@ -48,7 +49,9 @@ function VisualizationContent({
 export function StatsPage() {
   const colors = useAppColors();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
+  const { entriesRevision } = useTimer();
   const { visualization, setVisualization, ready: vizReady } = useStatsVisualization();
   const [period, setPeriod] = useState<PeriodType>('day');
   const [anchorDate, setAnchorDate] = useState(new Date());
@@ -93,12 +96,14 @@ export function StatsPage() {
   }, [user, selectedUserId]);
 
   useEffect(() => {
-    loadFriends().catch(console.error);
-  }, [loadFriends]);
+    if (location.pathname === '/stats') {
+      loadFriends().catch(console.error);
+    }
+  }, [location.pathname, loadFriends]);
 
   useEffect(() => {
     loadData().catch(console.error);
-  }, [loadData]);
+  }, [loadData, entriesRevision]);
 
   useEffect(() => {
     if (!user) return;

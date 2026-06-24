@@ -183,7 +183,7 @@ export function FriendsPage() {
             className="min-w-0 flex-1 rounded-xl border px-4 py-3"
             style={inputStyle}
           />
-          <ActionButton label="Send" type="submit" loading={sending} disabled={sending || !email.trim()} />
+          <ActionButton label="Send request" type="submit" loading={sending} disabled={sending || !email.trim()} />
         </form>
       </ThemedSurface>
 

@@ -29,6 +29,7 @@ export function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [clearing, setClearing] = useState(false);
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<number | null>(null);
   const [pendingFriendCount, setPendingFriendCount] = useState(0);
   const {
     firstName,
@@ -60,6 +61,7 @@ export function ProfilePage() {
     try {
       setError(null);
       await refreshAll();
+      setLastRefreshedAt(Date.now());
       setMessage('Data refreshed from the cloud.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Refresh failed');
@@ -71,6 +73,10 @@ export function ProfilePage() {
       setExporting(true);
       setError(null);
       const [entries, tags] = await Promise.all([fetchAllEntries(user.id), fetchTags(user.id)]);
+      if (entries.length === 0) {
+        setError('No time entries to export.');
+        return;
+      }
       const personName =
         buildProfileDisplayName({ firstName, lastName }) ?? user.email ?? 'Me';
       const csv = exportEntriesCsv(entries, tags, personName);
@@ -85,7 +91,13 @@ export function ProfilePage() {
   };
 
   const handleClear = async () => {
-    if (!window.confirm('Delete all tracked time entries? This cannot be undone.')) return;
+    if (
+      !window.confirm(
+        'This permanently deletes all tracked time entries in the cloud. Tags and geofences are kept. This cannot be undone.',
+      )
+    ) {
+      return;
+    }
     try {
       setClearing(true);
       setError(null);
@@ -100,6 +112,7 @@ export function ProfilePage() {
   };
 
   const handleSignOut = async () => {
+    if (!window.confirm('Your local session will end. Cloud data stays saved.')) return;
     await signOut();
     navigate('/login');
   };
@@ -111,6 +124,16 @@ export function ProfilePage() {
         year: 'numeric',
       })
     : null;
+
+  const lastRefreshedLabel = lastRefreshedAt
+    ? `Last refreshed ${new Date(lastRefreshedAt).toLocaleString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      })}`
+    : undefined;
 
   return (
     <div>
@@ -169,6 +192,7 @@ export function ProfilePage() {
             id: 'refresh',
             label: 'Refresh data',
             icon: 'sync',
+            subtitle: lastRefreshedLabel,
             onClick: handleRefresh,
             loading: refreshing,
             disabled: refreshing || exporting || clearing,
