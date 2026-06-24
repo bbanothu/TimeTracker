@@ -7,16 +7,12 @@ import {
   Platform,
   ScrollView,
   Text,
-  View,
 } from 'react-native';
 
-import { ActionButton } from '@/components/ActionButton';
 import { AppBackground } from '@/components/AppBackground';
 import { ProfileIdentityCard } from '@/components/ProfileIdentityCard';
 import { ProfileLinkRows } from '@/components/ProfileLinkRows';
-import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAuth } from '@/hooks/useAuth';
-import { useAppColors } from '@/hooks/useAppColors';
 import { useScreenTopPadding } from '@/hooks/useScreenTopPadding';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
 import { clearTrackedData, exportTrackedDataCsv } from '@/services/dataService';
@@ -27,7 +23,6 @@ import { getLastAutoSyncAt, performManualSync } from '@/services/syncScheduler';
 export default function ProfileScreen() {
   const router = useRouter();
   const topPadding = useScreenTopPadding(8);
-  const colors = useAppColors();
   const { user, signOut } = useAuth();
   const [exporting, setExporting] = useState(false);
   const [clearing, setClearing] = useState(false);
@@ -159,14 +154,14 @@ export default function ProfileScreen() {
     : null;
 
   const lastSyncedLabel = lastSyncedAt
-    ? new Date(lastSyncedAt).toLocaleString(undefined, {
+    ? `Last synced ${new Date(lastSyncedAt).toLocaleString(undefined, {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
         hour: 'numeric',
         minute: '2-digit',
-      })
-    : null;
+      })}`
+    : undefined;
 
   return (
     <AppBackground>
@@ -219,53 +214,51 @@ export default function ProfileScreen() {
             ]}
           />
 
-          <ThemedSurface className="mb-4 p-4">
-            <Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>
-              Data
-            </Text>
-            <Text className="mb-4 text-sm" style={{ color: colors.textMuted }}>
-              Your data downloads when you sign in. Changes upload automatically when you stop a
-              session, edit tags, or update saved places. Use Upload to cloud to retry a failed
-              upload. You can also export tracked time or permanently remove all time entries.
-            </Text>
-            {lastSyncedLabel ? (
-              <Text className="mb-3 text-xs" style={{ color: colors.textMuted }}>
-                Last synced {lastSyncedLabel}
-              </Text>
-            ) : null}
-            <ActionButton
-              label="Upload to cloud"
-              onPress={handleSync}
-              variant="secondary"
-              loading={syncing}
-              disabled={syncing || exporting || clearing}
-              className="mb-4"
-            />
-            <View className="flex-row gap-3">
-              <ActionButton
-                label="Export to CSV"
-                onPress={handleExportCsv}
-                disabled={exporting || clearing || syncing}
-                loading={exporting}
-                className="flex-1"
-              />
-              <ActionButton
-                label="Clear all data"
-                onPress={handleClearAllData}
-                variant="destructiveOutline"
-                disabled={exporting || clearing || syncing}
-                loading={clearing}
-                className="flex-1"
-              />
-            </View>
-          </ThemedSurface>
+          <ProfileLinkRows
+            rows={[
+              {
+                id: 'sync',
+                label: 'Upload to cloud',
+                icon: 'sync',
+                subtitle: lastSyncedLabel,
+                onPress: handleSync,
+                loading: syncing,
+                disabled: syncing || exporting || clearing,
+                showChevron: false,
+              },
+              {
+                id: 'export',
+                label: 'Export to CSV',
+                icon: 'export',
+                onPress: handleExportCsv,
+                loading: exporting,
+                disabled: syncing || exporting || clearing,
+                showChevron: false,
+              },
+              {
+                id: 'clear',
+                label: 'Clear all data',
+                icon: 'clear',
+                variant: 'destructive',
+                onPress: handleClearAllData,
+                loading: clearing,
+                disabled: syncing || exporting || clearing,
+                showChevron: false,
+              },
+            ]}
+          />
 
-          <ActionButton
-            label="Sign out"
-            onPress={handleLogout}
-            variant="destructiveOutline"
-            size="lg"
-            className="mb-8"
+          <ProfileLinkRows
+            rows={[
+              {
+                id: 'signout',
+                label: 'Sign out',
+                icon: 'signout',
+                variant: 'destructive',
+                onPress: handleLogout,
+                showChevron: false,
+              },
+            ]}
           />
         </ScrollView>
       </KeyboardAvoidingView>

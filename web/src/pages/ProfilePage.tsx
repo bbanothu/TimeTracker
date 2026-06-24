@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 
-import { ActionButton } from '@/components/ui/ActionButton';
 import { ProfileIdentityCard } from '@/components/ui/ProfileIdentityCard';
 import { ProfileLinkRows } from '@/components/ui/ProfileLinkRows';
-import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRefresh } from '@/contexts/RefreshContext';
 import { useAppColors } from '@/contexts/ThemeContext';
@@ -27,6 +25,8 @@ export function ProfilePage() {
   const { refreshAll, refreshing } = useRefresh();
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const [pendingFriendCount, setPendingFriendCount] = useState(0);
   const {
     firstName,
@@ -66,6 +66,7 @@ export function ProfilePage() {
 
   const handleExport = async () => {
     try {
+      setExporting(true);
       setError(null);
       const [entries, geofences] = await Promise.all([
         fetchAllEntries(user.id),
@@ -77,18 +78,23 @@ export function ProfilePage() {
       setMessage(`Downloaded ${entries.length} entries.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Export failed');
+    } finally {
+      setExporting(false);
     }
   };
 
   const handleClear = async () => {
     if (!window.confirm('Delete all tracked time entries? This cannot be undone.')) return;
     try {
+      setClearing(true);
       setError(null);
       const count = await deleteAllEntries(user.id);
       notifyDataRefresh();
       setMessage(`Removed ${count} entries.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Clear failed');
+    } finally {
+      setClearing(false);
     }
   };
 
@@ -156,35 +162,51 @@ export function ProfilePage() {
         ]}
       />
 
-      <ThemedSurface className="mb-4 p-4">
-        <h2 className="mb-3 font-semibold" style={{ color: colors.text }}>
-          Data
-        </h2>
-        <p className="mb-4 text-sm" style={{ color: colors.textMuted }}>
-          Changes save to the cloud automatically. Pull down on any tab to refresh, or use Refresh
-          data to load the latest from your other devices. You can also export tracked time or
-          permanently remove all time entries.
-        </p>
-        <ActionButton
-          label="Refresh data"
-          onClick={handleRefresh}
-          variant="secondary"
-          loading={refreshing}
-          disabled={refreshing}
-          className="mb-4 w-full"
-        />
-        <div className="flex gap-3">
-          <ActionButton label="Export CSV" onClick={handleExport} className="flex-1" />
-          <ActionButton
-            label="Clear all data"
-            onClick={handleClear}
-            variant="destructiveOutline"
-            className="flex-1"
-          />
-        </div>
-      </ThemedSurface>
+      <ProfileLinkRows
+        rows={[
+          {
+            id: 'refresh',
+            label: 'Refresh data',
+            icon: 'sync',
+            onClick: handleRefresh,
+            loading: refreshing,
+            disabled: refreshing || exporting || clearing,
+            showChevron: false,
+          },
+          {
+            id: 'export',
+            label: 'Export CSV',
+            icon: 'export',
+            onClick: handleExport,
+            loading: exporting,
+            disabled: refreshing || exporting || clearing,
+            showChevron: false,
+          },
+          {
+            id: 'clear',
+            label: 'Clear all data',
+            icon: 'clear',
+            variant: 'destructive',
+            onClick: handleClear,
+            loading: clearing,
+            disabled: refreshing || exporting || clearing,
+            showChevron: false,
+          },
+        ]}
+      />
 
-      <ActionButton label="Sign out" onClick={handleSignOut} variant="destructiveOutline" className="w-full" />
+      <ProfileLinkRows
+        rows={[
+          {
+            id: 'signout',
+            label: 'Sign out',
+            icon: 'signout',
+            variant: 'destructive',
+            onClick: handleSignOut,
+            showChevron: false,
+          },
+        ]}
+      />
     </div>
   );
 }
