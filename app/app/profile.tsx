@@ -7,20 +7,20 @@ import {
   Platform,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 
 import { ActionButton } from '@/components/ActionButton';
 import { AppBackground } from '@/components/AppBackground';
-import { DarkModeToggle } from '@/components/DarkModeToggle';
-import { ProfileAvatar } from '@/components/ProfileAvatar';
+import { ProfileIdentityCard } from '@/components/ProfileIdentityCard';
+import { ProfileLinkRows } from '@/components/ProfileLinkRows';
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppColors } from '@/hooks/useAppColors';
 import { useScreenTopPadding } from '@/hooks/useScreenTopPadding';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
 import { clearTrackedData, exportTrackedDataCsv } from '@/services/dataService';
+import { useProfileName } from '@/hooks/useProfileName';
 import { fetchIncomingPendingCount } from '@/services/friendsService';
 import { getLastAutoSyncAt, performManualSync } from '@/services/syncScheduler';
 
@@ -28,17 +28,22 @@ export default function ProfileScreen() {
   const router = useRouter();
   const topPadding = useScreenTopPadding(8);
   const colors = useAppColors();
-  const { user, signOut, updateEmail, updatePassword } = useAuth();
-  const [email, setEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [savingEmail, setSavingEmail] = useState(false);
-  const [savingPassword, setSavingPassword] = useState(false);
+  const { user, signOut } = useAuth();
   const [exporting, setExporting] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
   const [pendingFriendCount, setPendingFriendCount] = useState(0);
+  const {
+    firstName,
+    lastName,
+    setFirstName,
+    setLastName,
+    loading: profileLoading,
+    saving: profileSaving,
+    error: profileError,
+    reload: reloadProfile,
+  } = useProfileName();
 
   const loadPendingCount = useCallback(() => {
     fetchIncomingPendingCount()
@@ -49,58 +54,13 @@ export default function ProfileScreen() {
   useFocusEffect(
     useCallback(() => {
       loadPendingCount();
-    }, [loadPendingCount]),
+      reloadProfile().catch(console.error);
+    }, [loadPendingCount, reloadProfile]),
   );
-
-  useEffect(() => {
-    setEmail(user?.email ?? '');
-  }, [user?.email]);
 
   useEffect(() => {
     getLastAutoSyncAt().then(setLastSyncedAt).catch(() => undefined);
   }, []);
-
-  const handleUpdateEmail = async () => {
-    const trimmed = email.trim();
-    if (!trimmed) {
-      Alert.alert('Email required', 'Enter a valid email address.');
-      return;
-    }
-    if (trimmed === user?.email) return;
-
-    try {
-      setSavingEmail(true);
-      await updateEmail(trimmed);
-      Alert.alert('Email updated', 'Check your inbox if email confirmation is required.');
-    } catch (error) {
-      Alert.alert('Update failed', error instanceof Error ? error.message : 'Unknown error');
-    } finally {
-      setSavingEmail(false);
-    }
-  };
-
-  const handleUpdatePassword = async () => {
-    if (newPassword.length < 6) {
-      Alert.alert('Password too short', 'Use at least 6 characters.');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      Alert.alert('Passwords do not match', 'Make sure both password fields match.');
-      return;
-    }
-
-    try {
-      setSavingPassword(true);
-      await updatePassword(newPassword);
-      setNewPassword('');
-      setConfirmPassword('');
-      Alert.alert('Password updated', 'Your password has been changed.');
-    } catch (error) {
-      Alert.alert('Update failed', error instanceof Error ? error.message : 'Unknown error');
-    } finally {
-      setSavingPassword(false);
-    }
-  };
 
   const handleSync = async () => {
     if (!user?.id) return;
@@ -208,12 +168,6 @@ export default function ProfileScreen() {
       })
     : null;
 
-  const inputStyle = {
-    backgroundColor: colors.inputBg,
-    borderColor: colors.inputBorder,
-    color: colors.text,
-  };
-
   return (
     <AppBackground>
       <KeyboardAvoidingView
@@ -225,113 +179,45 @@ export default function ProfileScreen() {
           style={{ paddingTop: topPadding }}
           keyboardShouldPersistTaps="handled"
         >
-          <ThemedSurface className="mb-4 px-3 py-3">
-            <View className="flex-row items-center gap-3">
-              <ProfileAvatar
-                compact
-                userId={user?.id}
-                fallbackLabel={(user?.email?.[0] ?? '?').toUpperCase()}
-              />
-              <View className="min-w-0 flex-1">
-                <Text
-                  className="text-sm font-semibold"
-                  style={{ color: colors.textOnBg }}
-                  numberOfLines={1}
-                >
-                  {user?.email ?? 'Account'}
-                </Text>
-                {memberSince ? (
-                  <Text className="mt-0.5 text-xs" style={{ color: colors.textMuted }}>
-                    Member since {memberSince}
-                  </Text>
-                ) : null}
-              </View>
-              <DarkModeToggle />
-            </View>
-          </ThemedSurface>
+          <ProfileIdentityCard
+            email={user?.email ?? ''}
+            memberSince={memberSince}
+            userId={user?.id}
+            firstName={firstName}
+            lastName={lastName}
+            onFirstNameChange={setFirstName}
+            onLastNameChange={setLastName}
+            saving={profileSaving}
+            disabled={profileLoading}
+          />
 
-          {/* <ThemedSurface className="mb-4 p-4">
-            <Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>
-              Account
-            </Text>
-            <Text className="mb-2 text-sm" style={{ color: colors.textMuted }}>
-              Email
-            </Text>
-            <TextInput
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Email"
-              placeholderTextColor={colors.inputPlaceholder}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              className="mb-3 rounded-xl border px-4 py-3 text-base"
-              style={inputStyle}
-            />
-            <ActionButton
-              label="Save email"
-              onPress={handleUpdateEmail}
-              loading={savingEmail}
-              disabled={savingEmail || email.trim() === user?.email}
-            />
-          </ThemedSurface> */}
+          {profileError ? (
+            <Text className="mb-3 text-sm text-rose-500">{profileError}</Text>
+          ) : null}
 
-          <ThemedSurface className="mb-4 p-4">
-            <Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>
-              Friends
-            </Text>
-            <Text className="mb-4 text-sm" style={{ color: colors.textMuted }}>
-              Add friends by email and share your stats with each other.
-            </Text>
-            <ActionButton
-              label={
-                pendingFriendCount > 0
-                  ? `Manage friends (${pendingFriendCount})`
-                  : 'Manage friends'
-              }
-              onPress={() => router.push('/friends')}
-              variant="secondary"
-            />
-          </ThemedSurface>
-
-          <ThemedSurface className="mb-4 p-4">
-            <Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>
-              Activity
-            </Text>
-            <Text className="mb-4 text-sm" style={{ color: colors.textMuted }}>
-              Browse and delete past time entries.
-            </Text>
-            <ActionButton label="View history" onPress={() => router.push('/history')} variant="secondary" />
-          </ThemedSurface>
-
-          <ThemedSurface className="mb-4 p-4">
-            <Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>
-              Password
-            </Text>
-            <TextInput
-              value={newPassword}
-              onChangeText={setNewPassword}
-              placeholder="New password"
-              placeholderTextColor={colors.inputPlaceholder}
-              secureTextEntry
-              className="mb-3 rounded-xl border px-4 py-3 text-base"
-              style={inputStyle}
-            />
-            <TextInput
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              placeholder="Confirm new password"
-              placeholderTextColor={colors.inputPlaceholder}
-              secureTextEntry
-              className="mb-3 rounded-xl border px-4 py-3 text-base"
-              style={inputStyle}
-            />
-            <ActionButton
-              label="Update password"
-              onPress={handleUpdatePassword}
-              loading={savingPassword}
-              disabled={savingPassword || !newPassword}
-            />
-          </ThemedSurface>
+          <ProfileLinkRows
+            rows={[
+              {
+                id: 'friends',
+                label: 'Friends',
+                icon: 'friends',
+                badge: pendingFriendCount,
+                onPress: () => router.push('/friends'),
+              },
+              {
+                id: 'history',
+                label: 'History',
+                icon: 'history',
+                onPress: () => router.push('/history'),
+              },
+              {
+                id: 'password',
+                label: 'Password',
+                icon: 'password',
+                onPress: () => router.push('/change-password'),
+              },
+            ]}
+          />
 
           <ThemedSurface className="mb-4 p-4">
             <Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>

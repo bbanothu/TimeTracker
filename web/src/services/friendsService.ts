@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { buildProfileDisplayName } from '@/services/profileService';
 import { fetchAllEntries, fetchGeofences } from '@/services/data';
 import type { Friendship, FriendshipOtherUser, FriendshipStatus, Geofence, TimeEntry } from '@/types';
 
@@ -12,14 +13,15 @@ type FriendshipRow = {
 type ProfileRow = {
   user_id: string;
   email: string;
+  first_name: string | null;
+  last_name: string | null;
   display_name: string | null;
 };
 
 export function friendLabel(user: FriendshipOtherUser): string {
   const name = user.displayName?.trim();
   if (name) return name;
-  const local = user.email.split('@')[0];
-  return local || user.email;
+  return user.email;
 }
 
 async function getCurrentUserId(): Promise<string> {
@@ -34,7 +36,7 @@ async function fetchProfiles(userIds: string[]): Promise<Map<string, ProfileRow>
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('user_id, email, display_name')
+    .select('user_id, email, first_name, last_name, display_name')
     .in('user_id', userIds);
 
   if (error) throw error;
@@ -48,7 +50,13 @@ function mapFriendship(row: FriendshipRow, me: string, profiles: Map<string, Pro
   const otherUser: FriendshipOtherUser = {
     userId: otherId,
     email: profile?.email ?? 'unknown',
-    displayName: profile?.display_name ?? null,
+    displayName: profile
+      ? buildProfileDisplayName({
+          firstName: profile.first_name,
+          lastName: profile.last_name,
+          displayName: profile.display_name,
+        })
+      : null,
   };
 
   return {

@@ -6,6 +6,7 @@ import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAppColors } from '@/contexts/ThemeContext';
 import {
   fetchFriendships,
+  friendLabel,
   removeFriend,
   respondToRequest,
   sendFriendRequest,
@@ -206,7 +207,7 @@ export function FriendsPage() {
                       className="min-w-0 flex-1 truncate text-sm"
                       style={{ color: colors.text }}
                     >
-                      {friendship.otherUser.email}
+                      {friendLabel(friendship.otherUser)}
                     </p>
                     <div className="flex shrink-0 gap-2">
                         <button
@@ -252,7 +253,7 @@ export function FriendsPage() {
                       className="min-w-0 flex-1 truncate text-sm"
                       style={{ color: colors.text }}
                     >
-                      {friendship.otherUser.email}
+                      {friendLabel(friendship.otherUser)}
                     </p>
                     <button
                       type="button"
@@ -290,7 +291,7 @@ export function FriendsPage() {
                       className="min-w-0 flex-1 truncate text-sm"
                       style={{ color: colors.text }}
                     >
-                      {friendship.otherUser.email}
+                      {friendLabel(friendship.otherUser)}
                     </p>
                     <button
                       type="button"

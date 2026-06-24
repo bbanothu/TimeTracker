@@ -3,6 +3,7 @@ import { BrowserRouter, HashRouter, Navigate, Route, Routes } from 'react-router
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { useHashRouter } from '@/lib/isElectron';
+import { ChangePasswordPage } from '@/pages/ChangePasswordPage';
 import { FriendsPage } from '@/pages/FriendsPage';
 import { GoalProgressPage } from '@/pages/GoalProgressPage';
 import { GoalsPage } from '@/pages/GoalsPage';
@@ -30,6 +31,7 @@ function AppRoutes() {
         <Route path="goals" element={<GoalsPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="profile/friends" element={<FriendsPage />} />
+        <Route path="profile/password" element={<ChangePasswordPage />} />
         <Route path="profile/history" element={<HistoryPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -87,6 +87,16 @@ function RootNavigator() {
               }}
             />
             <Stack.Screen
+              name="change-password"
+              options={{
+                headerShown: true,
+                title: 'Password',
+                headerBackTitle: '',
+                headerBackButtonDisplayMode: 'minimal',
+                ...getAppHeaderOptions(colors),
+              }}
+            />
+            <Stack.Screen
               name="history"
               options={{
                 headerShown: true,

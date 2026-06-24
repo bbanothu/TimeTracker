@@ -1,9 +1,9 @@
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 import { ActionButton } from '@/components/ui/ActionButton';
-import { DarkModeToggle } from '@/components/ui/DarkModeToggle';
-import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
+import { ProfileIdentityCard } from '@/components/ui/ProfileIdentityCard';
+import { ProfileLinkRows } from '@/components/ui/ProfileLinkRows';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRefresh } from '@/contexts/RefreshContext';
@@ -16,19 +16,28 @@ import {
   fetchAllEntries,
   fetchGeofences,
 } from '@/services/data';
+import { useProfileName } from '@/hooks/useProfileName';
 import { fetchIncomingPendingCount } from '@/services/friendsService';
 
 export function ProfilePage() {
   const colors = useAppColors();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, signOut, updatePassword } = useAuth();
+  const { user, signOut } = useAuth();
   const { refreshAll, refreshing } = useRefresh();
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pendingFriendCount, setPendingFriendCount] = useState(0);
+  const {
+    firstName,
+    lastName,
+    setFirstName,
+    setLastName,
+    loading: profileLoading,
+    saving: profileSaving,
+    error: profileError,
+    reload: reloadProfile,
+  } = useProfileName();
 
   const loadPendingCount = useCallback(() => {
     fetchIncomingPendingCount()
@@ -39,16 +48,11 @@ export function ProfilePage() {
   useEffect(() => {
     if (location.pathname === '/profile') {
       loadPendingCount();
+      reloadProfile().catch(console.error);
     }
-  }, [location.pathname, loadPendingCount]);
+  }, [location.pathname, loadPendingCount, reloadProfile]);
 
   if (!user) return <Navigate to="/login" replace />;
-
-  const inputStyle = {
-    backgroundColor: colors.inputBg,
-    borderColor: colors.inputBorder,
-    color: colors.text,
-  };
 
   const handleRefresh = async () => {
     try {
@@ -93,27 +97,6 @@ export function ProfilePage() {
     navigate('/login');
   };
 
-  const handlePassword = async (event: FormEvent) => {
-    event.preventDefault();
-    if (newPassword.length < 6) {
-      setError('Use at least 6 characters.');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match.');
-      return;
-    }
-    try {
-      setError(null);
-      await updatePassword(newPassword);
-      setNewPassword('');
-      setConfirmPassword('');
-      setMessage('Password updated.');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Update failed');
-    }
-  };
-
   const memberSince = user.created_at
     ? new Date(user.created_at).toLocaleDateString(undefined, {
         month: 'long',
@@ -131,99 +114,47 @@ export function ProfilePage() {
         <h1 className="text-2xl font-bold" style={{ color: colors.headerText }}>
           Account
         </h1>
-        <DarkModeToggle />
+        <span className="w-12" />
       </div>
 
-      <ThemedSurface className="mb-4 px-3 py-3">
-        <div className="flex items-center gap-3">
-          <ProfileAvatar
-            compact
-            fallbackLabel={(user.email?.[0] ?? '?').toUpperCase()}
-          />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold" style={{ color: colors.textOnBg }}>
-              {user.email}
-            </p>
-            {memberSince ? (
-              <p className="mt-0.5 text-xs" style={{ color: colors.textMuted }}>
-                Member since {memberSince}
-              </p>
-            ) : null}
-          </div>
-        </div>
-      </ThemedSurface>
+      <ProfileIdentityCard
+        email={user.email ?? ''}
+        memberSince={memberSince}
+        firstName={firstName}
+        lastName={lastName}
+        onFirstNameChange={setFirstName}
+        onLastNameChange={setLastName}
+        saving={profileSaving}
+        disabled={profileLoading}
+      />
 
+      {profileError ? <p className="mb-3 text-sm text-rose-500">{profileError}</p> : null}
       {message ? <p className="mb-3 text-sm text-emerald-600">{message}</p> : null}
       {error ? <p className="mb-3 text-sm text-rose-500">{error}</p> : null}
 
-      <ThemedSurface className="mb-4 p-4">
-        <h2 className="mb-3 font-semibold" style={{ color: colors.text }}>
-          Friends
-        </h2>
-        <p className="mb-4 text-sm" style={{ color: colors.textMuted }}>
-          Add friends by email and share your stats with each other.
-        </p>
-        <button
-          type="button"
-          onClick={() => navigate('/profile/friends')}
-          className="flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left"
-          style={{ borderColor: colors.glassBorder, backgroundColor: colors.secondaryBg }}
-        >
-          <span className="font-semibold" style={{ color: colors.text }}>
-            Manage friends
-          </span>
-          {pendingFriendCount > 0 ? (
-            <span
-              className="min-w-[1.5rem] rounded-full px-2 py-0.5 text-center text-xs font-bold text-white"
-              style={{ backgroundColor: colors.primaryBright }}
-            >
-              {pendingFriendCount}
-            </span>
-          ) : (
-            <span style={{ color: colors.textMuted }}>→</span>
-          )}
-        </button>
-      </ThemedSurface>
-
-      <ThemedSurface className="mb-4 p-4">
-        <h2 className="mb-3 font-semibold" style={{ color: colors.text }}>
-          Activity
-        </h2>
-        <p className="mb-4 text-sm" style={{ color: colors.textMuted }}>
-          Browse and delete past time entries.
-        </p>
-        <ActionButton
-          label="View history"
-          variant="secondary"
-          className="w-full"
-          onClick={() => navigate('/profile/history')}
-        />
-      </ThemedSurface>
-
-      <ThemedSurface className="mb-4 p-4">
-        <h2 className="mb-3 font-semibold" style={{ color: colors.text }}>
-          Password
-        </h2>
-        <form onSubmit={handlePassword} className="space-y-3">
-          <input
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="New password"
-            type="password"
-            className="w-full rounded-xl border px-4 py-3"
-            style={inputStyle}
-          />
-          <input
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Confirm new password"
-            type="password"
-            className="w-full rounded-xl border px-4 py-3"
-            style={inputStyle}
-          />
-          <ActionButton label="Update password" type="submit" className="w-full" />
-        </form>
-      </ThemedSurface>
+      <ProfileLinkRows
+        rows={[
+          {
+            id: 'friends',
+            label: 'Friends',
+            icon: 'friends',
+            badge: pendingFriendCount,
+            onClick: () => navigate('/profile/friends'),
+          },
+          {
+            id: 'history',
+            label: 'History',
+            icon: 'history',
+            onClick: () => navigate('/profile/history'),
+          },
+          {
+            id: 'password',
+            label: 'Password',
+            icon: 'password',
+            onClick: () => navigate('/profile/password'),
+          },
+        ]}
+      />
 
       <ThemedSurface className="mb-4 p-4">
         <h2 className="mb-3 font-semibold" style={{ color: colors.text }}>

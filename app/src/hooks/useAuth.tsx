@@ -13,7 +13,7 @@ interface AuthContextValue {
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateEmail: (email: string) => Promise<void>;
-  updatePassword: (password: string) => Promise<void>;
+  updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -63,8 +63,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error;
   }, []);
 
-  const updatePassword = useCallback(async (password: string) => {
-    const { error } = await supabase.auth.updateUser({ password });
+  const updatePassword = useCallback(async (currentPassword: string, newPassword: string) => {
+    const { data, error: userError } = await supabase.auth.getUser();
+    if (userError) throw userError;
+    const email = data.user?.email;
+    if (!email) throw new Error('No email on account');
+
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+      email,
+      password: currentPassword,
+    });
+    if (verifyError) throw new Error('Current password is incorrect');
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) throw error;
   }, []);
 

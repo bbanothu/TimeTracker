@@ -21,6 +21,7 @@ import { useAppColors } from '@/hooks/useAppColors';
 import { useScreenTopPadding } from '@/hooks/useScreenTopPadding';
 import {
   fetchFriendships,
+  friendLabel,
   removeFriend,
   respondToRequest,
   sendFriendRequest,
@@ -187,7 +188,7 @@ export default function FriendsScreen() {
                         style={{ color: colors.text }}
                         numberOfLines={1}
                       >
-                        {friendship.otherUser.email}
+                        {friendLabel(friendship.otherUser)}
                       </Text>
                       <View className="flex-row gap-2">
                           <Pressable
@@ -236,7 +237,7 @@ export default function FriendsScreen() {
                         style={{ color: colors.text }}
                         numberOfLines={1}
                       >
-                        {friendship.otherUser.email}
+                        {friendLabel(friendship.otherUser)}
                       </Text>
                       <Pressable
                         onPress={() => handleCancel(friendship.id)}
@@ -275,7 +276,7 @@ export default function FriendsScreen() {
                         style={{ color: colors.text }}
                         numberOfLines={1}
                       >
-                        {friendship.otherUser.email}
+                        {friendLabel(friendship.otherUser)}
                       </Text>
                       <Pressable
                         onPress={() => confirmRemove(friendship.id)}
