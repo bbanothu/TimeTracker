@@ -1,9 +1,11 @@
 import NetInfo from '@react-native-community/netinfo';
 import { Platform } from 'react-native';
 
-import { clearAllTrackedData, getAllEntries, initDatabase } from '@/db/client';
+import { clearAllTrackedData, getAllEntries, getAllTags, initDatabase } from '@/db/client';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
+import { buildProfileDisplayName, fetchMyProfile } from '@/services/profileService';
+import { aggregatedExportDayCount } from '@/utils/aggregatedExportCsv';
 
 import { exportEntriesToCsv } from './exportService';
 
@@ -32,11 +34,23 @@ export async function clearTrackedData(userId: string): Promise<number> {
 export async function exportTrackedDataCsv(userId: string): Promise<number> {
   initDatabase(userId);
   const entries = getAllEntries();
+  const tags = getAllTags();
 
   if (entries.length === 0) {
     throw new Error('No time entries to export');
   }
 
-  await exportEntriesToCsv(entries);
-  return entries.length;
+  const profile = await fetchMyProfile().catch(() => ({
+    firstName: '',
+    lastName: '',
+    email: '',
+  }));
+  const personName =
+    buildProfileDisplayName({
+      firstName: profile.firstName,
+      lastName: profile.lastName,
+    }) ?? profile.email;
+
+  await exportEntriesToCsv(entries, tags, personName);
+  return aggregatedExportDayCount(entries);
 }

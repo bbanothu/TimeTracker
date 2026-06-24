@@ -88,7 +88,10 @@ export default function ProfileScreen() {
     try {
       setExporting(true);
       const count = await exportTrackedDataCsv(user.id);
-      Alert.alert('Export ready', `Shared ${count} time ${count === 1 ? 'entry' : 'entries'} as CSV.`);
+      Alert.alert(
+        'Export ready',
+        `Shared aggregated data for ${count} ${count === 1 ? 'day' : 'days'}.`,
+      );
     } catch (error) {
       Alert.alert('Export failed', error instanceof Error ? error.message : 'Unknown error');
     } finally {

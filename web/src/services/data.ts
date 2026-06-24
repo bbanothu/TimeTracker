@@ -6,6 +6,7 @@ import {
   saveTagAnalyticsPref,
 } from '@/lib/tagAnalyticsPrefs';
 import type { ActiveSession, EntrySource, Geofence, Tag, TagDailyGoal, TimeEntry } from '@/types';
+import { buildAggregatedExportCsv } from '@/utils/aggregatedExportCsv';
 
 const SESSION_KEY = 'timetracker-active-sessions';
 const LEGACY_SESSION_KEY = 'timetracker-active-session';
@@ -560,25 +561,8 @@ export function saveActiveSessions(sessions: ActiveSession[]): void {
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessions));
 }
 
-export function exportEntriesCsv(entries: TimeEntry[], geofenceNames: Map<string, string>): string {
-  const header = ['started_at', 'ended_at', 'duration_minutes', 'source', 'tags', 'geofence_id', 'geofence_name'];
-  const rows = entries.map((entry) => {
-    const durationMinutes = ((entry.endedAt - entry.startedAt) / 60000).toFixed(2);
-    const tags = entry.tags.map((tag) => tag.name).join('; ');
-    const geofenceName = entry.geofenceId ? geofenceNames.get(entry.geofenceId) ?? '' : '';
-    return [
-      new Date(entry.startedAt).toISOString(),
-      new Date(entry.endedAt).toISOString(),
-      durationMinutes,
-      entry.source,
-      tags,
-      entry.geofenceId ?? '',
-      geofenceName,
-    ];
-  });
-
-  const escape = (value: string) => (/[",\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value);
-  return [header, ...rows].map((row) => row.map(escape).join(',')).join('\n');
+export function exportEntriesCsv(entries: TimeEntry[], tags: Tag[], personName: string): string {
+  return buildAggregatedExportCsv(entries, tags, personName);
 }
 
 export function downloadCsv(filename: string, csv: string): void {

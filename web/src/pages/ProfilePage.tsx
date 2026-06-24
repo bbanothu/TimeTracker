@@ -12,10 +12,12 @@ import {
   downloadCsv,
   exportEntriesCsv,
   fetchAllEntries,
-  fetchGeofences,
+  fetchTags,
 } from '@/services/data';
 import { useProfileName } from '@/hooks/useProfileName';
+import { buildProfileDisplayName } from '@/services/profileService';
 import { fetchIncomingPendingCount } from '@/services/friendsService';
+import { aggregatedExportDayCount } from '@/utils/aggregatedExportCsv';
 
 export function ProfilePage() {
   const colors = useAppColors();
@@ -68,14 +70,13 @@ export function ProfilePage() {
     try {
       setExporting(true);
       setError(null);
-      const [entries, geofences] = await Promise.all([
-        fetchAllEntries(user.id),
-        fetchGeofences(user.id),
-      ]);
-      const names = new Map(geofences.map((g) => [g.id, g.name]));
-      const csv = exportEntriesCsv(entries, names);
+      const [entries, tags] = await Promise.all([fetchAllEntries(user.id), fetchTags(user.id)]);
+      const personName =
+        buildProfileDisplayName({ firstName, lastName }) ?? user.email ?? 'Me';
+      const csv = exportEntriesCsv(entries, tags, personName);
       downloadCsv(`timetracker-export-${new Date().toISOString().slice(0, 10)}.csv`, csv);
-      setMessage(`Downloaded ${entries.length} entries.`);
+      const dayCount = aggregatedExportDayCount(entries);
+      setMessage(`Downloaded ${dayCount} ${dayCount === 1 ? 'day' : 'days'} of aggregated data.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Export failed');
     } finally {

@@ -1,50 +1,15 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 
-import { getGeofenceById } from '@/db/client';
-import type { TimeEntry } from '@/types';
+import type { Tag, TimeEntry } from '@/types';
+import { buildAggregatedExportCsv } from '@/utils/aggregatedExportCsv';
 
-function escapeCsv(value: string): string {
-  if (/[",\n\r]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
-
-function formatCsvRow(values: string[]): string {
-  return values.map(escapeCsv).join(',');
-}
-
-export async function exportEntriesToCsv(entries: TimeEntry[]): Promise<void> {
-  const header = formatCsvRow([
-    'started_at',
-    'ended_at',
-    'duration_minutes',
-    'source',
-    'tags',
-    'geofence_id',
-    'geofence_name',
-  ]);
-
-  const rows = entries.map((entry) => {
-    const durationMinutes = ((entry.endedAt - entry.startedAt) / 60000).toFixed(2);
-    const tags = entry.tags.map((tag) => tag.name).join('; ');
-    const geofenceName = entry.geofenceId
-      ? (getGeofenceById(entry.geofenceId)?.name ?? '')
-      : '';
-
-    return formatCsvRow([
-      new Date(entry.startedAt).toISOString(),
-      new Date(entry.endedAt).toISOString(),
-      durationMinutes,
-      entry.source,
-      tags,
-      entry.geofenceId ?? '',
-      geofenceName,
-    ]);
-  });
-
-  const csv = [header, ...rows].join('\n');
+export async function exportEntriesToCsv(
+  entries: TimeEntry[],
+  tags: Tag[],
+  personName: string,
+): Promise<void> {
+  const csv = buildAggregatedExportCsv(entries, tags, personName);
   const filename = `timetracker-export-${new Date().toISOString().slice(0, 10)}.csv`;
   const path = `${FileSystem.cacheDirectory}${filename}`;
 
