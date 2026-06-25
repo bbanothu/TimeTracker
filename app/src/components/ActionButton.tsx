@@ -49,7 +49,7 @@ export function ActionButton({
       spinnerColor: colors.destructiveText,
     },
     secondary: {
-      backgroundColor: colors.secondaryBg,
+      backgroundColor: colors.secondaryBgSolid,
       borderColor: colors.surfaceBorder,
       textColor: colors.secondaryText,
       spinnerColor: colors.secondaryText,

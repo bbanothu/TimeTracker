@@ -22,7 +22,7 @@ export function ActionButton({
 
   const styles: Record<Variant, CSSProperties> = {
     primary: { backgroundColor: colors.primary, color: colors.textOnPrimary },
-    secondary: { backgroundColor: colors.secondaryBg, color: colors.secondaryText },
+    secondary: { backgroundColor: colors.secondaryBgSolid, color: colors.secondaryText },
     destructive: { backgroundColor: colors.stop, color: '#fff' },
     destructiveOutline: {
       backgroundColor: colors.destructiveBg,

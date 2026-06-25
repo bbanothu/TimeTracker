@@ -1,13 +1,10 @@
-import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { AddManualSessionModal } from '@/components/ui/AddManualSessionModal';
 import { ActiveSessionsList } from '@/components/ui/ActiveSessionsList';
 import { ActionButton } from '@/components/ui/ActionButton';
-import { DarkModeToggle } from '@/components/ui/DarkModeToggle';
 import { EntryList } from '@/components/ui/EntryList';
-import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import { TagDropdown } from '@/components/ui/TagDropdown';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAuth } from '@/contexts/AuthContext';
@@ -84,21 +81,7 @@ export function TrackPage() {
 
   return (
     <div>
-      <PageHeader
-        title="Track"
-        actions={
-          <>
-            <DarkModeToggle />
-            <Link to="/profile" aria-label="Account">
-              <ProfileAvatar
-                compact
-                editable={false}
-                fallbackLabel={(user?.email?.[0] ?? '?').toUpperCase()}
-              />
-            </Link>
-          </>
-        }
-      />
+      <PageHeader title="Track" />
 
       <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-8">
         <div>
@@ -152,10 +135,7 @@ export function TrackPage() {
           )}
         </div>
 
-        <section
-          className="lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto lg:rounded-2xl lg:border lg:p-4"
-          style={{ borderColor: colors.glassBorder, backgroundColor: colors.glass }}
-        >
+        <section className="lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto">
           <p className="mb-2 text-sm font-medium lg:text-base" style={{ color: colors.textMuted }}>
             Today ({todayEntries.length})
           </p>

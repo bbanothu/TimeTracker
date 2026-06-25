@@ -16,14 +16,14 @@ export function DarkModeToggle() {
       accessibilityLabel={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       className="rounded-full border p-2.5 active:opacity-80"
       style={{
-        backgroundColor: colors.glass,
+        backgroundColor: 'transparent',
         borderColor: colors.glassBorder,
       }}
     >
       <Ionicons
         name={isDark ? 'sunny-outline' : 'moon-outline'}
         size={20}
-        color={colors.textOnGlass}
+        color={colors.text}
       />
     </Pressable>
   );
