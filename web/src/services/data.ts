@@ -563,6 +563,52 @@ export async function fetchGeofences(userId: string): Promise<Geofence[]> {
   return (data ?? []).map((row) => mapGeofence(row as unknown as GeofenceRow));
 }
 
+export async function createGeofence(
+  userId: string,
+  input: {
+    tagId: string;
+    name: string;
+    latitude: number;
+    longitude: number;
+    radiusMeters: number;
+  },
+): Promise<Geofence> {
+  const name = input.name.trim();
+  if (!name) throw new Error('Place name is required');
+
+  const radiusMeters = Math.max(25, Math.round(input.radiusMeters) || 150);
+  const payload = {
+    user_id: userId,
+    tag_id: input.tagId,
+    name,
+    latitude: input.latitude,
+    longitude: input.longitude,
+    radius_meters: radiusMeters,
+    enabled: true,
+    updated_at: new Date().toISOString(),
+  };
+
+  let { data, error } = await supabase
+    .from('geofences')
+    .insert(payload)
+    .select(`id, tag_id, name, latitude, longitude, radius_meters, enabled, tags(${NESTED_TAG_COLUMNS})`)
+    .single();
+
+  if (isMissingAnalyticsColumn(error)) {
+    ({ data, error } = await supabase
+      .from('geofences')
+      .insert(payload)
+      .select(
+        `id, tag_id, name, latitude, longitude, radius_meters, enabled, tags(${NESTED_TAG_COLUMNS_LEGACY})`,
+      )
+      .single());
+  }
+
+  if (error) throw error;
+  if (!data) throw new Error('Place could not be saved');
+  return mapGeofence(data as unknown as GeofenceRow);
+}
+
 export async function updateGeofence(
   userId: string,
   id: string,
