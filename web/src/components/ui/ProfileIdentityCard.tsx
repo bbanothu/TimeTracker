@@ -81,8 +81,11 @@ export function ProfileIdentityCard({
             placeholder="Jane"
             autoComplete="given-name"
             disabled={disabled}
-            className="w-full rounded-xl border px-3 py-2.5 text-sm disabled:opacity-60"
-            style={inputStyle}
+            className="w-full rounded-xl border px-3 py-2.5 text-sm"
+            style={{
+              ...inputStyle,
+              color: disabled ? colors.textDisabled : colors.text,
+            }}
           />
         </div>
         <div>
@@ -95,8 +98,11 @@ export function ProfileIdentityCard({
             placeholder="Doe"
             autoComplete="family-name"
             disabled={disabled}
-            className="w-full rounded-xl border px-3 py-2.5 text-sm disabled:opacity-60"
-            style={inputStyle}
+            className="w-full rounded-xl border px-3 py-2.5 text-sm"
+            style={{
+              ...inputStyle,
+              color: disabled ? colors.textDisabled : colors.text,
+            }}
           />
         </div>
       </div>

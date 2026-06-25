@@ -75,6 +75,11 @@ export async function handleGeofenceExit(geofenceId: string): Promise<void> {
   }
 }
 
+export async function hasBackgroundLocationPermission(): Promise<boolean> {
+  const { status } = await Location.getBackgroundPermissionsAsync();
+  return status === Location.PermissionStatus.GRANTED;
+}
+
 export async function syncGeofencingTask(): Promise<void> {
   try {
     const geofences = getEnabledGeofences();
@@ -89,6 +94,14 @@ export async function syncGeofencingTask(): Promise<void> {
 
     const hasStarted = await Location.hasStartedGeofencingAsync(GEOFENCE_TASK);
     if (regions.length === 0) {
+      if (hasStarted) {
+        await Location.stopGeofencingAsync(GEOFENCE_TASK);
+      }
+      return;
+    }
+
+    const backgroundGranted = await hasBackgroundLocationPermission();
+    if (!backgroundGranted) {
       if (hasStarted) {
         await Location.stopGeofencingAsync(GEOFENCE_TASK);
       }
@@ -143,6 +156,7 @@ export async function checkForegroundGeofences(
 
 export const geofenceService = {
   syncGeofencingTask,
+  hasBackgroundLocationPermission,
   requestLocationPermissions,
   requestBackgroundPermissions,
   checkForegroundGeofences,

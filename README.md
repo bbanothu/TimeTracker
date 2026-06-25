@@ -177,3 +177,5 @@ Geofence auto-tracking is not available on desktop (same as web); you can still 
 ## Auth
 
 Both clients use Supabase Auth (email/password). Create an account from the Register screen on either client; the same login works across mobile and web.
+
+docker buildx build --platform linux/arm64 -t bbanothu1997/time-tracker:latest --push .

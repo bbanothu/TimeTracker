@@ -8,6 +8,7 @@ import { StatsPersonSelector } from '@/components/StatsPersonSelector';
 import { TabScrollView } from '@/components/TabScrollView';
 import { TabScreenContainer } from '@/components/TabScreenContainer';
 import { useAuth } from '@/hooks/useAuth';
+import { useAppColors } from '@/hooks/useAppColors';
 import { useStats } from '@/hooks/useStats';
 import { useStatsVisualization } from '@/hooks/useStatsVisualization';
 import { fetchAcceptedFriends } from '@/services/friendsService';
@@ -15,6 +16,7 @@ import type { FriendshipOtherUser } from '@/types';
 import { Text } from 'react-native';
 
 export default function StatsScreen() {
+  const colors = useAppColors();
   const router = useRouter();
   const { user } = useAuth();
   const [friends, setFriends] = useState<FriendshipOtherUser[]>([]);
@@ -48,7 +50,7 @@ export default function StatsScreen() {
   if (!ready || !vizReady || !user) {
     return (
       <TabScreenContainer className="items-center justify-center">
-        <Text className="text-white/70">Loading...</Text>
+        <Text style={{ color: colors.textMuted }}>Loading...</Text>
       </TabScreenContainer>
     );
   }
@@ -81,8 +83,8 @@ export default function StatsScreen() {
           }
           progressDisabled={isViewingFriend}
         />
-        <ChartTypeSelector visualization={visualization} onChange={setVisualization} />
-        <StatsCharts summary={summary} visualization={visualization} scrollEnabled={false} />
+        <ChartTypeSelector period={period} visualization={visualization} onChange={setVisualization} />
+        <StatsCharts summary={summary} visualization={visualization} period={period} scrollEnabled={false} />
       </TabScrollView>
     </TabScreenContainer>
   );

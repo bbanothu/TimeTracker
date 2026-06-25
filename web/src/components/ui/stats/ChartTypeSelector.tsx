@@ -1,12 +1,14 @@
 import { useAppColors } from '@/contexts/ThemeContext';
-import type { StatsVisualization } from '@/types';
+import type { PeriodType, StatsVisualization } from '@/types';
 
 interface ChartTypeSelectorProps {
+  period: PeriodType;
   visualization: StatsVisualization;
   onChange: (visualization: StatsVisualization) => void;
+  className?: string;
 }
 
-const OPTIONS: { value: StatsVisualization; label: string }[] = [
+const ALL_OPTIONS: { value: StatsVisualization; label: string }[] = [
   { value: 'overview', label: 'Overview' },
   // { value: 'bars', label: 'Bars' },
   { value: 'list', label: 'List' },
@@ -14,26 +16,39 @@ const OPTIONS: { value: StatsVisualization; label: string }[] = [
   { value: 'trend', label: 'Trend' },
 ];
 
-export function ChartTypeSelector({ visualization, onChange }: ChartTypeSelectorProps) {
+export function ChartTypeSelector({
+  period,
+  visualization,
+  onChange,
+  className = '',
+}: ChartTypeSelectorProps) {
   const colors = useAppColors();
+  const options =
+    period === 'day' ? ALL_OPTIONS.filter((item) => item.value !== 'trend') : ALL_OPTIONS;
 
   return (
-    <div className="mb-4">
-      <p className="mb-2 text-sm font-semibold uppercase tracking-wide" style={{ color: colors.textMuted }}>
+    <div className={`mb-4 lg:mb-5 ${className}`}>
+      <p
+        className="mb-2 text-sm font-semibold uppercase tracking-wide lg:sr-only"
+        style={{ color: colors.textMuted }}
+      >
         Visualization
       </p>
       <div
-        className="grid grid-cols-4 gap-1 rounded-xl border p-1"
-        style={{ backgroundColor: colors.glass, borderColor: colors.glassBorder }}
+        className="flex flex-wrap gap-1 rounded-xl border p-1 lg:inline-flex"
+        style={{
+          backgroundColor: colors.glass,
+          borderColor: colors.glassBorder,
+        }}
       >
-        {OPTIONS.map((item) => {
+        {options.map((item) => {
           const selected = visualization === item.value;
           return (
             <button
               key={item.value}
               type="button"
               onClick={() => onChange(item.value)}
-              className="rounded-lg px-2 py-2 text-sm font-semibold"
+              className="rounded-lg px-3 py-2 text-sm font-semibold lg:px-5 lg:py-2.5"
               style={{
                 backgroundColor: selected ? colors.selectedBg : 'transparent',
                 color: selected ? colors.selectedText : colors.textMuted,

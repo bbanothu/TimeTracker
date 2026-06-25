@@ -17,6 +17,7 @@ type TagRow = {
   color: string;
   parent_id: string | null;
   include_in_analytics?: boolean | null;
+  description?: string | null;
 };
 
 type EntryRow = {
@@ -39,17 +40,22 @@ type GeofenceRow = {
   tags: TagRow | null;
 };
 
-const TAG_COLUMNS = 'id, name, color, parent_id, include_in_analytics';
+const TAG_COLUMNS = 'id, name, color, parent_id, include_in_analytics, description';
 const TAG_COLUMNS_LEGACY = 'id, name, color, parent_id';
-const NESTED_TAG_COLUMNS = 'id, name, color, parent_id, include_in_analytics';
+const NESTED_TAG_COLUMNS = 'id, name, color, parent_id, include_in_analytics, description';
 const NESTED_TAG_COLUMNS_LEGACY = 'id, name, color, parent_id';
 
-function isMissingAnalyticsColumn(error: { code?: string; message?: string } | null): boolean {
+function isMissingTagColumn(error: { code?: string; message?: string } | null, column: string): boolean {
   if (!error) return false;
-  return (
-    error.code === '42703' ||
-    (typeof error.message === 'string' && error.message.includes('include_in_analytics'))
-  );
+  return error.code === '42703' || (typeof error.message === 'string' && error.message.includes(column));
+}
+
+function isMissingAnalyticsColumn(error: { code?: string; message?: string } | null): boolean {
+  return isMissingTagColumn(error, 'include_in_analytics');
+}
+
+function isMissingDescriptionColumn(error: { code?: string; message?: string } | null): boolean {
+  return isMissingTagColumn(error, 'description');
 }
 
 function mapTag(row: TagRow): Tag {
@@ -59,6 +65,7 @@ function mapTag(row: TagRow): Tag {
     color: row.color,
     parentId: row.parent_id,
     includeInAnalytics: row.include_in_analytics !== false,
+    description: row.description?.trim() ? row.description.trim() : null,
   };
 }
 
@@ -96,6 +103,16 @@ export async function fetchTags(userId: string): Promise<Tag[]> {
     .select(TAG_COLUMNS)
     .eq('user_id', userId)
     .order('name');
+
+  if (isMissingDescriptionColumn(error)) {
+    const fallback = await supabase
+      .from('tags')
+      .select('id, name, color, parent_id, include_in_analytics')
+      .eq('user_id', userId)
+      .order('name');
+    if (fallback.error) throw fallback.error;
+    return applyTagAnalyticsPrefs(userId, (fallback.data ?? []).map(mapTag));
+  }
 
   if (isMissingAnalyticsColumn(error)) {
     const fallback = await supabase
@@ -144,9 +161,11 @@ export async function createTag(
   name: string,
   color: string,
   parentId: string | null,
+  description: string | null = null,
 ): Promise<Tag> {
   const normalized = name.replace(/^#/, '').trim().toLowerCase();
   if (!normalized) throw new Error('Tag name is required');
+  const normalizedDescription = description?.trim() ? description.trim() : null;
 
   let { data, error } = await supabase
     .from('tags')
@@ -156,10 +175,26 @@ export async function createTag(
       color,
       parent_id: parentId,
       include_in_analytics: true,
+      description: normalizedDescription,
       updated_at: new Date().toISOString(),
     })
     .select(TAG_COLUMNS)
     .single();
+
+  if (isMissingDescriptionColumn(error)) {
+    ({ data, error } = await supabase
+      .from('tags')
+      .insert({
+        user_id: userId,
+        name: normalized,
+        color,
+        parent_id: parentId,
+        include_in_analytics: true,
+        updated_at: new Date().toISOString(),
+      })
+      .select('id, name, color, parent_id, include_in_analytics')
+      .single());
+  }
 
   if (isMissingAnalyticsColumn(error)) {
     ({ data, error } = await supabase
@@ -221,32 +256,47 @@ export async function updateTag(
   name: string,
   color: string,
   parentId: string | null,
+  description?: string | null,
 ): Promise<Tag> {
   const normalized = name.replace(/^#/, '').trim().toLowerCase();
   if (!normalized) throw new Error('Tag name is required');
+  const normalizedDescription =
+    description === undefined ? undefined : description?.trim() ? description.trim() : null;
+
+  const updatePayload: Record<string, unknown> = {
+    name: normalized,
+    color,
+    parent_id: parentId,
+    updated_at: new Date().toISOString(),
+  };
+  if (normalizedDescription !== undefined) {
+    updatePayload.description = normalizedDescription;
+  }
 
   let { data, error } = await supabase
     .from('tags')
-    .update({
-      name: normalized,
-      color,
-      parent_id: parentId,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updatePayload)
     .eq('id', id)
     .eq('user_id', userId)
     .select(TAG_COLUMNS)
     .single();
 
-  if (isMissingAnalyticsColumn(error)) {
+  if (isMissingDescriptionColumn(error)) {
+    const { description: _ignored, ...legacyPayload } = updatePayload;
     ({ data, error } = await supabase
       .from('tags')
-      .update({
-        name: normalized,
-        color,
-        parent_id: parentId,
-        updated_at: new Date().toISOString(),
-      })
+      .update(legacyPayload)
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select('id, name, color, parent_id, include_in_analytics')
+      .single());
+  }
+
+  if (isMissingAnalyticsColumn(error)) {
+    const { include_in_analytics: _ignored, description: _desc, ...legacyPayload } = updatePayload;
+    ({ data, error } = await supabase
+      .from('tags')
+      .update(legacyPayload)
       .eq('id', id)
       .eq('user_id', userId)
       .select(TAG_COLUMNS_LEGACY)

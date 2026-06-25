@@ -2,16 +2,20 @@ import { FormEvent, useMemo, useState } from 'react';
 
 import { ActionButton } from '@/components/ui/ActionButton';
 import { BottomSheetModal, BottomSheetScroll } from '@/components/ui/BottomSheetModal';
+import { TagFormContent } from '@/components/ui/TagFormContent';
 import { TagsList } from '@/components/ui/TagsList';
+import { ThemedSurface } from '@/components/ui/ThemedSurface';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { TAG_COLOR_OPTIONS } from '@/theme/colors';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { useTags } from '@/contexts/TagsContext';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import type { Tag } from '@/types';
 import { flattenTags, getEligibleParents, wouldCreateCycle } from '@/utils/tagTree';
-import { formatTagName } from '@/utils/formatDuration';
 
 export function TagsPage() {
   const colors = useAppColors();
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
   const { tags, loading, addTag, editTag, removeTag, toggleTagAnalytics } = useTags();
   const [name, setName] = useState('');
   const [color, setColor] = useState<string>(TAG_COLOR_OPTIONS[0]);
@@ -19,6 +23,8 @@ export function TagsPage() {
   const [parentPickerOpen, setParentPickerOpen] = useState(false);
   const [tagFormOpen, setTagFormOpen] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
+  const [description, setDescription] = useState('');
+  const [showDescription, setShowDescription] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const flatTags = useMemo(() => flattenTags(tags), [tags]);
@@ -26,15 +32,19 @@ export function TagsPage() {
     () => getEligibleParents(editingTag?.id ?? null, tags),
     [editingTag, tags],
   );
-  const selectedParentLabel =
-    parentId === null
-      ? 'None (top level)'
-      : formatTagName(parentOptions.find((item) => item.tag.id === parentId)?.path ?? 'Unknown');
+
+  const formTitle = parentPickerOpen
+    ? 'Select parent'
+    : editingTag
+      ? 'Edit tag'
+      : 'New tag';
 
   const resetForm = () => {
     setName('');
     setColor(TAG_COLOR_OPTIONS[0]);
     setParentId(null);
+    setDescription('');
+    setShowDescription(false);
     setEditingTag(null);
     setError(null);
   };
@@ -65,8 +75,8 @@ export function TagsPage() {
       if (editingTag && parentId && wouldCreateCycle(editingTag.id, parentId, tags)) {
         throw new Error('That parent would create a cycle');
       }
-      if (editingTag) await editTag(editingTag.id, name, color, parentId);
-      else await addTag(name, color, parentId);
+      if (editingTag) await editTag(editingTag.id, name, color, parentId, description);
+      else await addTag(name, color, parentId, description);
       closeTagForm();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save tag');
@@ -78,6 +88,8 @@ export function TagsPage() {
     setName(tag.name);
     setColor(tag.color);
     setParentId(tag.parentId);
+    setDescription(tag.description ?? '');
+    setShowDescription(Boolean(tag.description));
     setError(null);
     setTagFormOpen(true);
   };
@@ -92,151 +104,97 @@ export function TagsPage() {
     }
   };
 
+  const formContent = (
+    <TagFormContent
+      editingTag={editingTag}
+      name={name}
+      onNameChange={setName}
+      color={color}
+      onColorChange={setColor}
+      parentId={parentId}
+      onParentIdChange={setParentId}
+      parentPickerOpen={parentPickerOpen}
+      onParentPickerOpenChange={setParentPickerOpen}
+      parentOptions={parentOptions}
+      showDescription={showDescription}
+      onShowDescriptionChange={setShowDescription}
+      description={description}
+      onDescriptionChange={setDescription}
+      error={error}
+      onSubmit={handleSubmit}
+    />
+  );
+
   if (loading) {
     return <p style={{ color: colors.textMuted }}>Loading…</p>;
   }
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold" style={{ color: colors.headerText }}>
-        Tags
-      </h1>
+      <PageHeader title="Tags" />
 
-      <ActionButton
-        label="Create new tag"
-        type="button"
-        variant="secondary"
-        onClick={openCreateForm}
-        className="mb-4 w-full"
-      />
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(320px,380px)] lg:items-start lg:gap-6">
+        <div>
+          <ActionButton
+            label="Create new tag"
+            type="button"
+            variant="secondary"
+            onClick={openCreateForm}
+            className="mb-4 w-full py-3.5 text-base lg:max-w-xs"
+          />
 
-      <p className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
-        Tags ({flatTags.length})
-      </p>
-      <TagsList
-        items={flatTags}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onToggleAnalytics={(tag, includeInAnalytics) => {
-          toggleTagAnalytics(tag.id, includeInAnalytics).catch((err) => {
-            setError(err instanceof Error ? err.message : 'Could not update tag');
-          });
-        }}
-      />
+          <p className="mb-2 text-base font-medium" style={{ color: colors.textMuted }}>
+            Tags ({flatTags.length})
+          </p>
+          <TagsList
+            items={flatTags}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onToggleAnalytics={(tag, includeInAnalytics) => {
+              toggleTagAnalytics(tag.id, includeInAnalytics).catch((err) => {
+                setError(err instanceof Error ? err.message : 'Could not update tag');
+              });
+            }}
+          />
+        </div>
 
-      <BottomSheetModal
-        visible={tagFormOpen}
-        title={parentPickerOpen ? 'Select parent' : editingTag ? 'Edit tag' : 'New tag'}
-        onClose={handleModalClose}
-        maxHeightFraction={0.9}
-      >
-        <BottomSheetScroll maxHeightFraction={0.75}>
-          {parentPickerOpen ? (
-            <div className="space-y-2 pb-2">
+        <ThemedSurface className="sticky top-8 hidden p-5 lg:block">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold" style={{ color: colors.text }}>
+              {tagFormOpen ? formTitle : 'Tag details'}
+            </h2>
+            {tagFormOpen ? (
               <button
                 type="button"
-                onClick={() => setParentPickerOpen(false)}
-                className="mb-1 flex items-center text-sm font-semibold"
+                onClick={closeTagForm}
+                className="text-sm font-semibold"
                 style={{ color: colors.primary }}
               >
-                <span className="mr-1">‹</span> Back to tag
+                Cancel
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setParentId(null);
-                  setParentPickerOpen(false);
-                }}
-                className="w-full rounded-xl px-4 py-3 text-left"
-                style={{
-                  backgroundColor: parentId === null ? colors.selectedBgSolid : colors.secondaryBgSolid,
-                  color: colors.text,
-                }}
-              >
-                None (top level)
-              </button>
-              {parentOptions.map((item) => (
-                <button
-                  key={item.tag.id}
-                  type="button"
-                  onClick={() => {
-                    setParentId(item.tag.id);
-                    setParentPickerOpen(false);
-                  }}
-                  className="w-full rounded-xl px-4 py-3 text-left"
-                  style={{
-                    marginLeft: item.depth * 12,
-                    backgroundColor:
-                      parentId === item.tag.id ? colors.selectedBgSolid : colors.secondaryBgSolid,
-                    color: colors.text,
-                  }}
-                >
-                  {formatTagName(item.path)}
-                </button>
-              ))}
-            </div>
+            ) : null}
+          </div>
+          {tagFormOpen ? (
+            formContent
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-3 pb-2">
-              <div>
-                <p className="mb-2 text-sm" style={{ color: colors.textMuted }}>
-                  Name
-                </p>
-                <input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="work"
-                  className="w-full rounded-xl border px-4 py-3"
-                  style={{
-                    backgroundColor: colors.inputBg,
-                    borderColor: colors.inputBorder,
-                    color: colors.text,
-                  }}
-                />
-              </div>
-              <div>
-                <p className="mb-2 text-sm" style={{ color: colors.textMuted }}>
-                  Parent tag
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setParentPickerOpen(true)}
-                  className="flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left"
-                  style={{
-                    backgroundColor: colors.inputBg,
-                    borderColor: colors.inputBorder,
-                    color: colors.text,
-                  }}
-                >
-                  <span>{selectedParentLabel}</span>
-                  <span style={{ color: colors.textMuted }}>▾</span>
-                </button>
-              </div>
-              <div>
-                <p className="mb-2 text-sm" style={{ color: colors.textMuted }}>
-                  Color
-                </p>
-                <div className="flex gap-2 overflow-x-auto pb-1">
-                  {TAG_COLOR_OPTIONS.map((item) => (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => setColor(item)}
-                      className={`h-10 w-10 shrink-0 rounded-full border-2 ${color === item ? 'border-stone-900 dark:border-white' : 'border-transparent'}`}
-                      style={{ backgroundColor: item }}
-                    />
-                  ))}
-                </div>
-              </div>
-              {error ? <p className="text-sm text-rose-500">{error}</p> : null}
-              <ActionButton
-                label={editingTag ? 'Update' : 'Add tag'}
-                type="submit"
-                className="w-full"
-              />
-            </form>
+            <p className="text-sm leading-6" style={{ color: colors.textMuted }}>
+              Select a tag from the list to edit it, or create a new tag. Descriptions and parent
+              tags help organize your tracking on larger screens.
+            </p>
           )}
-        </BottomSheetScroll>
-      </BottomSheetModal>
+        </ThemedSurface>
+      </div>
+
+      {!isDesktop ? (
+        <BottomSheetModal
+          visible={tagFormOpen}
+          title={formTitle}
+          onClose={handleModalClose}
+          maxHeightFraction={0.9}
+        >
+          <BottomSheetScroll maxHeightFraction={0.75}>{formContent}</BottomSheetScroll>
+        </BottomSheetModal>
+      ) : null}
     </div>
   );
 }

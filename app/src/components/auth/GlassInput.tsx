@@ -4,7 +4,7 @@ import { Platform, StyleSheet, TextInput, type TextInputProps } from 'react-nati
 interface GlassInputProps extends TextInputProps {}
 
 export function GlassInput(props: GlassInputProps) {
-  const placeholderColor = props.placeholderTextColor ?? 'rgba(255,255,255,0.55)';
+  const placeholderColor = props.placeholderTextColor ?? '#A8A29E';
 
   if (Platform.OS === 'android') {
     return (

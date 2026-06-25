@@ -21,9 +21,14 @@ async function upsertTagToRemote(payload: Record<string, unknown>): Promise<bool
   if (
     error?.code === 'PGRST204' &&
     typeof error.message === 'string' &&
-    error.message.includes('include_in_analytics')
+  (error.message.includes('include_in_analytics') || error.message.includes('description'))
   ) {
-    const { include_in_analytics: _ignored, updated_at: _updatedAt, ...rest } = payload;
+    const {
+      include_in_analytics: _ignoredAnalytics,
+      description: _ignoredDescription,
+      updated_at: _updatedAt,
+      ...rest
+    } = payload;
     if (Object.keys(rest).length > 0) {
       const { error: retryError } = await supabase.from('tags').upsert(rest);
       if (retryError) throw retryError;
@@ -45,6 +50,7 @@ async function ensureTagExistsForGoal(userId: string, tagId: string): Promise<vo
     color: tag.color,
     parent_id: tag.parentId,
     include_in_analytics: tag.includeInAnalytics,
+    description: tag.description,
     updated_at: new Date().toISOString(),
   });
 }

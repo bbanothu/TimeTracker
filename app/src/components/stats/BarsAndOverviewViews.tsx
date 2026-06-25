@@ -5,6 +5,7 @@ import {
   buildBucketLineData,
   buildPieData,
   buildTagBarData,
+  chartYAxisProps,
   hasBucketData,
   hasTagData,
   toChartMinutes,
@@ -12,7 +13,7 @@ import {
 import { TagLegend } from '@/components/stats/TagLegend';
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAppColors } from '@/hooks/useAppColors';
-import type { StatsSummary } from '@/types';
+import type { PeriodType, StatsSummary } from '@/types';
 
 interface ChartViewProps {
   summary: StatsSummary;
@@ -69,6 +70,7 @@ export function OverviewView({ summary }: ChartViewProps) {
             yAxisThickness={0}
             noOfSections={4}
             maxValue={Math.max(...barData.map((item) => item.value), 60)}
+            {...chartYAxisProps}
             yAxisTextStyle={{ color: colors.chartText, fontSize: 12 }}
             xAxisLabelTextStyle={{ color: colors.chartText, fontSize: 12 }}
           />
@@ -78,7 +80,7 @@ export function OverviewView({ summary }: ChartViewProps) {
   );
 }
 
-export function BarsView({ summary }: ChartViewProps) {
+export function BarsView({ summary, period }: ChartViewProps & { period: PeriodType }) {
   const colors = useAppColors();
   const tagBarData = buildTagBarData(summary).map((item) => ({
     value: item.value,
@@ -126,6 +128,7 @@ export function BarsView({ summary }: ChartViewProps) {
               overflowTop={8}
               yAxisExtraHeight={40}
               topLabelContainerStyle={{ width: 64, marginBottom: 6 }}
+              {...chartYAxisProps}
               yAxisTextStyle={{ color: colors.chartText, fontSize: 12 }}
               xAxisLabelTextStyle={{ height: 0, opacity: 0 }}
             />
@@ -133,30 +136,33 @@ export function BarsView({ summary }: ChartViewProps) {
         )}
       </ThemedSurface>
 
-      <ThemedSurface className="mb-8 p-4">
-        <Text className="mb-4 text-base font-semibold" style={{ color: colors.text }}>
-          Trend
-        </Text>
-        {!hasBucketData(summary) ? (
-          <Text className="text-center" style={{ color: colors.textMuted }}>
-            No trend data
+      {period !== 'day' ? (
+        <ThemedSurface className="mb-8 p-4">
+          <Text className="mb-4 text-base font-semibold" style={{ color: colors.text }}>
+            Trend
           </Text>
-        ) : (
-          <LineChart
-            data={lineData}
-            curved
-            color={colors.chartPrimary}
-            thickness={2}
-            hideRules
-            xAxisThickness={0}
-            yAxisThickness={0}
-            noOfSections={4}
-            maxValue={Math.max(...lineData.map((item) => item.value), 60)}
-            yAxisTextStyle={{ color: colors.chartText, fontSize: 12 }}
-            xAxisLabelTextStyle={{ color: colors.chartText, fontSize: 12 }}
-          />
-        )}
-      </ThemedSurface>
+          {!hasBucketData(summary) ? (
+            <Text className="text-center" style={{ color: colors.textMuted }}>
+              No trend data
+            </Text>
+          ) : (
+            <LineChart
+              data={lineData}
+              curved
+              color={colors.chartPrimary}
+              thickness={2}
+              hideRules
+              xAxisThickness={0}
+              yAxisThickness={0}
+              noOfSections={4}
+              maxValue={Math.max(...lineData.map((item) => item.value), 60)}
+              {...chartYAxisProps}
+              yAxisTextStyle={{ color: colors.chartText, fontSize: 12 }}
+              xAxisLabelTextStyle={{ color: colors.chartText, fontSize: 12 }}
+            />
+          )}
+        </ThemedSurface>
+      ) : null}
     </>
   );
 }

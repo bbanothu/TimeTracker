@@ -7,6 +7,7 @@ interface StatsPersonSelectorProps {
   selectedUserId: string | null;
   selfUserId: string;
   onChange: (userId: string | null) => void;
+  className?: string;
 }
 
 export function StatsPersonSelector({
@@ -14,6 +15,7 @@ export function StatsPersonSelector({
   selectedUserId,
   selfUserId,
   onChange,
+  className = '',
 }: StatsPersonSelectorProps) {
   const colors = useAppColors();
 
@@ -26,7 +28,7 @@ export function StatsPersonSelector({
       : null;
 
   return (
-    <div className="mb-4">
+    <div className={`mb-4 lg:mb-0 lg:min-w-[200px] ${className}`}>
       <label className="mb-2 block text-sm font-medium" style={{ color: colors.textMuted }}>
         Viewing stats for
       </label>

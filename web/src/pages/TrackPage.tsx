@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
+import { PageHeader } from '@/components/layout/PageHeader';
 import { AddManualSessionModal } from '@/components/ui/AddManualSessionModal';
 import { ActiveSessionsList } from '@/components/ui/ActiveSessionsList';
 import { ActionButton } from '@/components/ui/ActionButton';
@@ -83,23 +84,25 @@ export function TrackPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold" style={{ color: colors.headerText }}>
-          Track
-        </h1>
-        <div className="flex items-center gap-2">
-          <DarkModeToggle />
-          <Link to="/profile" aria-label="Account">
-            <ProfileAvatar
-              compact
-              editable={false}
-              fallbackLabel={(user?.email?.[0] ?? '?').toUpperCase()}
-            />
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        title="Track"
+        actions={
+          <>
+            <DarkModeToggle />
+            <Link to="/profile" aria-label="Account">
+              <ProfileAvatar
+                compact
+                editable={false}
+                fallbackLabel={(user?.email?.[0] ?? '?').toUpperCase()}
+              />
+            </Link>
+          </>
+        }
+      />
 
-      <ThemedSurface className="mb-6 p-4">
+      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-8">
+        <div>
+          <ThemedSurface className="mb-6 p-4 lg:mb-4">
         <div className="mb-3 flex items-center justify-between">
           <p className="text-sm font-medium" style={{ color: colors.textMuted }}>
             Start new session
@@ -128,34 +131,41 @@ export function TrackPage() {
         </div>
       </ThemedSurface>
 
-      {sessions.length > 0 ? (
-        <section className="mb-4">
-          <p className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
-            Active ({sessions.length})
+          {sessions.length > 0 ? (
+            <section className="mb-4">
+              <p className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
+                Active ({sessions.length})
+              </p>
+              <ActiveSessionsList
+                sessions={sessions}
+                tags={tags}
+                geofenceNames={geofenceNames}
+                onStop={(sessionId) => {
+                  stop(sessionId).catch(console.error);
+                }}
+              />
+            </section>
+          ) : (
+            <p className="mb-4 text-center text-sm lg:mb-0" style={{ color: colors.textMuted }}>
+              No active sessions yet.
+            </p>
+          )}
+        </div>
+
+        <section
+          className="lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto lg:rounded-2xl lg:border lg:p-4"
+          style={{ borderColor: colors.glassBorder, backgroundColor: colors.glass }}
+        >
+          <p className="mb-2 text-sm font-medium lg:text-base" style={{ color: colors.textMuted }}>
+            Today ({todayEntries.length})
           </p>
-          <ActiveSessionsList
-            sessions={sessions}
-            tags={tags}
+          <EntryList
+            entries={todayEntries}
+            emptyMessage="No tracked time yet today."
             geofenceNames={geofenceNames}
-            onStop={(sessionId) => {
-              stop(sessionId).catch(console.error);
-            }}
           />
         </section>
-      ) : (
-        <p className="mb-4 text-center text-sm" style={{ color: colors.textMuted }}>
-          No active sessions yet.
-        </p>
-      )}
-
-      <p className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
-        Today ({todayEntries.length})
-      </p>
-      <EntryList
-        entries={todayEntries}
-        emptyMessage="No tracked time yet today."
-        geofenceNames={geofenceNames}
-      />
+      </div>
 
       <AddManualSessionModal
         visible={manualModalOpen}

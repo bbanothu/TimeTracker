@@ -2,11 +2,14 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 import { AppBackground } from '@/components/layout/AppBackground';
 import { AppShell } from '@/components/layout/AppShell';
+import { DesktopSidebar } from '@/components/layout/DesktopSidebar';
 import { TabNav } from '@/components/layout/TabNav';
+import { useAppColors } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppDataProviders } from '@/routes/AppDataProviders';
 
 export function ProtectedLayout() {
+  const colors = useAppColors();
   const { user, loading } = useAuth();
   const location = useLocation();
   const hideTabNav = location.pathname.startsWith('/profile');
@@ -14,9 +17,12 @@ export function ProtectedLayout() {
   if (loading) {
     return (
       <AppBackground>
-        <AppShell>
-          <p className="text-center text-stone-500">Loading…</p>
-        </AppShell>
+        <div className="min-h-dvh w-full lg:h-dvh lg:overflow-hidden lg:pl-60">
+          <DesktopSidebar />
+          <AppShell>
+            <p className="text-center" style={{ color: colors.textMuted }}>Loading…</p>
+          </AppShell>
+        </div>
       </AppBackground>
     );
   }
@@ -26,9 +32,12 @@ export function ProtectedLayout() {
   return (
     <AppDataProviders>
       <AppBackground>
-        <AppShell className={hideTabNav ? 'pb-10' : undefined}>
-          <Outlet />
-        </AppShell>
+        <div className="min-h-dvh w-full lg:h-dvh lg:overflow-hidden lg:pl-60">
+          <DesktopSidebar />
+          <AppShell className={hideTabNav ? 'pb-10 lg:pb-8' : undefined}>
+            <Outlet />
+          </AppShell>
+        </div>
         {hideTabNav ? null : <TabNav />}
       </AppBackground>
     </AppDataProviders>

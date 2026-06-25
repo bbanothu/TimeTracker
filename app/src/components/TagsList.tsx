@@ -26,7 +26,7 @@ export function TagsList({
 
   if (items.length === 0) {
     return (
-      <Text className="py-2 text-center text-sm" style={{ color: colors.textMuted }}>
+      <Text className="py-2 text-center text-base" style={{ color: colors.textMuted }}>
         {emptyMessage}
       </Text>
     );
@@ -35,7 +35,7 @@ export function TagsList({
   return (
     <ThemedSurface className="overflow-hidden">
       {items.map((item, index) => {
-        const indent = item.depth * 12;
+        const indent = item.depth * 14;
         const included = item.tag.includeInAnalytics !== false;
         const label = formatTagName(item.tag.name);
         const pathLabel = item.depth > 0 ? formatTagName(item.path) : label;
@@ -43,19 +43,19 @@ export function TagsList({
         return (
           <View
             key={item.tag.id}
-            className="flex-row items-center gap-2 py-2.5 pr-3"
+            className="flex-row items-center gap-2.5 py-3.5 pr-3"
             style={{
-              paddingLeft: 12 + indent,
+              paddingLeft: 14 + indent,
               borderBottomWidth: index < items.length - 1 ? 1 : 0,
               borderBottomColor: colors.surfaceBorder,
             }}
           >
             <View
-              className="h-2 w-2 shrink-0 rounded-full"
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
               style={{ backgroundColor: item.tag.color }}
             />
             <Text
-              className="min-w-0 flex-1 text-sm font-semibold"
+              className="min-w-0 flex-1 text-base font-semibold"
               style={{ color: included ? colors.textOnBg : colors.textMuted }}
               numberOfLines={1}
               accessibilityLabel={pathLabel}
@@ -68,15 +68,15 @@ export function TagsList({
               accessibilityState={{ checked: included }}
               accessibilityLabel="Include in analytics"
               hitSlop={8}
-              className="h-5 w-9 shrink-0 justify-center rounded-full border"
+              className="h-6 w-11 shrink-0 justify-center rounded-full border"
               style={{
                 backgroundColor: included ? colors.primary : colors.secondaryBg,
                 borderColor: included ? colors.primary : colors.surfaceBorder,
               }}
             >
               <View
-                className="h-3.5 w-3.5 rounded-full bg-white"
-                style={{ marginLeft: included ? 18 : 2 }}
+                className="h-4 w-4 rounded-full bg-white"
+                style={{ marginLeft: included ? 26 : 2 }}
               />
             </Pressable>
             <Pressable
@@ -84,9 +84,9 @@ export function TagsList({
               accessibilityRole="button"
               accessibilityLabel={`Edit ${label}`}
               hitSlop={8}
-              className="shrink-0 p-1"
+              className="shrink-0 p-1.5"
             >
-              <Ionicons name="create-outline" size={18} color={colors.textMuted} />
+              <Ionicons name="create-outline" size={22} color={colors.textMuted} />
             </Pressable>
             <Pressable
               onPress={() => {
@@ -102,9 +102,9 @@ export function TagsList({
               accessibilityRole="button"
               accessibilityLabel={`Delete ${label}`}
               hitSlop={8}
-              className="shrink-0 p-1"
+              className="shrink-0 p-1.5"
             >
-              <Ionicons name="trash-outline" size={18} color={colors.destructiveText} />
+              <Ionicons name="trash-outline" size={22} color={colors.destructiveText} />
             </Pressable>
           </View>
         );

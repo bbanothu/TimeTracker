@@ -1,7 +1,7 @@
 import { Text } from 'react-native';
 import { BarChart } from 'react-native-gifted-charts';
 
-import { buildStackData, hasBucketData } from '@/components/stats/chartUtils';
+import { buildStackData, chartYAxisProps, hasBucketData } from '@/components/stats/chartUtils';
 import { TagLegend } from '@/components/stats/TagLegend';
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAppColors } from '@/hooks/useAppColors';
@@ -57,6 +57,7 @@ export function StackedView({ summary }: StackedViewProps) {
             overflowTop={24}
             yAxisExtraHeight={24}
             topLabelContainerStyle={{ marginBottom: 4 }}
+            {...chartYAxisProps}
             yAxisTextStyle={{ color: colors.chartText, fontSize: 12 }}
             xAxisLabelTextStyle={{ color: colors.chartText, fontSize: 12 }}
           />

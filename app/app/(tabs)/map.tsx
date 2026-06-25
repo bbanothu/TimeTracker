@@ -161,11 +161,6 @@ export default function MapScreen() {
       setDraftLat(null);
       setDraftLng(null);
       loadGeofences();
-      try {
-        await syncGeofencingTask();
-      } catch (error) {
-        console.warn('Geofence sync unavailable:', error);
-      }
       pushChangesInBackground(user?.id);
 
       const backgroundGranted = await requestBackgroundPermissions();
@@ -191,22 +186,14 @@ export default function MapScreen() {
   const handleToggle = async (geofence: Geofence, enabled: boolean) => {
     updateGeofence(geofence.id, { enabled });
     loadGeofences();
-    try {
-      await syncGeofencingTask();
-    } catch (error) {
-      console.warn('Geofence sync unavailable:', error);
-    }
+    await syncGeofencingTask();
     pushChangesInBackground(user?.id);
   };
 
   const handleDelete = async (geofence: Geofence) => {
     deleteGeofence(geofence.id);
     loadGeofences();
-    try {
-      await syncGeofencingTask();
-    } catch (error) {
-      console.warn('Geofence sync unavailable:', error);
-    }
+    await syncGeofencingTask();
     pushChangesInBackground(user?.id);
   };
 

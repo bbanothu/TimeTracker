@@ -1,6 +1,7 @@
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { PageHeader } from '@/components/layout/PageHeader';
 import { ChartTypeSelector } from '@/components/ui/stats/ChartTypeSelector';
 import {
   ListView,
@@ -8,9 +9,9 @@ import {
   StackedView,
   TrendView,
 } from '@/components/ui/stats/StatsChartViews';
-import { StatsKpiCard } from '@/components/ui/stats/StatsKpiCard';
+import { StatsKpiRow } from '@/components/ui/stats/StatsKpiRow';
+import { StatsPeriodToolbar } from '@/components/ui/stats/StatsPeriodToolbar';
 import { StatsPersonSelector } from '@/components/ui/stats/StatsPersonSelector';
-import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { useTimer } from '@/contexts/TimerContext';
@@ -24,18 +25,22 @@ import {
 } from '@/services/friendsService';
 import { getStatsSummary } from '@/services/statsService';
 import type { FriendshipOtherUser, Geofence, PeriodType, StatsSummary, StatsVisualization, TimeEntry } from '@/types';
-import { formatPeriodLabel, shiftPeriod } from '@/utils/periodBounds';
 
 function VisualizationContent({
   summary,
   visualization,
+  period,
 }: {
   summary: StatsSummary;
   visualization: StatsVisualization;
+  period: PeriodType;
 }) {
-  switch (visualization) {
+  const effectiveVisualization =
+    period === 'day' && visualization === 'trend' ? 'overview' : visualization;
+
+  switch (effectiveVisualization) {
     case 'list':
-      return <ListView summary={summary} />;
+      return <ListView summary={summary} period={period} />;
     case 'stacked':
       return <StackedView summary={summary} />;
     case 'trend':
@@ -48,7 +53,6 @@ function VisualizationContent({
 
 export function StatsPage() {
   const colors = useAppColors();
-  const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
   const { entriesRevision } = useTimer();
@@ -125,76 +129,40 @@ export function StatsPage() {
   }
 
   return (
-    <div>
-      <h1 className="mb-4 text-2xl font-bold" style={{ color: colors.headerText }}>
-        Stats
-      </h1>
+    <div className="lg:pb-2">
+      <div className="mb-4 flex flex-col gap-4 lg:mb-5 lg:flex-row lg:items-end lg:justify-between">
+        <PageHeader title="Stats" />
+        <div className="flex flex-col gap-3 lg:items-end">
+          {friends.length > 0 ? (
+            <StatsPersonSelector
+              friends={friends}
+              selectedUserId={selectedUserId}
+              selfUserId={user.id}
+              onChange={setSelectedUserId}
+            />
+          ) : null}
+          <StatsPeriodToolbar
+            period={period}
+            anchorDate={anchorDate}
+            isViewingFriend={isViewingFriend}
+            onPeriodChange={setPeriod}
+            onAnchorDateChange={setAnchorDate}
+          />
+        </div>
+      </div>
 
-      <StatsPersonSelector
-        friends={friends}
-        selectedUserId={selectedUserId}
-        selfUserId={user.id}
-        onChange={setSelectedUserId}
+      <StatsKpiRow summary={summary} />
+
+      <ChartTypeSelector
+        period={period}
+        visualization={visualization}
+        onChange={setVisualization}
+        className="lg:flex lg:justify-start"
       />
 
-      <ThemedSurface className="mb-4 p-4">
-        <div
-          className="mb-3 grid grid-cols-4 gap-1 rounded-xl p-1"
-          style={{ backgroundColor: colors.glass, borderColor: colors.glassBorder, borderWidth: 1 }}
-        >
-          {(['day', 'week', 'month'] as PeriodType[]).map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => setPeriod(item)}
-              className="rounded-lg px-2 py-2 text-sm font-semibold capitalize"
-              style={{
-                backgroundColor: period === item ? colors.selectedBg : 'transparent',
-                color: period === item ? colors.selectedText : colors.textMuted,
-              }}
-            >
-              {item}
-            </button>
-          ))}
-          {isViewingFriend ? (
-            <span
-              className="rounded-lg px-2 py-2 text-center text-sm font-semibold"
-              style={{ color: colors.textMuted, opacity: 0.45 }}
-              title="Progress is only available for your own stats"
-            >
-              Progress
-            </span>
-          ) : (
-            <button
-              type="button"
-              onClick={() =>
-                navigate(
-                  `/stats/progress?date=${encodeURIComponent(anchorDate.toISOString())}&period=${period}`,
-                )
-              }
-              className="rounded-lg px-2 py-2 text-sm font-semibold"
-              style={{ color: colors.textMuted }}
-            >
-              Progress
-            </button>
-          )}
-        </div>
-        <div className="flex items-center justify-between gap-3">
-          <button type="button" onClick={() => setAnchorDate(shiftPeriod(anchorDate, period, -1))}>
-            ←
-          </button>
-          <p className="text-sm font-medium" style={{ color: colors.text }}>
-            {formatPeriodLabel(anchorDate, period)}
-          </p>
-          <button type="button" onClick={() => setAnchorDate(shiftPeriod(anchorDate, period, 1))}>
-            →
-          </button>
-        </div>
-      </ThemedSurface>
-
-      <ChartTypeSelector visualization={visualization} onChange={setVisualization} />
-      <StatsKpiCard summary={summary} />
-      <VisualizationContent summary={summary} visualization={visualization} />
+      <div className="min-w-0">
+        <VisualizationContent summary={summary} visualization={visualization} period={period} />
+      </div>
     </div>
   );
 }

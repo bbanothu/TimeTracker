@@ -91,7 +91,7 @@ export function ProfileIdentityCard({
             autoComplete="given-name"
             editable={!disabled}
             className="rounded-xl border px-3 py-2.5 text-sm"
-            style={[inputStyle, disabled ? { opacity: 0.6 } : null]}
+            style={[inputStyle, disabled ? { color: colors.textDisabled } : null]}
           />
         </View>
         <View className="flex-1">
@@ -106,7 +106,7 @@ export function ProfileIdentityCard({
             autoComplete="family-name"
             editable={!disabled}
             className="rounded-xl border px-3 py-2.5 text-sm"
-            style={[inputStyle, disabled ? { opacity: 0.6 } : null]}
+            style={[inputStyle, disabled ? { color: colors.textDisabled } : null]}
           />
         </View>
       </View>

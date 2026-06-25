@@ -15,7 +15,7 @@ interface TagsListProps {
 
 function EditIcon({ color }: { color: string }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
         stroke={color}
@@ -36,7 +36,7 @@ function EditIcon({ color }: { color: string }) {
 
 function DeleteIcon({ color }: { color: string }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
         stroke={color}
@@ -60,7 +60,7 @@ export function TagsList({
 
   if (items.length === 0) {
     return (
-      <p className="py-2 text-center text-sm" style={{ color: colors.textMuted }}>
+      <p className="py-2 text-center text-base" style={{ color: colors.textMuted }}>
         {emptyMessage}
       </p>
     );
@@ -69,7 +69,7 @@ export function TagsList({
   return (
     <ThemedSurface className="overflow-hidden p-0">
       {items.map((item, index) => {
-        const indent = item.depth * 12;
+        const indent = item.depth * 14;
         const included = item.tag.includeInAnalytics !== false;
         const label = formatTagName(item.tag.name);
         const pathLabel = item.depth > 0 ? formatTagName(item.path) : label;
@@ -77,18 +77,18 @@ export function TagsList({
         return (
           <div
             key={item.tag.id}
-            className="flex items-center gap-2 py-2.5 pr-3"
+            className="flex items-center gap-2.5 py-3.5 pr-3"
             style={{
-              paddingLeft: 12 + indent,
+              paddingLeft: 14 + indent,
               borderBottom: index < items.length - 1 ? `1px solid ${colors.surfaceBorder}` : undefined,
             }}
           >
             <span
-              className="h-2 w-2 shrink-0 rounded-full"
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
               style={{ backgroundColor: item.tag.color }}
             />
             <span
-              className="min-w-0 flex-1 truncate text-sm font-semibold"
+              className="min-w-0 flex-1 truncate text-base font-semibold"
               style={{ color: included ? colors.textOnBg : colors.textMuted }}
               title={pathLabel}
             >
@@ -101,15 +101,15 @@ export function TagsList({
               aria-label="Include in analytics"
               title={included ? 'Shown in analytics' : 'Hidden from analytics'}
               onClick={() => onToggleAnalytics(item.tag, !included)}
-              className="relative h-5 w-9 shrink-0 rounded-full border transition"
+              className="relative h-6 w-11 shrink-0 rounded-full border transition"
               style={{
                 backgroundColor: included ? colors.primary : colors.secondaryBg,
                 borderColor: included ? colors.primary : colors.surfaceBorder,
               }}
             >
               <span
-                className="absolute top-0.5 h-3.5 w-3.5 rounded-full bg-white transition-all"
-                style={{ left: included ? '18px' : '2px' }}
+                className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all"
+                style={{ left: included ? '26px' : '2px' }}
               />
             </button>
             <button
@@ -117,7 +117,7 @@ export function TagsList({
               aria-label={`Edit ${label}`}
               title="Edit"
               onClick={() => onEdit(item.tag)}
-              className="shrink-0 rounded p-1 transition hover:opacity-80"
+              className="shrink-0 rounded p-1.5 transition hover:opacity-80"
             >
               <EditIcon color={colors.textMuted} />
             </button>
@@ -129,7 +129,7 @@ export function TagsList({
                 if (!confirmDelete(`Remove ${label}? This cannot be undone.`)) return;
                 onDelete(item.tag);
               }}
-              className="shrink-0 rounded p-1 transition hover:opacity-80"
+              className="shrink-0 rounded p-1.5 transition hover:opacity-80"
             >
               <DeleteIcon color={colors.destructiveText} />
             </button>

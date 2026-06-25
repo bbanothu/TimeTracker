@@ -18,7 +18,7 @@ export function AppBackground({ children }: { children: ReactNode }) {
           backgroundImage: `linear-gradient(180deg, ${colors.backgroundGradient[0]}, ${colors.backgroundGradient[1]}, ${colors.backgroundGradient[2]})`,
         }}
       />
-      <div className="relative z-10 flex min-h-dvh flex-col">{children}</div>
+      <div className="relative z-10 flex min-h-dvh w-full flex-col">{children}</div>
     </div>
   );
 }

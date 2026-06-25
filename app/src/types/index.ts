@@ -6,6 +6,7 @@ export interface Tag {
   color: string;
   parentId: string | null;
   includeInAnalytics: boolean;
+  description: string | null;
 }
 
 export interface TagDailyGoal {

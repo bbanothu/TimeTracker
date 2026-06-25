@@ -10,8 +10,14 @@ import type { Tag } from '@/types';
 interface TagsContextValue {
   tags: Tag[];
   refresh: () => void;
-  addTag: (name: string, color: string, parentId?: string | null) => void;
-  editTag: (id: string, name: string, color: string, parentId?: string | null) => void;
+  addTag: (name: string, color: string, parentId?: string | null, description?: string | null) => void;
+  editTag: (
+    id: string,
+    name: string,
+    color: string,
+    parentId?: string | null,
+    description?: string | null,
+  ) => void;
   removeTag: (id: string) => void;
   toggleTagAnalytics: (id: string, includeInAnalytics: boolean) => void;
 }
@@ -45,16 +51,22 @@ export function TagsProvider({ children }: { children: React.ReactNode }) {
   }, [refresh, user?.id]);
 
   const addTag = useCallback(
-    (name: string, color: string, parentId: string | null = null) => {
-      createTag(name, color, parentId);
+    (name: string, color: string, parentId: string | null = null, description: string | null = null) => {
+      createTag(name, color, parentId, description);
       syncAfterMutation();
     },
     [syncAfterMutation],
   );
 
   const editTag = useCallback(
-    (id: string, name: string, color: string, parentId?: string | null) => {
-      updateTag(id, name, color, parentId);
+    (
+      id: string,
+      name: string,
+      color: string,
+      parentId?: string | null,
+      description?: string | null,
+    ) => {
+      updateTag(id, name, color, parentId, description);
       syncAfterMutation();
     },
     [syncAfterMutation],

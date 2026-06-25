@@ -136,8 +136,17 @@ export function ProfileLinkRows({ rows }: ProfileLinkRowsProps) {
     <ThemedSurface className="mb-4 overflow-hidden p-0">
       {rows.map((row, index) => {
         const destructive = row.variant === 'destructive';
-        const labelColor = destructive ? colors.destructive : colors.text;
-        const iconColor = destructive ? colors.destructive : colors.textMuted;
+        const isInactive = row.disabled || row.loading;
+        const labelColor = destructive
+          ? colors.destructive
+          : isInactive
+            ? colors.textDisabled
+            : colors.text;
+        const iconColor = destructive
+          ? colors.destructive
+          : isInactive
+            ? colors.textDisabled
+            : colors.textMuted;
         const showChevron = row.showChevron ?? true;
 
         return (
@@ -146,7 +155,7 @@ export function ProfileLinkRows({ rows }: ProfileLinkRowsProps) {
             type="button"
             onClick={row.onClick}
             disabled={row.disabled || row.loading}
-            className="flex w-full items-center justify-between px-4 py-3.5 text-left disabled:opacity-50"
+            className="flex w-full items-center justify-between px-4 py-3.5 text-left"
             style={{
               borderBottomWidth: index < rows.length - 1 ? 1 : 0,
               borderBottomColor: colors.glassBorder,

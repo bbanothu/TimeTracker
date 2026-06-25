@@ -49,9 +49,18 @@ export function ProfileLinkRows({ rows }: ProfileLinkRowsProps) {
   return (
     <ThemedSurface className="mb-4 overflow-hidden p-0">
       {rows.map((row, index) => {
+        const isInactive = row.disabled || row.loading;
         const destructive = row.variant === 'destructive';
-        const labelColor = destructive ? colors.destructive : colors.text;
-        const iconColor = destructive ? colors.destructive : colors.textMuted;
+        const labelColor = destructive
+          ? colors.destructive
+          : isInactive
+            ? colors.textDisabled
+            : colors.text;
+        const iconColor = destructive
+          ? colors.destructive
+          : isInactive
+            ? colors.textDisabled
+            : colors.textMuted;
         const showChevron = row.showChevron ?? true;
 
         return (
@@ -63,7 +72,6 @@ export function ProfileLinkRows({ rows }: ProfileLinkRowsProps) {
             style={{
               borderBottomWidth: index < rows.length - 1 ? 1 : 0,
               borderBottomColor: colors.glassBorder,
-              opacity: row.disabled || row.loading ? 0.5 : 1,
             }}
           >
             <View className="min-w-0 flex-1 flex-row items-center gap-3 pr-2">

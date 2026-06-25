@@ -1,14 +1,15 @@
 import { Pressable, Text, View } from 'react-native';
 
 import { useAppColors } from '@/hooks/useAppColors';
-import type { StatsVisualization } from '@/types';
+import type { PeriodType, StatsVisualization } from '@/types';
 
 interface ChartTypeSelectorProps {
+  period: PeriodType;
   visualization: StatsVisualization;
   onChange: (visualization: StatsVisualization) => void;
 }
 
-const OPTIONS: { value: StatsVisualization; label: string }[] = [
+const ALL_OPTIONS: { value: StatsVisualization; label: string }[] = [
   { value: 'overview', label: 'Overview' },
   // { value: 'bars', label: 'Bars' },
   { value: 'list', label: 'List' },
@@ -16,8 +17,10 @@ const OPTIONS: { value: StatsVisualization; label: string }[] = [
   { value: 'trend', label: 'Trend' },
 ];
 
-export function ChartTypeSelector({ visualization, onChange }: ChartTypeSelectorProps) {
+export function ChartTypeSelector({ period, visualization, onChange }: ChartTypeSelectorProps) {
   const colors = useAppColors();
+  const options =
+    period === 'day' ? ALL_OPTIONS.filter((item) => item.value !== 'trend') : ALL_OPTIONS;
 
   return (
     <View className="mb-4">
@@ -31,7 +34,7 @@ export function ChartTypeSelector({ visualization, onChange }: ChartTypeSelector
         className="flex-row rounded-xl p-1"
         style={{ backgroundColor: colors.glass, borderColor: colors.glassBorder, borderWidth: 1 }}
       >
-        {OPTIONS.map((item) => {
+        {options.map((item) => {
           const selected = visualization === item.value;
           return (
             <Pressable

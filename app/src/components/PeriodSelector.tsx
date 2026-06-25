@@ -51,10 +51,10 @@ export function PeriodSelector({
         })}
         {onProgressPress || progressDisabled ? (
           progressDisabled ? (
-            <View className="flex-1 rounded-lg py-2" style={{ opacity: 0.45 }}>
+            <View className="flex-1 rounded-lg py-2">
               <Text
                 className="text-center text-sm font-semibold"
-                style={{ color: colors.textMuted }}
+                style={{ color: colors.textDisabled }}
               >
                 Progress
               </Text>

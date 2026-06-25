@@ -23,6 +23,8 @@ export default function TagsScreen() {
   const [parentPickerOpen, setParentPickerOpen] = useState(false);
   const [tagFormOpen, setTagFormOpen] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
+  const [description, setDescription] = useState('');
+  const [showDescription, setShowDescription] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const tagFormScrollRef = useRef<ScrollViewType>(null);
 
@@ -40,6 +42,8 @@ export default function TagsScreen() {
     setName('');
     setColor(TAG_COLOR_OPTIONS[0]);
     setParentId(null);
+    setDescription('');
+    setShowDescription(false);
     setEditingTag(null);
     setError(null);
   };
@@ -62,9 +66,9 @@ export default function TagsScreen() {
         throw new Error('That parent would create a cycle');
       }
       if (editingTag) {
-        editTag(editingTag.id, name, color, parentId);
+        editTag(editingTag.id, name, color, parentId, description);
       } else {
-        addTag(name, color, parentId);
+        addTag(name, color, parentId, description);
       }
       closeTagForm();
     } catch (err) {
@@ -77,6 +81,8 @@ export default function TagsScreen() {
     setName(tag.name);
     setColor(tag.color);
     setParentId(tag.parentId);
+    setDescription(tag.description ?? '');
+    setShowDescription(Boolean(tag.description));
     setError(null);
     setTagFormOpen(true);
   };
@@ -97,10 +103,11 @@ export default function TagsScreen() {
           label="Create new tag"
           onPress={openCreateForm}
           variant="secondary"
+          size="lg"
           className="mb-4"
         />
 
-        <Text className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
+        <Text className="mb-2 text-base font-medium" style={{ color: colors.textMuted }}>
         Tags ({flatTags.length})
       </Text>
       <TagsList
@@ -135,8 +142,8 @@ export default function TagsScreen() {
                 onPress={() => setParentPickerOpen(false)}
                 className="mb-3 flex-row items-center"
               >
-                <Ionicons name="chevron-back" size={18} color={colors.primary} />
-                <Text className="ml-1 text-sm font-semibold" style={{ color: colors.primary }}>
+                <Ionicons name="chevron-back" size={22} color={colors.primary} />
+                <Text className="ml-1 text-base font-semibold" style={{ color: colors.primary }}>
                   Back to tag
                 </Text>
               </Pressable>
@@ -145,13 +152,13 @@ export default function TagsScreen() {
                   setParentId(null);
                   setParentPickerOpen(false);
                 }}
-                className="mb-2 rounded-xl px-4 py-3"
+                className="mb-2 rounded-xl px-4 py-3.5"
                 style={{
                   backgroundColor:
                     parentId === null ? colors.selectedBgSolid : colors.secondaryBgSolid,
                 }}
               >
-                <Text className="text-base" style={{ color: colors.text }}>
+                <Text className="text-lg" style={{ color: colors.text }}>
                   None (top level)
                 </Text>
               </Pressable>
@@ -162,14 +169,14 @@ export default function TagsScreen() {
                     setParentId(item.tag.id);
                     setParentPickerOpen(false);
                   }}
-                  className="mb-2 rounded-xl px-4 py-3"
+                  className="mb-2 rounded-xl px-4 py-3.5"
                   style={{
-                    marginLeft: item.depth * 12,
+                    marginLeft: item.depth * 14,
                     backgroundColor:
                       parentId === item.tag.id ? colors.selectedBgSolid : colors.secondaryBgSolid,
                   }}
                 >
-                  <Text className="text-base" style={{ color: colors.text }}>
+                  <Text className="text-lg" style={{ color: colors.text }}>
                     {formatTagName(item.path)}
                   </Text>
                 </Pressable>
@@ -177,7 +184,7 @@ export default function TagsScreen() {
             </>
           ) : (
             <>
-              <Text className="mb-2 text-sm" style={{ color: colors.textMuted }}>
+              <Text className="mb-2 text-base" style={{ color: colors.textMuted }}>
                 Name
               </Text>
               <TextInput
@@ -186,7 +193,7 @@ export default function TagsScreen() {
                 placeholder="work"
                 placeholderTextColor={colors.inputPlaceholder}
                 autoCapitalize="none"
-                className="mb-3 rounded-xl border px-4 py-3 text-base"
+                className="mb-3 rounded-xl border px-4 py-3.5 text-lg"
                 style={{
                   backgroundColor: colors.inputBg,
                   borderColor: colors.inputBorder,
@@ -199,7 +206,7 @@ export default function TagsScreen() {
                   }, delay);
                 }}
               />
-              <Text className="mb-2 text-sm" style={{ color: colors.textMuted }}>
+              <Text className="mb-2 text-base" style={{ color: colors.textMuted }}>
                 Parent tag
               </Text>
               <Pressable
@@ -207,28 +214,28 @@ export default function TagsScreen() {
                   Keyboard.dismiss();
                   setParentPickerOpen(true);
                 }}
-                className="mb-3 flex-row items-center justify-between rounded-xl border px-4 py-3"
+                className="mb-3 flex-row items-center justify-between rounded-xl border px-4 py-3.5"
                 style={{ backgroundColor: colors.inputBg, borderColor: colors.inputBorder }}
               >
-                <Text className="text-base" style={{ color: colors.text }}>
+                <Text className="text-lg" style={{ color: colors.text }}>
                   {selectedParentLabel}
                 </Text>
-                <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
+                <Ionicons name="chevron-down" size={22} color={colors.textMuted} />
               </Pressable>
-              <Text className="mb-2 text-sm" style={{ color: colors.textMuted }}>
+              <Text className="mb-2 text-base" style={{ color: colors.textMuted }}>
                 Color
               </Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 className="mb-4"
-                contentContainerStyle={{ gap: 8, paddingRight: 4 }}
+                contentContainerStyle={{ gap: 10, paddingRight: 4 }}
               >
                 {TAG_COLOR_OPTIONS.map((item) => (
                   <Pressable
                     key={item}
                     onPress={() => setColor(item)}
-                    className={`h-10 w-10 rounded-full ${color === item ? 'border-2' : ''}`}
+                    className={`h-12 w-12 rounded-full ${color === item ? 'border-2' : ''}`}
                     style={{
                       backgroundColor: item,
                       borderColor: color === item ? colors.text : 'transparent',
@@ -236,14 +243,48 @@ export default function TagsScreen() {
                   />
                 ))}
               </ScrollView>
+              {showDescription ? (
+                <>
+                  <Text className="mb-2 text-base" style={{ color: colors.textMuted }}>
+                    Description
+                  </Text>
+                  <TextInput
+                    value={description}
+                    onChangeText={setDescription}
+                    placeholder="Notes about when or how to use this tag"
+                    placeholderTextColor={colors.inputPlaceholder}
+                    multiline
+                    textAlignVertical="top"
+                    className="mb-4 min-h-[112px] rounded-xl border px-4 py-3.5 text-lg"
+                    style={{
+                      backgroundColor: colors.inputBg,
+                      borderColor: colors.inputBorder,
+                      color: colors.text,
+                    }}
+                  />
+                </>
+              ) : (
+                <Pressable
+                  onPress={() => setShowDescription(true)}
+                  className="mb-4 flex-row items-center self-start"
+                  accessibilityRole="button"
+                  accessibilityLabel="Add description"
+                >
+                  <Ionicons name="add" size={20} color={colors.primary} />
+                  <Text className="ml-1 text-base font-semibold" style={{ color: colors.primary }}>
+                    Add description
+                  </Text>
+                </Pressable>
+              )}
               {error ? (
-                <Text className="mt-3 text-sm font-medium" style={{ color: colors.destructive }}>
+                <Text className="mt-3 text-base font-medium" style={{ color: colors.destructive }}>
                   {error}
                 </Text>
               ) : null}
               <ActionButton
                 label={editingTag ? 'Update' : 'Add tag'}
                 onPress={handleSave}
+                size="lg"
               />
             </>
           )}

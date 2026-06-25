@@ -1,18 +1,18 @@
 import { Text, View } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 
-import { buildBucketLineData, hasBucketData, hasTagData } from '@/components/stats/chartUtils';
+import { buildBucketLineData, chartYAxisProps, hasBucketData, hasTagData } from '@/components/stats/chartUtils';
 import { TagLegend } from '@/components/stats/TagLegend';
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAppColors } from '@/hooks/useAppColors';
-import type { StatsSummary } from '@/types';
+import type { PeriodType, StatsSummary } from '@/types';
 import { formatDurationLong, formatTagName } from '@/utils/formatDuration';
 
 interface ChartViewProps {
   summary: StatsSummary;
 }
 
-export function ListView({ summary }: ChartViewProps) {
+export function ListView({ summary, period }: ChartViewProps & { period: PeriodType }) {
   const colors = useAppColors();
   const lineData = buildBucketLineData(summary);
 
@@ -94,34 +94,37 @@ export function ListView({ summary }: ChartViewProps) {
         </ThemedSurface>
       ) : null}
 
-      <ThemedSurface className="mb-8 p-4">
-        <Text className="mb-4 text-base font-semibold" style={{ color: colors.text }}>
-          Trend
-        </Text>
-        {!hasBucketData(summary) ? (
-          <Text className="text-center" style={{ color: colors.textMuted }}>
-            No trend data
+      {period !== 'day' ? (
+        <ThemedSurface className="mb-8 p-4">
+          <Text className="mb-4 text-base font-semibold" style={{ color: colors.text }}>
+            Trend
           </Text>
-        ) : (
-          <LineChart
-            data={lineData}
-            areaChart
-            curved
-            color={colors.chartPrimary}
-            startFillColor={colors.chartSecondary}
-            endFillColor={colors.surface}
-            startOpacity={0.4}
-            endOpacity={0.05}
-            hideRules
-            xAxisThickness={0}
-            yAxisThickness={0}
-            noOfSections={4}
-            maxValue={Math.max(...lineData.map((item) => item.value), 60)}
-            yAxisTextStyle={{ color: colors.chartText, fontSize: 12 }}
-            xAxisLabelTextStyle={{ color: colors.chartText, fontSize: 12 }}
-          />
-        )}
-      </ThemedSurface>
+          {!hasBucketData(summary) ? (
+            <Text className="text-center" style={{ color: colors.textMuted }}>
+              No trend data
+            </Text>
+          ) : (
+            <LineChart
+              data={lineData}
+              areaChart
+              curved
+              color={colors.chartPrimary}
+              startFillColor={colors.chartSecondary}
+              endFillColor={colors.surface}
+              startOpacity={0.4}
+              endOpacity={0.05}
+              hideRules
+              xAxisThickness={0}
+              yAxisThickness={0}
+              noOfSections={4}
+              maxValue={Math.max(...lineData.map((item) => item.value), 60)}
+              {...chartYAxisProps}
+              yAxisTextStyle={{ color: colors.chartText, fontSize: 12 }}
+              xAxisLabelTextStyle={{ color: colors.chartText, fontSize: 12 }}
+            />
+          )}
+        </ThemedSurface>
+      ) : null}
     </>
   );
 }
@@ -161,6 +164,7 @@ export function TrendView({ summary }: ChartViewProps) {
             textColor={colors.chartText}
             textFontSize={10}
             textShiftY={-8}
+            {...chartYAxisProps}
             yAxisTextStyle={{ color: colors.chartText, fontSize: 12 }}
             xAxisLabelTextStyle={{ color: colors.chartText, fontSize: 12 }}
           />

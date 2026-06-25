@@ -24,8 +24,19 @@ interface TagsContextValue {
   tags: Tag[];
   loading: boolean;
   refresh: () => Promise<void>;
-  addTag: (name: string, color: string, parentId?: string | null) => Promise<void>;
-  editTag: (id: string, name: string, color: string, parentId?: string | null) => Promise<void>;
+  addTag: (
+    name: string,
+    color: string,
+    parentId?: string | null,
+    description?: string | null,
+  ) => Promise<void>;
+  editTag: (
+    id: string,
+    name: string,
+    color: string,
+    parentId?: string | null,
+    description?: string | null,
+  ) => Promise<void>;
   removeTag: (id: string) => Promise<void>;
   toggleTagAnalytics: (id: string, includeInAnalytics: boolean) => Promise<void>;
 }
@@ -70,18 +81,29 @@ export function TagsProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const addTag = useCallback(
-    async (name: string, color: string, parentId: string | null = null) => {
+    async (
+      name: string,
+      color: string,
+      parentId: string | null = null,
+      description: string | null = null,
+    ) => {
       if (!user) return;
-      await createTag(user.id, name, color, parentId);
+      await createTag(user.id, name, color, parentId, description);
       await afterMutation();
     },
     [user, afterMutation],
   );
 
   const editTag = useCallback(
-    async (id: string, name: string, color: string, parentId?: string | null) => {
+    async (
+      id: string,
+      name: string,
+      color: string,
+      parentId?: string | null,
+      description?: string | null,
+    ) => {
       if (!user) return;
-      await updateTag(user.id, id, name, color, parentId ?? null);
+      await updateTag(user.id, id, name, color, parentId ?? null, description);
       await afterMutation();
     },
     [user, afterMutation],

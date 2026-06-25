@@ -23,6 +23,7 @@ type TagRow = {
   color: string;
   parent_id: string | null;
   include_in_analytics?: boolean | null;
+  description?: string | null;
 };
 
 type EntryRow = {
@@ -45,7 +46,7 @@ type GeofenceRow = {
   tags: TagRow | null;
 };
 
-const NESTED_TAG_COLUMNS = 'id, name, color, parent_id, include_in_analytics';
+const NESTED_TAG_COLUMNS = 'id, name, color, parent_id, include_in_analytics, description';
 const NESTED_TAG_COLUMNS_LEGACY = 'id, name, color, parent_id';
 
 function mapTag(row: TagRow) {
@@ -55,6 +56,7 @@ function mapTag(row: TagRow) {
     color: row.color,
     parentId: row.parent_id,
     includeInAnalytics: row.include_in_analytics !== false,
+    description: row.description?.trim() ? row.description.trim() : null,
   };
 }
 

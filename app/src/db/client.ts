@@ -50,6 +50,7 @@ function rowToTag(row: {
   color: string;
   parent_id?: string | null;
   include_in_analytics?: number | boolean | null;
+  description?: string | null;
 }): Tag {
   return {
     id: row.id,
@@ -57,7 +58,13 @@ function rowToTag(row: {
     color: row.color,
     parentId: row.parent_id ?? null,
     includeInAnalytics: row.include_in_analytics === 0 || row.include_in_analytics === false ? false : true,
+    description: row.description?.trim() ? row.description.trim() : null,
   };
+}
+
+function normalizeDescription(description?: string | null): string | null {
+  const trimmed = description?.trim();
+  return trimmed ? trimmed : null;
 }
 
 function migrateTagsToV3(database: SQLite.SQLiteDatabase): void {
@@ -134,6 +141,15 @@ function migrateToV6(database: SQLite.SQLiteDatabase): void {
   `);
 }
 
+function migrateToV7(database: SQLite.SQLiteDatabase): void {
+  const hasDescription = database.getFirstSync<{ name: string }>(
+    "SELECT name FROM pragma_table_info('tags') WHERE name = 'description'",
+  );
+  if (hasDescription) return;
+
+  database.execSync('ALTER TABLE tags ADD COLUMN description TEXT');
+}
+
 function validateSiblingName(
   userId: string,
   name: string,
@@ -176,7 +192,7 @@ function loadTagsForEntry(entryId: string): Tag[] {
       parent_id: string | null;
       include_in_analytics: number;
     }>(
-      `SELECT t.id, t.name, t.color, t.parent_id, t.include_in_analytics
+      `SELECT t.id, t.name, t.color, t.parent_id, t.include_in_analytics, t.description
        FROM tags t
        INNER JOIN time_entry_tags tet ON tet.tag_id = t.id
        WHERE tet.entry_id = ? AND tet.user_id = ?`,
@@ -194,7 +210,7 @@ function loadTagsForSession(sessionId: string): Tag[] {
       parent_id: string | null;
       include_in_analytics: number;
     }>(
-      `SELECT t.id, t.name, t.color, t.parent_id, t.include_in_analytics
+      `SELECT t.id, t.name, t.color, t.parent_id, t.include_in_analytics, t.description
        FROM tags t
        INNER JOIN active_session_tags ast ON ast.tag_id = t.id
        WHERE ast.session_id = ?`,
@@ -313,6 +329,7 @@ export function initDatabase(userId: string): void {
   migrateTagsToV4(database);
   migrateToV5(database);
   migrateToV6(database);
+  migrateToV7(database);
   database.execSync(TAGS_V3_INDEX_SQL);
 
   const versionRow = database.getFirstSync<{ value: string }>(
@@ -350,6 +367,9 @@ export function initDatabase(userId: string): void {
       if (storedVersion < 6) {
         migrateToV6(database);
       }
+      if (storedVersion < 7) {
+        migrateToV7(database);
+      }
       database.runSync('UPDATE meta SET value = ? WHERE key = ?', [
         String(SCHEMA_VERSION),
         'schema_version',
@@ -378,8 +398,8 @@ export function seedLocalDefaultTagsIfEmpty(): void {
   for (const tag of DEFAULT_TAGS) {
     const id = createId();
     getDb().runSync(
-      'INSERT INTO tags (id, user_id, name, color, parent_id, include_in_analytics, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [id, userId, tag.name, tag.color, null, 1, ts],
+      'INSERT INTO tags (id, user_id, name, color, parent_id, include_in_analytics, description, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, userId, tag.name, tag.color, null, 1, null, ts],
     );
     enqueueSync('tag', id, 'upsert', {
       id,
@@ -388,6 +408,7 @@ export function seedLocalDefaultTagsIfEmpty(): void {
       color: tag.color,
       parent_id: null,
       include_in_analytics: true,
+      description: null,
       updated_at: new Date(ts).toISOString(),
     });
   }
@@ -400,6 +421,7 @@ export function upsertTagFromRemote(tag: {
   color: string;
   parent_id?: string | null;
   include_in_analytics?: boolean | null;
+  description?: string | null;
   updated_at: string;
 }): void {
   const updatedAt = new Date(tag.updated_at).getTime();
@@ -450,15 +472,25 @@ export function upsertTagFromRemote(tag: {
   }
 
   database.runSync(
-    `INSERT INTO tags (id, user_id, name, color, parent_id, include_in_analytics, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO tags (id, user_id, name, color, parent_id, include_in_analytics, description, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
        name = excluded.name,
        color = excluded.color,
        parent_id = excluded.parent_id,
        include_in_analytics = excluded.include_in_analytics,
+       description = excluded.description,
        updated_at = excluded.updated_at
      WHERE excluded.updated_at >= tags.updated_at`,
-    [tag.id, tag.user_id, tag.name, tag.color, tag.parent_id ?? null, includeInAnalytics, updatedAt],
+    [
+      tag.id,
+      tag.user_id,
+      tag.name,
+      tag.color,
+      tag.parent_id ?? null,
+      includeInAnalytics,
+      normalizeDescription(tag.description),
+      updatedAt,
+    ],
   );
 }
 
@@ -561,14 +593,20 @@ export function getAllTags(): Tag[] {
       color: string;
       parent_id: string | null;
       include_in_analytics: number;
+      description: string | null;
     }>(
-      'SELECT id, name, color, parent_id, include_in_analytics FROM tags WHERE user_id = ? ORDER BY name ASC',
+      'SELECT id, name, color, parent_id, include_in_analytics, description FROM tags WHERE user_id = ? ORDER BY name ASC',
       [userId],
     )
     .map(rowToTag);
 }
 
-export function createTag(name: string, color: string, parentId: string | null = null): Tag {
+export function createTag(
+  name: string,
+  color: string,
+  parentId: string | null = null,
+  description: string | null = null,
+): Tag {
   const userId = requireUserId();
   const normalized = name.replace(/^#/, '').trim().toLowerCase();
   if (!normalized) throw new Error('Tag name is required');
@@ -577,10 +615,18 @@ export function createTag(name: string, color: string, parentId: string | null =
   validateSiblingName(userId, normalized, parentId);
 
   const ts = nowMs();
-  const tag: Tag = { id: createId(), name: normalized, color, parentId, includeInAnalytics: true };
+  const normalizedDescription = normalizeDescription(description);
+  const tag: Tag = {
+    id: createId(),
+    name: normalized,
+    color,
+    parentId,
+    includeInAnalytics: true,
+    description: normalizedDescription,
+  };
   getDb().runSync(
-    'INSERT INTO tags (id, user_id, name, color, parent_id, include_in_analytics, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [tag.id, userId, tag.name, tag.color, parentId, 1, ts],
+    'INSERT INTO tags (id, user_id, name, color, parent_id, include_in_analytics, description, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [tag.id, userId, tag.name, tag.color, parentId, 1, normalizedDescription, ts],
   );
   enqueueSync('tag', tag.id, 'upsert', {
     id: tag.id,
@@ -589,6 +635,7 @@ export function createTag(name: string, color: string, parentId: string | null =
     color: tag.color,
     parent_id: parentId,
     include_in_analytics: true,
+    description: normalizedDescription,
     updated_at: new Date(ts).toISOString(),
   });
   return tag;
@@ -599,6 +646,7 @@ export function updateTag(
   name: string,
   color: string,
   parentId?: string | null,
+  description?: string | null,
 ): Tag {
   const userId = requireUserId();
   const existing = getDb().getFirstSync<{
@@ -607,10 +655,16 @@ export function updateTag(
     color: string;
     parent_id: string | null;
     include_in_analytics: number;
-  }>('SELECT id, name, color, parent_id, include_in_analytics FROM tags WHERE id = ? AND user_id = ?', [id, userId]);
+    description: string | null;
+  }>(
+    'SELECT id, name, color, parent_id, include_in_analytics, description FROM tags WHERE id = ? AND user_id = ?',
+    [id, userId],
+  );
   if (!existing) throw new Error('Tag not found');
 
   const resolvedParentId = parentId !== undefined ? parentId : existing.parent_id;
+  const resolvedDescription =
+    description !== undefined ? normalizeDescription(description) : normalizeDescription(existing.description);
   const normalized = name.replace(/^#/, '').trim().toLowerCase();
   if (!normalized) throw new Error('Tag name is required');
 
@@ -619,8 +673,8 @@ export function updateTag(
 
   const ts = nowMs();
   getDb().runSync(
-    'UPDATE tags SET name = ?, color = ?, parent_id = ?, updated_at = ? WHERE id = ? AND user_id = ?',
-    [normalized, color, resolvedParentId, ts, id, userId],
+    'UPDATE tags SET name = ?, color = ?, parent_id = ?, description = ?, updated_at = ? WHERE id = ? AND user_id = ?',
+    [normalized, color, resolvedParentId, resolvedDescription, ts, id, userId],
   );
   enqueueSync('tag', id, 'upsert', {
     id,
@@ -629,6 +683,7 @@ export function updateTag(
     color,
     parent_id: resolvedParentId,
     include_in_analytics: existing.include_in_analytics !== 0,
+    description: resolvedDescription,
     updated_at: new Date(ts).toISOString(),
   });
   return {
@@ -637,6 +692,7 @@ export function updateTag(
     color,
     parentId: resolvedParentId,
     includeInAnalytics: existing.include_in_analytics !== 0,
+    description: resolvedDescription,
   };
 }
 
@@ -648,7 +704,11 @@ export function setTagIncludeInAnalytics(id: string, includeInAnalytics: boolean
     color: string;
     parent_id: string | null;
     include_in_analytics: number;
-  }>('SELECT id, name, color, parent_id, include_in_analytics FROM tags WHERE id = ? AND user_id = ?', [id, userId]);
+    description: string | null;
+  }>(
+    'SELECT id, name, color, parent_id, include_in_analytics, description FROM tags WHERE id = ? AND user_id = ?',
+    [id, userId],
+  );
   if (!existing) throw new Error('Tag not found');
 
   const ts = nowMs();
@@ -664,6 +724,7 @@ export function setTagIncludeInAnalytics(id: string, includeInAnalytics: boolean
     color: existing.color,
     parent_id: existing.parent_id,
     include_in_analytics: includeInAnalytics,
+    description: normalizeDescription(existing.description),
     updated_at: new Date(ts).toISOString(),
   });
   return {
@@ -672,6 +733,7 @@ export function setTagIncludeInAnalytics(id: string, includeInAnalytics: boolean
     color: existing.color,
     parentId: existing.parent_id,
     includeInAnalytics,
+    description: normalizeDescription(existing.description),
   };
 }
 
@@ -1058,7 +1120,7 @@ export function getAllGeofences(): Geofence[] {
     longitude: row.longitude,
     radiusMeters: row.radius_meters,
     enabled: row.enabled === 1,
-    tag: { id: row.tag_id, name: row.tag_name, color: row.tag_color, parentId: null, includeInAnalytics: true },
+    tag: { id: row.tag_id, name: row.tag_name, color: row.tag_color, parentId: null, includeInAnalytics: true, description: null },
   }));
 }
 
@@ -1093,7 +1155,7 @@ export function getGeofenceById(id: string): Geofence | null {
     longitude: row.longitude,
     radiusMeters: row.radius_meters,
     enabled: row.enabled === 1,
-    tag: { id: row.tag_id, name: row.tag_name, color: row.tag_color, parentId: null, includeInAnalytics: true },
+    tag: { id: row.tag_id, name: row.tag_name, color: row.tag_color, parentId: null, includeInAnalytics: true, description: null },
   };
 }
 

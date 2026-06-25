@@ -14,7 +14,7 @@ export const authScreenStyles = StyleSheet.create({
     marginBottom: 28,
   },
   kicker: {
-    color: 'rgba(255,255,255,0.75)',
+    color: '#F5F5F4',
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.5,
@@ -29,7 +29,7 @@ export const authScreenStyles = StyleSheet.create({
     marginBottom: 8,
   },
   subtitle: {
-    color: 'rgba(255,255,255,0.8)',
+    color: '#F5F5F4',
     fontSize: 18,
     lineHeight: 24,
   },
@@ -50,7 +50,7 @@ export const authScreenStyles = StyleSheet.create({
     marginBottom: 6,
   },
   cardHint: {
-    color: 'rgba(255,255,255,0.65)',
+    color: '#D6D3D1',
     fontSize: 16,
     marginBottom: 18,
   },
@@ -75,7 +75,7 @@ export const authScreenStyles = StyleSheet.create({
     paddingVertical: 4,
   },
   linkText: {
-    color: 'rgba(255,255,255,0.9)',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },

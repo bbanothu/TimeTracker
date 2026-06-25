@@ -1,25 +1,18 @@
 import { NavLink } from 'react-router-dom';
 
+import { mainNavTabs } from '@/config/nav';
 import { useAppColors } from '@/contexts/ThemeContext';
-
-const tabs = [
-  { to: '/', label: 'Track', icon: '⏱' },
-  { to: '/tags', label: 'Tags', icon: '🏷' },
-  { to: '/map', label: 'Map', icon: '📍' },
-  { to: '/stats', label: 'Stats', icon: '📊' },
-  { to: '/goals', label: 'Goals', icon: '🎯' },
-];
 
 export function TabNav() {
   const colors = useAppColors();
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-20 border-t backdrop-blur-md"
+      className="fixed inset-x-0 bottom-0 z-20 border-t backdrop-blur-md lg:hidden"
       style={{ backgroundColor: colors.tabBarBg, borderColor: colors.tabBarBorder }}
     >
       <div className="mx-auto grid max-w-lg grid-cols-5">
-        {tabs.map((tab) => (
+        {mainNavTabs.map((tab) => (
           <NavLink
             key={tab.to}
             to={tab.to}
