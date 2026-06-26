@@ -10,13 +10,35 @@ import { groupGeofencesByTag, tagGroupSubtitle } from '@/utils/groupGeofences';
 interface GeofencesListProps {
   geofences: Geofence[];
   emptyMessage?: string;
+  onEdit: (geofence: Geofence) => void;
   onToggle: (geofence: Geofence, enabled: boolean) => void;
   onDelete: (geofence: Geofence) => void;
 }
 
+function EditIcon({ color }: { color: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function DeleteIcon({ color }: { color: string }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
         stroke={color}
@@ -53,12 +75,14 @@ function ChevronIcon({ color, expanded }: { color: string; expanded: boolean }) 
 function GeofenceRow({
   geofence,
   colors,
+  onEdit,
   onToggle,
   onDelete,
   indented = false,
 }: {
   geofence: Geofence;
   colors: ReturnType<typeof useAppColors>;
+  onEdit: (geofence: Geofence) => void;
   onToggle: (geofence: Geofence, enabled: boolean) => void;
   onDelete: (geofence: Geofence) => void;
   indented?: boolean;
@@ -110,13 +134,22 @@ function GeofenceRow({
       </button>
       <button
         type="button"
+        aria-label={`Edit ${geofence.name}`}
+        title="Edit"
+        onClick={() => onEdit(geofence)}
+        className="flex h-5 w-5 shrink-0 items-center justify-center rounded transition hover:opacity-80"
+      >
+        <EditIcon color={colors.textMuted} />
+      </button>
+      <button
+        type="button"
         aria-label={`Delete ${geofence.name}`}
         title="Delete"
         onClick={() => {
           if (!confirmDelete(`Remove ${geofence.name}? This cannot be undone.`)) return;
           onDelete(geofence);
         }}
-        className="shrink-0 rounded p-1 transition hover:opacity-80"
+        className="flex h-5 w-5 shrink-0 items-center justify-center rounded transition hover:opacity-80"
       >
         <DeleteIcon color={colors.destructiveText} />
       </button>
@@ -127,6 +160,7 @@ function GeofenceRow({
 export function GeofencesList({
   geofences,
   emptyMessage = 'No saved places yet.',
+  onEdit,
   onToggle,
   onDelete,
 }: GeofencesListProps) {
@@ -169,6 +203,7 @@ export function GeofencesList({
               <GeofenceRow
                 geofence={geofence}
                 colors={colors}
+                onEdit={onEdit}
                 onToggle={onToggle}
                 onDelete={onDelete}
               />
@@ -220,6 +255,7 @@ export function GeofencesList({
                     <GeofenceRow
                       geofence={geofence}
                       colors={colors}
+                      onEdit={onEdit}
                       onToggle={onToggle}
                       onDelete={onDelete}
                       indented

@@ -612,12 +612,17 @@ export async function createGeofence(
 export async function updateGeofence(
   userId: string,
   id: string,
-  patch: Partial<Pick<Geofence, 'enabled' | 'name' | 'radiusMeters'>>,
+  patch: Partial<
+    Pick<Geofence, 'enabled' | 'name' | 'radiusMeters' | 'tagId' | 'latitude' | 'longitude'>
+  >,
 ): Promise<void> {
   const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (patch.enabled !== undefined) payload.enabled = patch.enabled;
-  if (patch.name !== undefined) payload.name = patch.name;
-  if (patch.radiusMeters !== undefined) payload.radius_meters = patch.radiusMeters;
+  if (patch.name !== undefined) payload.name = patch.name.trim();
+  if (patch.radiusMeters !== undefined) payload.radius_meters = Math.max(25, Math.round(patch.radiusMeters));
+  if (patch.tagId !== undefined) payload.tag_id = patch.tagId;
+  if (patch.latitude !== undefined) payload.latitude = patch.latitude;
+  if (patch.longitude !== undefined) payload.longitude = patch.longitude;
 
   const { error } = await supabase.from('geofences').update(payload).eq('id', id).eq('user_id', userId);
   if (error) throw error;

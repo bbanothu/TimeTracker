@@ -10,6 +10,7 @@ import MapView, { Circle, Marker, type MapPressEvent } from 'react-native-maps';
 import * as Location from 'expo-location';
 
 import { ActionButton } from '@/components/ActionButton';
+import { EditGeofenceModal } from '@/components/EditGeofenceModal';
 import { GeofencesList } from '@/components/GeofencesList';
 import { TabScrollView } from '@/components/TabScrollView';
 import { TabScreenContainer } from '@/components/TabScreenContainer';
@@ -64,6 +65,7 @@ export default function MapScreen() {
   const [region, setRegion] = useState(DEFAULT_REGION);
   const [showBanner, setShowBanner] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [editingGeofence, setEditingGeofence] = useState<Geofence | null>(null);
   const insideIdsRef = useRef<Set<string>>(new Set());
 
   const hasPin = draftLat != null && draftLng != null;
@@ -192,6 +194,26 @@ export default function MapScreen() {
 
   const handleDelete = async (geofence: Geofence) => {
     deleteGeofence(geofence.id);
+    loadGeofences();
+    await syncGeofencingTask();
+    pushChangesInBackground(user?.id);
+  };
+
+  const handleEdit = (geofence: Geofence) => {
+    setEditingGeofence(geofence);
+  };
+
+  const handleSaveEdit = async (
+    geofenceId: string,
+    input: {
+      tagId: string;
+      name: string;
+      latitude: number;
+      longitude: number;
+      radiusMeters: number;
+    },
+  ) => {
+    updateGeofence(geofenceId, input);
     loadGeofences();
     await syncGeofencingTask();
     pushChangesInBackground(user?.id);
@@ -330,6 +352,7 @@ export default function MapScreen() {
       <View className="mx-4 mb-6">
         <GeofencesList
           geofences={geofences}
+          onEdit={handleEdit}
           onToggle={handleToggle}
           onDelete={handleDelete}
         />
@@ -342,6 +365,14 @@ export default function MapScreen() {
       <TabScrollView className="flex-1" contentContainerClassName="pb-6" onRefreshExtra={refreshMapData}>
         {setupHeader}
       </TabScrollView>
+
+      <EditGeofenceModal
+        visible={editingGeofence != null}
+        geofence={editingGeofence}
+        tags={tags}
+        onClose={() => setEditingGeofence(null)}
+        onSave={handleSaveEdit}
+      />
     </TabScreenContainer>
   );
 }

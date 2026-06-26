@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ActionButton } from '@/components/ui/ActionButton';
+import { EditGeofenceModal } from '@/components/ui/EditGeofenceModal';
 import { GeofenceMap, DEFAULT_CENTER } from '@/components/ui/GeofenceMap';
 import { GeofencesList } from '@/components/ui/GeofencesList';
 import { TagDropdown } from '@/components/ui/TagDropdown';
@@ -36,6 +37,7 @@ export function MapPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [editingGeofence, setEditingGeofence] = useState<Geofence | null>(null);
 
   const hasPin = draftLat != null && draftLng != null;
   const canSave = hasPin && !!selectedTagId && name.trim().length > 0 && !saving;
@@ -113,6 +115,22 @@ export function MapPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSaveEdit = async (
+    geofenceId: string,
+    input: {
+      tagId: string;
+      name: string;
+      latitude: number;
+      longitude: number;
+      radiusMeters: number;
+    },
+  ) => {
+    if (!user) return;
+    await updateGeofence(user.id, geofenceId, input);
+    await load();
+    notifyDataRefresh();
   };
 
   if (loading) {
@@ -219,6 +237,7 @@ export function MapPage() {
             </p>
             <GeofencesList
               geofences={geofences}
+              onEdit={setEditingGeofence}
               onToggle={(geofence, enabled) =>
                 updateGeofence(user!.id, geofence.id, { enabled }).then(() => {
                   load();
@@ -253,6 +272,15 @@ export function MapPage() {
           />
         </ThemedSurface>
       </div>
+
+      <EditGeofenceModal
+        visible={editingGeofence != null}
+        geofence={editingGeofence}
+        geofences={geofences}
+        tags={tags}
+        onClose={() => setEditingGeofence(null)}
+        onSave={handleSaveEdit}
+      />
     </div>
   );
 }

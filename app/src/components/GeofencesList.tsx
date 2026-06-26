@@ -8,9 +8,14 @@ import type { Geofence } from '@/types';
 import { formatTagName } from '@/utils/formatDuration';
 import { groupGeofencesByTag, tagGroupSubtitle } from '@/utils/groupGeofences';
 
+const ROW_CONTROL_WIDTH = 51;
+const ROW_CONTROL_HEIGHT = 31;
+const ROW_ICON_SIZE = 26;
+
 interface GeofencesListProps {
   geofences: Geofence[];
   emptyMessage?: string;
+  onEdit: (geofence: Geofence) => void;
   onToggle: (geofence: Geofence, enabled: boolean) => void;
   onDelete: (geofence: Geofence) => void;
 }
@@ -18,12 +23,14 @@ interface GeofencesListProps {
 function GeofenceRow({
   geofence,
   colors,
+  onEdit,
   onToggle,
   onDelete,
   indented = false,
 }: {
   geofence: Geofence;
   colors: ReturnType<typeof useAppColors>;
+  onEdit: (geofence: Geofence) => void;
   onToggle: (geofence: Geofence, enabled: boolean) => void;
   onDelete: (geofence: Geofence) => void;
   indented?: boolean;
@@ -62,6 +69,16 @@ function GeofenceRow({
         accessibilityLabel={`Auto-tracking for ${geofence.name}`}
       />
       <Pressable
+        onPress={() => onEdit(geofence)}
+        accessibilityRole="button"
+        accessibilityLabel={`Edit ${geofence.name}`}
+        hitSlop={4}
+        className="shrink-0 items-center justify-center"
+        style={{ width: ROW_CONTROL_WIDTH, height: ROW_CONTROL_HEIGHT }}
+      >
+        <Ionicons name="create-outline" size={ROW_ICON_SIZE} color={colors.textMuted} />
+      </Pressable>
+      <Pressable
         onPress={() => {
           Alert.alert('Delete place', `Remove ${geofence.name}? This cannot be undone.`, [
             { text: 'Cancel', style: 'cancel' },
@@ -74,10 +91,11 @@ function GeofenceRow({
         }}
         accessibilityRole="button"
         accessibilityLabel={`Delete ${geofence.name}`}
-        hitSlop={8}
-        className="shrink-0 p-1"
+        hitSlop={4}
+        className="shrink-0 items-center justify-center"
+        style={{ width: ROW_CONTROL_WIDTH, height: ROW_CONTROL_HEIGHT }}
       >
-        <Ionicons name="trash-outline" size={18} color={colors.destructiveText} />
+        <Ionicons name="trash-outline" size={ROW_ICON_SIZE} color={colors.destructiveText} />
       </Pressable>
     </>
   );
@@ -86,6 +104,7 @@ function GeofenceRow({
 export function GeofencesList({
   geofences,
   emptyMessage = 'No saved places yet.',
+  onEdit,
   onToggle,
   onDelete,
 }: GeofencesListProps) {
@@ -128,6 +147,7 @@ export function GeofencesList({
               <GeofenceRow
                 geofence={geofence}
                 colors={colors}
+                onEdit={onEdit}
                 onToggle={onToggle}
                 onDelete={onDelete}
               />
@@ -184,6 +204,7 @@ export function GeofencesList({
                     <GeofenceRow
                       geofence={geofence}
                       colors={colors}
+                      onEdit={onEdit}
                       onToggle={onToggle}
                       onDelete={onDelete}
                       indented
