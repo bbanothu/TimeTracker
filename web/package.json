@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build docker": "npm run build && docker buildx build --platform linux/arm64 -t bbanothu1997/time-tracker:latest --push .",
     "preview": "vite preview",
     "format": "prettier --write ."
   },

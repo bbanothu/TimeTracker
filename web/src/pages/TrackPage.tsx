@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { AddManualSessionModal } from '@/components/ui/AddManualSessionModal';
 import { ActiveSessionsList } from '@/components/ui/ActiveSessionsList';
-import { ActionButton } from '@/components/ui/ActionButton';
 import { EntryList } from '@/components/ui/EntryList';
+import { StartSessionButton } from '@/components/ui/SessionControlButtons';
 import { TagDropdown } from '@/components/ui/TagDropdown';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAuth } from '@/contexts/AuthContext';
@@ -113,11 +113,11 @@ export function TrackPage() {
     <div>
       <PageHeader title="Track" />
 
-      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-8">
+      <div className="lg:grid lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)] lg:items-start lg:gap-6">
         <div>
           <ThemedSurface className="mb-6 p-4 lg:mb-4">
             <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-medium" style={{ color: colors.textMuted }}>
+              <p className="text-2xl font-medium" style={{ color: colors.textMuted }}>
                 Start new session
               </p>
               <button
@@ -126,7 +126,7 @@ export function TrackPage() {
                 aria-label="Add past session"
                 className="rounded-full p-1 transition hover:opacity-70"
               >
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <circle cx="12" cy="12" r="9" stroke={colors.primary} strokeWidth="1.5" />
                   <path
                     d="M12 8v8M8 12h8"
@@ -137,11 +137,13 @@ export function TrackPage() {
                 </svg>
               </button>
             </div>
-            <TagDropdown tags={tags} selectedId={selectedTagId} onSelect={setSelectedTagId} />
-            {error ? <p className="mt-3 text-sm text-rose-500">{error}</p> : null}
-            <div className="mt-4">
-              <ActionButton label="Start" onClick={handleStart} className="w-full" />
+            <div className="flex items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <TagDropdown tags={tags} selectedId={selectedTagId} onSelect={setSelectedTagId} />
+              </div>
+              <StartSessionButton onClick={handleStart} disabled={!selectedTagId} />
             </div>
+            {error ? <p className="mt-3 text-sm text-rose-500">{error}</p> : null}
           </ThemedSurface>
 
           {sessions.length > 0 ? (

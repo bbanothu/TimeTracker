@@ -1,4 +1,5 @@
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
+import { StopSessionButton } from '@/components/ui/SessionControlButtons';
 import { useAppColors } from '@/contexts/ThemeContext';
 import type { ActiveSession, Tag } from '@/types';
 import { formatDuration, formatTagName } from '@/utils/formatDuration';
@@ -63,18 +64,7 @@ export function ActiveSessionsList({
             >
               {formatDuration(elapsed)}
             </span>
-            <button
-              type="button"
-              onClick={() => onStop(session.id)}
-              className="shrink-0 rounded-lg border px-2.5 py-1 text-xs font-semibold transition hover:opacity-90"
-              style={{
-                backgroundColor: colors.destructiveBg,
-                borderColor: colors.destructiveBorder,
-                color: colors.destructiveText,
-              }}
-            >
-              Stop
-            </button>
+            <StopSessionButton onClick={() => onStop(session.id)} />
           </div>
         );
       })}
