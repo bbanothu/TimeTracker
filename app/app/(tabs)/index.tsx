@@ -4,7 +4,6 @@ import { Alert, Pressable, Text, View } from 'react-native';
 
 import { ActiveSessionsList } from '@/components/ActiveSessionsList';
 import { AddManualSessionModal } from '@/components/AddManualSessionModal';
-import { ActionButton } from '@/components/ActionButton';
 import { EntryList } from '@/components/EntryList';
 import { TabScrollView } from '@/components/TabScrollView';
 import { TabScreenContainer } from '@/components/TabScreenContainer';
@@ -138,9 +137,24 @@ export default function TrackScreen() {
               <Ionicons name="add-circle-outline" size={26} color={colors.primary} />
             </Pressable>
           </View>
-          <TagDropdown tags={tags} selectedId={selectedTagId} onSelect={setSelectedTagId} />
-          <View className="mt-4">
-            <ActionButton label="Start" onPress={handleStart} size="lg" />
+          <View className="flex-row items-center gap-2">
+            <View className="min-w-0 flex-1">
+              <TagDropdown tags={tags} selectedId={selectedTagId} onSelect={setSelectedTagId} />
+            </View>
+            <Pressable
+              onPress={handleStart}
+              accessibilityRole="button"
+              accessibilityLabel="Start session"
+              className="items-center justify-center rounded-xl border active:opacity-80"
+              style={{
+                width: 48,
+                height: 48,
+                backgroundColor: colors.primary,
+                borderColor: colors.primary,
+              }}
+            >
+              <Ionicons name="play" size={22} color={colors.textOnPrimary} style={{ marginLeft: 2 }} />
+            </Pressable>
           </View>
         </ThemedSurface>
 

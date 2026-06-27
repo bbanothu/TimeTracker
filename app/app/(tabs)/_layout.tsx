@@ -5,14 +5,21 @@ import type { ComponentProps } from 'react';
 import { AppBackground } from '@/components/AppBackground';
 import { ProfileButton } from '@/components/ProfileButton';
 import { useAppColors } from '@/hooks/useAppColors';
-import { getAppHeaderOptions, getTabBarStyle } from '@/navigation/headerOptions';
+import {
+  getAppHeaderOptions,
+  getTabBarGoalsItemStyle,
+  getTabBarItemStyle,
+  getTabBarLabelStyle,
+  getTabBarStyle,
+  getTabBarTrackItemStyle,
+  TAB_ICON_SIZE,
+} from '@/navigation/headerOptions';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
 function TabIcon({
   focused,
   color,
-  size,
   active,
   inactive,
 }: {
@@ -22,7 +29,7 @@ function TabIcon({
   active: IoniconName;
   inactive: IoniconName;
 }) {
-  return <Ionicons name={focused ? active : inactive} size={size} color={color} />;
+  return <Ionicons name={focused ? active : inactive} size={TAB_ICON_SIZE} color={color} />;
 }
 
 function TabsNavigator() {
@@ -39,6 +46,8 @@ function TabsNavigator() {
         tabBarActiveTintColor: colors.tabActive,
         tabBarInactiveTintColor: colors.tabInactive,
         tabBarStyle: getTabBarStyle(colors),
+        tabBarLabelStyle: getTabBarLabelStyle(),
+        tabBarItemStyle: getTabBarItemStyle(),
       }}
     >
       <Tabs.Screen
@@ -46,6 +55,7 @@ function TabsNavigator() {
         options={{
           title: 'Track',
           tabBarLabel: 'Track',
+          tabBarItemStyle: getTabBarTrackItemStyle(),
           tabBarIcon: ({ color, size, focused }) => (
             <TabIcon
               focused={focused}
@@ -110,6 +120,7 @@ function TabsNavigator() {
         options={{
           title: 'Goals',
           tabBarLabel: 'Goals',
+          tabBarItemStyle: getTabBarGoalsItemStyle(),
           tabBarIcon: ({ color, size, focused }) => (
             <TabIcon
               focused={focused}
