@@ -50,7 +50,12 @@ export function TagDropdown({ tags, selectedId, onSelect }: TagDropdownProps) {
         </span>
       </button>
 
-      <BottomSheetModal visible={open} title="Select activity" onClose={() => setOpen(false)}>
+      <BottomSheetModal
+        visible={open}
+        title="Select activity"
+        onClose={() => setOpen(false)}
+        zIndexClass="z-[9999]"
+      >
         <BottomSheetScroll>
           {flatTags.length === 0 ? (
             <p className="py-6 text-center text-sm" style={{ color: colors.textMuted }}>
