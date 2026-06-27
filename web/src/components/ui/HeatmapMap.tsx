@@ -1,9 +1,9 @@
 import { useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import 'leaflet.heat';
 
 import { DEFAULT_CENTER } from '@/components/ui/GeofenceMap';
+import { createHeatLayer } from '@/lib/paddedHeatLayer';
 import type { HeatmapPoint } from '@/utils/heatmapPoints';
 
 import 'leaflet/dist/leaflet.css';
@@ -25,11 +25,11 @@ const HEAT_GRADIENT: Record<number, string> = {
 
 function heatOptions(points: HeatmapPoint[], zoom: number) {
   const maxIntensity = Math.max(...points.map((point) => point[2]), 1);
-  const zoomFactor = Math.max(0.95, Math.min(1.35, (14 - zoom) * 0.12 + 1));
+  const zoomFactor = Math.max(0.95, Math.min(1.25, (14 - zoom) * 0.1 + 1));
 
   return {
-    radius: Math.round(105 * zoomFactor),
-    blur: Math.round(82 * zoomFactor),
+    radius: Math.round(58 * zoomFactor),
+    blur: Math.round(42 * zoomFactor),
     max: maxIntensity * 0.72,
     minOpacity: 0.48,
     maxZoom: 18,
@@ -49,7 +49,7 @@ function HeatLayer({ points }: { points: HeatmapPoint[] }) {
   useEffect(() => {
     if (points.length === 0) return;
 
-    let layer = L.heatLayer(points, heatOptions(points, map.getZoom()));
+    let layer = createHeatLayer(points, heatOptions(points, map.getZoom()));
     layer.addTo(map);
 
     const bounds = L.latLngBounds(points.map(([lat, lng]) => [lat, lng] as [number, number]));
@@ -59,7 +59,7 @@ function HeatLayer({ points }: { points: HeatmapPoint[] }) {
 
     const refreshLayer = () => {
       map.removeLayer(layer);
-      layer = L.heatLayer(points, heatOptions(points, map.getZoom()));
+      layer = createHeatLayer(points, heatOptions(points, map.getZoom()));
       layer.addTo(map);
     };
 
@@ -101,11 +101,11 @@ export function HeatmapMap({ points, center, className = '' }: HeatmapMapProps) 
   );
 
   return (
-    <div className={`overflow-hidden rounded-xl ${className}`}>
+    <div className={`rounded-xl ${className}`}>
       <MapContainer
         center={mapCenter}
         zoom={DEFAULT_ZOOM}
-        className="h-full w-full"
+        className="h-full w-full overflow-hidden rounded-xl"
         scrollWheelZoom
       >
         <TileLayer
