@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Alert, Pressable, Switch, Text, View } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedSurface } from '@/components/ThemedSurface';
@@ -7,10 +7,6 @@ import { useAppColors } from '@/hooks/useAppColors';
 import type { Geofence } from '@/types';
 import { formatTagName } from '@/utils/formatDuration';
 import { groupGeofencesByTag, tagGroupSubtitle } from '@/utils/groupGeofences';
-
-const ROW_CONTROL_WIDTH = 51;
-const ROW_CONTROL_HEIGHT = 31;
-const ROW_ICON_SIZE = 26;
 
 interface GeofencesListProps {
   geofences: Geofence[];
@@ -64,21 +60,29 @@ function GeofenceRow({
           {subtitle}
         </Text>
       </View>
-      <Switch
-        value={geofence.enabled}
-        onValueChange={(value) => onToggle(geofence, value)}
-        trackColor={{ false: colors.switchTrackOff, true: colors.primary }}
+      <Pressable
+        onPress={() => onToggle(geofence, !geofence.enabled)}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: geofence.enabled }}
         accessibilityLabel={`Auto-tracking for ${geofence.name}`}
-      />
+        hitSlop={8}
+        className="h-7 w-12 shrink-0 flex-row items-center overflow-hidden rounded-full border p-0.5"
+        style={{
+          backgroundColor: geofence.enabled ? colors.primary : colors.secondaryBg,
+          borderColor: geofence.enabled ? colors.primary : colors.surfaceBorder,
+          justifyContent: geofence.enabled ? 'flex-end' : 'flex-start',
+        }}
+      >
+        <View className="h-5 w-5 rounded-full bg-white" />
+      </Pressable>
       <Pressable
         onPress={() => onEdit(geofence)}
         accessibilityRole="button"
         accessibilityLabel={`Edit ${geofence.name}`}
-        hitSlop={4}
-        className="shrink-0 items-center justify-center"
-        style={{ width: ROW_CONTROL_WIDTH, height: ROW_CONTROL_HEIGHT }}
+        hitSlop={8}
+        className="shrink-0 p-1.5"
       >
-        <Ionicons name="create-outline" size={ROW_ICON_SIZE} color={colors.textMuted} />
+        <Ionicons name="create-outline" size={22} color={colors.textMuted} />
       </Pressable>
       <Pressable
         onPress={() => {
@@ -93,11 +97,10 @@ function GeofenceRow({
         }}
         accessibilityRole="button"
         accessibilityLabel={`Delete ${geofence.name}`}
-        hitSlop={4}
-        className="shrink-0 items-center justify-center"
-        style={{ width: ROW_CONTROL_WIDTH, height: ROW_CONTROL_HEIGHT }}
+        hitSlop={8}
+        className="shrink-0 p-1.5"
       >
-        <Ionicons name="trash-outline" size={ROW_ICON_SIZE} color={colors.destructiveText} />
+        <Ionicons name="trash-outline" size={22} color={colors.destructiveText} />
       </Pressable>
     </>
   );
@@ -147,7 +150,7 @@ export function GeofencesList({
           return (
             <View
               key={group.key}
-              className="flex-row items-center gap-2 px-3 py-2.5"
+              className="flex-row items-center gap-2.5 px-3 py-2.5"
               style={borderStyle}
             >
               <GeofenceRow
@@ -167,7 +170,7 @@ export function GeofencesList({
               onPress={() => toggleExpanded(group.key)}
               accessibilityRole="button"
               accessibilityState={{ expanded }}
-              className="flex-row items-center gap-2 px-3 py-2.5"
+              className="flex-row items-center gap-2.5 px-3 py-2.5"
             >
               <View className="min-w-0 flex-1">
                 <View className="flex-row items-center gap-1.5">
@@ -204,7 +207,7 @@ export function GeofencesList({
               ? group.geofences.map((geofence, index) => (
                   <View
                     key={geofence.id}
-                    className="flex-row items-center gap-2 px-3 py-2.5"
+                    className="flex-row items-center gap-2.5 px-3 py-2.5"
                     style={
                       index < group.geofences.length - 1
                         ? { borderBottomWidth: 1, borderBottomColor: colors.surfaceBorder }

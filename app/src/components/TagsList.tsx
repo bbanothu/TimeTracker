@@ -68,16 +68,14 @@ export function TagsList({
               accessibilityState={{ checked: included }}
               accessibilityLabel="Include in analytics"
               hitSlop={8}
-              className="h-6 w-11 shrink-0 justify-center rounded-full border"
+              className="h-7 w-12 shrink-0 flex-row items-center overflow-hidden rounded-full border p-0.5"
               style={{
                 backgroundColor: included ? colors.primary : colors.secondaryBg,
                 borderColor: included ? colors.primary : colors.surfaceBorder,
+                justifyContent: included ? 'flex-end' : 'flex-start',
               }}
             >
-              <View
-                className="h-4 w-4 rounded-full bg-white"
-                style={{ marginLeft: included ? 26 : 2 }}
-              />
+              <View className="h-5 w-5 rounded-full bg-white" />
             </Pressable>
             <Pressable
               onPress={() => onEdit(item.tag)}
