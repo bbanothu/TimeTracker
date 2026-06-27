@@ -125,7 +125,7 @@ export default function TrackScreen() {
       <TabScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-2">
         <ThemedSurface className="mb-6 p-4">
           <View className="mb-3 flex-row items-center justify-between">
-            <Text className="text-sm font-medium" style={{ color: colors.textMuted }}>
+            <Text className="text-2xl font-medium" style={{ color: colors.textMuted }}>
               Start new session
             </Text>
             <Pressable
@@ -134,7 +134,7 @@ export default function TrackScreen() {
               accessibilityRole="button"
               className="rounded-full p-1 active:opacity-70"
             >
-              <Ionicons name="add-circle-outline" size={26} color={colors.primary} />
+              <Ionicons name="add-circle-outline" size={40} color={colors.primary} />
             </Pressable>
           </View>
           <View className="flex-row items-center gap-2">
@@ -145,22 +145,23 @@ export default function TrackScreen() {
               onPress={handleStart}
               accessibilityRole="button"
               accessibilityLabel="Start session"
-              className="items-center justify-center rounded-xl border active:opacity-80"
+              className="items-center justify-center rounded-full active:opacity-80"
               style={{
                 width: 48,
                 height: 48,
-                backgroundColor: colors.primary,
+                borderWidth: 2.5,
                 borderColor: colors.primary,
+                backgroundColor: 'transparent',
               }}
             >
-              <Ionicons name="play" size={22} color={colors.textOnPrimary} style={{ marginLeft: 2 }} />
+              <Ionicons name="play" size={20} color={colors.primary} style={{ marginLeft: 2 }} />
             </Pressable>
           </View>
         </ThemedSurface>
 
         {sessions.length > 0 ? (
           <View className="mb-4">
-            <Text className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
+            <Text className="mb-2 text-base font-medium" style={{ color: colors.textMuted }}>
               Active ({sessions.length})
             </Text>
             <ActiveSessionsList
@@ -170,12 +171,12 @@ export default function TrackScreen() {
             />
           </View>
         ) : (
-          <Text className="mb-4 text-center text-sm" style={{ color: colors.textMuted }}>
+          <Text className="mb-4 text-center text-base" style={{ color: colors.textMuted }}>
             No active sessions yet.
           </Text>
         )}
 
-        <Text className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
+        <Text className="mb-2 text-base font-medium" style={{ color: colors.textMuted }}>
           Today ({todayEntries.length})
         </Text>
         <EntryList

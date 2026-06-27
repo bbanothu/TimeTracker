@@ -5,7 +5,7 @@ import type { AppColors } from '@/theme/colors';
 
 const ANDROID_HEADER_BODY = 52;
 export const TAB_ICON_SIZE = 30;
-export const TAB_LABEL_FONT_SIZE = 13;
+export const TAB_LABEL_FONT_SIZE = 14;
 export const TAB_EDGE_INSET = 12;
 const TAB_ITEM_SPACING = -8;
 
@@ -52,7 +52,7 @@ export function getAppHeaderOptions(colors: AppColors) {
     headerTintColor: colors.headerText,
     headerTitleStyle: {
       fontWeight: '700' as const,
-      fontSize: 22,
+      fontSize: 24,
       color: colors.headerText,
     },
     headerShadowVisible: false,

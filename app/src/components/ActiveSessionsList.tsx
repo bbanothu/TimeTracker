@@ -39,7 +39,7 @@ export function ActiveSessionsList({ sessions, geofenceNames, onStop }: ActiveSe
                   style={{ backgroundColor: session.tags[0]?.color ?? colors.primary }}
                 />
                 <Text
-                  className="flex-1 text-sm font-semibold"
+                  className="flex-1 text-base font-semibold"
                   style={{ color: colors.textOnBg }}
                   numberOfLines={1}
                 >
@@ -48,7 +48,7 @@ export function ActiveSessionsList({ sessions, geofenceNames, onStop }: ActiveSe
               </View>
               {subtitle ? (
                 <Text
-                  className="ml-3.5 text-xs"
+                  className="ml-3.5 text-sm"
                   style={{ color: colors.textMuted }}
                   numberOfLines={1}
                 >
@@ -57,23 +57,32 @@ export function ActiveSessionsList({ sessions, geofenceNames, onStop }: ActiveSe
               ) : null}
             </View>
             <Text
-              className="shrink-0 font-mono text-sm font-semibold tabular-nums"
+              className="shrink-0 font-mono text-base font-semibold tabular-nums"
               style={{ color: colors.textOnBg }}
             >
               {formatDuration(elapsed)}
             </Text>
             <Pressable
               onPress={() => onStop(session.id)}
-              className="rounded-lg px-2.5 py-1"
+              accessibilityRole="button"
+              accessibilityLabel="Stop session"
+              className="items-center justify-center rounded-full active:opacity-80"
               style={{
-                backgroundColor: colors.destructiveBg,
-                borderColor: colors.destructiveBorder,
-                borderWidth: 1,
+                width: 40,
+                height: 40,
+                borderWidth: 2.5,
+                borderColor: colors.stop,
+                backgroundColor: 'transparent',
               }}
             >
-              <Text className="text-xs font-semibold" style={{ color: colors.destructiveText }}>
-                Stop
-              </Text>
+              <View
+                style={{
+                  width: 14,
+                  height: 14,
+                  borderRadius: 2.5,
+                  backgroundColor: colors.stop,
+                }}
+              />
             </Pressable>
           </View>
         );

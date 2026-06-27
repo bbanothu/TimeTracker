@@ -1,5 +1,16 @@
 /** @type {import('tailwindcss').Config} */
-const fontSize = require('../tailwind.fontSize');
+const baseFontSize = require('../tailwind.fontSize');
+
+function bumpFontSizes(sizes, stepRem = 0.0625) {
+  return Object.fromEntries(
+    Object.entries(sizes).map(([key, value]) => {
+      const [size, options] = value;
+      const numeric = parseFloat(size);
+      const unit = size.replace(String(numeric), '');
+      return [key, [`${numeric + stepRem}${unit}`, options]];
+    }),
+  );
+}
 
 module.exports = {
   darkMode: 'class',
@@ -7,7 +18,7 @@ module.exports = {
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
-      fontSize,
+      fontSize: bumpFontSizes(baseFontSize),
     },
   },
   plugins: [],
