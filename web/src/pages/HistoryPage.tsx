@@ -89,10 +89,11 @@ export function HistoryPage() {
     tagIds: string[],
     startedAt: number,
     endedAt: number,
+    details: string | null,
   ) => {
     if (!user) return;
 
-    await updateTimeEntry(user.id, entryId, { startedAt, endedAt, tagIds });
+    await updateTimeEntry(user.id, entryId, { startedAt, endedAt, tagIds, details });
     notifyDataRefresh();
     await loadEntries();
     await refresh();

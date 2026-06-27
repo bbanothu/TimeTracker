@@ -10,18 +10,27 @@ import { TabScrollView } from '@/components/TabScrollView';
 import { TabScreenContainer } from '@/components/TabScreenContainer';
 import { TagDropdown } from '@/components/TagDropdown';
 import { ThemedSurface } from '@/components/ThemedSurface';
-import { getGeofenceById } from '@/db/client';
+import { StopSessionDetailsModal } from '@/components/StopSessionDetailsModal';
+import { getGeofenceById, updateEntryStopDetails } from '@/db/client';
+import { useAuth } from '@/hooks/useAuth';
 import { useActiveSession } from '@/hooks/useActiveSession';
 import { useAppColors } from '@/hooks/useAppColors';
 import { useTags } from '@/hooks/useTags';
+import { getStopCoordinates } from '@/lib/stopLocation';
+import { dismissGeofenceNotification } from '@/services/notificationService';
+import { pushChangesInBackground } from '@/services/syncScheduler';
+import { timerService } from '@/services/timerService';
 
 export default function TrackScreen() {
-  const { ready, sessions, todayEntries, tick, startManual, stop, addManualEntry } =
+  const { user } = useAuth();
+  const { ready, sessions, todayEntries, tick, startManual, addManualEntry, refresh } =
     useActiveSession();
   const { tags } = useTags();
   const colors = useAppColors();
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
   const [manualModalOpen, setManualModalOpen] = useState(false);
+  const [stopDetailsEntryId, setStopDetailsEntryId] = useState<string | null>(null);
+  const [savingStopDetails, setSavingStopDetails] = useState(false);
 
   void tick;
 
@@ -69,6 +78,41 @@ export default function TrackScreen() {
     }
   };
 
+  const handleStop = async (sessionId: string) => {
+    const session = sessions.find((item) => item.id === sessionId);
+    const coords = await getStopCoordinates();
+    const entry = timerService.stop(sessionId, {
+      stopLatitude: coords?.latitude ?? null,
+      stopLongitude: coords?.longitude ?? null,
+    });
+    refresh();
+    if (session?.geofenceId) {
+      dismissGeofenceNotification(session.geofenceId).catch(console.warn);
+    }
+    if (user) {
+      pushChangesInBackground(user.id);
+    }
+    if (entry) {
+      setStopDetailsEntryId(entry.id);
+    }
+  };
+
+  const handleSaveStopDetails = async (details: string) => {
+    if (!stopDetailsEntryId) return;
+
+    try {
+      setSavingStopDetails(true);
+      updateEntryStopDetails(stopDetailsEntryId, { details: details || null });
+      setStopDetailsEntryId(null);
+      refresh();
+      if (user) {
+        pushChangesInBackground(user.id);
+      }
+    } finally {
+      setSavingStopDetails(false);
+    }
+  };
+
   if (!ready) {
     return (
       <TabScreenContainer className="items-center justify-center">
@@ -105,7 +149,7 @@ export default function TrackScreen() {
             <Text className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
               Active ({sessions.length})
             </Text>
-            <ActiveSessionsList sessions={sessions} geofenceNames={geofenceNames} onStop={stop} />
+            <ActiveSessionsList sessions={sessions} geofenceNames={geofenceNames} onStop={handleStop} />
           </View>
         ) : (
           <Text className="mb-4 text-center text-sm" style={{ color: colors.textMuted }}>
@@ -128,6 +172,13 @@ export default function TrackScreen() {
         tags={tags}
         onClose={() => setManualModalOpen(false)}
         onSave={addManualEntry}
+      />
+
+      <StopSessionDetailsModal
+        visible={stopDetailsEntryId != null}
+        onClose={() => setStopDetailsEntryId(null)}
+        onSave={handleSaveStopDetails}
+        saving={savingStopDetails}
       />
     </TabScreenContainer>
   );

@@ -1,7 +1,7 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { useEffect, useRef, useState } from 'react';
-import { Platform, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { Platform, Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
 
 import { ActionButton } from '@/components/ActionButton';
 import { BottomSheetModal, getBottomSheetScrollHeight } from '@/components/BottomSheetModal';
@@ -14,7 +14,7 @@ interface EditEntryModalProps {
   entry: TimeEntry | null;
   tags: Tag[];
   onClose: () => void;
-  onSave: (entryId: string, tagIds: string[], startedAt: number, endedAt: number) => void;
+  onSave: (entryId: string, tagIds: string[], startedAt: number, endedAt: number, details: string | null) => void;
 }
 
 type PickerField = 'start' | 'end' | null;
@@ -33,6 +33,7 @@ export function EditEntryModal({
   const [startAt, setStartAt] = useState(new Date());
   const [endAt, setEndAt] = useState(new Date());
   const [pickerField, setPickerField] = useState<PickerField>(null);
+  const [details, setDetails] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -40,6 +41,7 @@ export function EditEntryModal({
     setStartAt(new Date(entry.startedAt));
     setEndAt(new Date(entry.endedAt));
     setSelectedTagId(entry.tags[0]?.id ?? null);
+    setDetails(entry.details ?? '');
     setPickerField(null);
     setError(null);
   }, [visible, entry]);
@@ -63,7 +65,7 @@ export function EditEntryModal({
         setError('Choose an activity.');
         return;
       }
-      onSave(entry.id, [selectedTagId], startAt.getTime(), endAt.getTime());
+      onSave(entry.id, [selectedTagId], startAt.getTime(), endAt.getTime(), details.trim() || null);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save session');
@@ -122,6 +124,24 @@ export function EditEntryModal({
             {format(endAt, 'MMM d, yyyy · h:mm a')}
           </Text>
         </Pressable>
+
+        <Text className="mb-2 mt-4 text-sm font-medium" style={{ color: colors.textMuted }}>
+          Details
+        </Text>
+        <TextInput
+          value={details}
+          onChangeText={setDetails}
+          placeholder="Notes about this session"
+          placeholderTextColor={colors.inputPlaceholder}
+          multiline
+          textAlignVertical="top"
+          className="min-h-[96px] rounded-xl border px-4 py-3 text-base"
+          style={{
+            backgroundColor: colors.inputBg,
+            borderColor: colors.inputBorder,
+            color: colors.text,
+          }}
+        />
 
         {pickerField ? (
           <View className="mt-3">

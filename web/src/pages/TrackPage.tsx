@@ -11,7 +11,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTimer } from '@/contexts/TimerContext';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { useTags } from '@/contexts/TagsContext';
-import { fetchGeofences } from '@/services/data';
+import { StopSessionDetailsModal } from '@/components/ui/StopSessionDetailsModal';
+import { notifyDataRefresh } from '@/lib/dataRefresh';
+import { fetchGeofences, updateTimeEntryStopDetails } from '@/services/data';
 
 export function TrackPage() {
   const colors = useAppColors();
@@ -20,6 +22,8 @@ export function TrackPage() {
   const { tags } = useTags();
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
   const [manualModalOpen, setManualModalOpen] = useState(false);
+  const [stopDetailsEntryId, setStopDetailsEntryId] = useState<string | null>(null);
+  const [savingStopDetails, setSavingStopDetails] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [geofenceNames, setGeofenceNames] = useState<Map<string, string>>(new Map());
 
@@ -79,6 +83,32 @@ export function TrackPage() {
     }
   };
 
+  const handleStop = async (sessionId: string) => {
+    try {
+      const entryId = await stop(sessionId);
+      if (entryId) {
+        setStopDetailsEntryId(entryId);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleSaveStopDetails = async (details: string) => {
+    if (!user || !stopDetailsEntryId) return;
+
+    try {
+      setSavingStopDetails(true);
+      await updateTimeEntryStopDetails(user.id, stopDetailsEntryId, {
+        details: details || null,
+      });
+      setStopDetailsEntryId(null);
+      notifyDataRefresh();
+    } finally {
+      setSavingStopDetails(false);
+    }
+  };
+
   return (
     <div>
       <PageHeader title="Track" />
@@ -123,9 +153,7 @@ export function TrackPage() {
                 sessions={sessions}
                 tags={tags}
                 geofenceNames={geofenceNames}
-                onStop={(sessionId) => {
-                  stop(sessionId).catch(console.error);
-                }}
+                onStop={handleStop}
               />
             </section>
           ) : (
@@ -152,6 +180,13 @@ export function TrackPage() {
         tags={tags}
         onClose={() => setManualModalOpen(false)}
         onSave={addManualEntry}
+      />
+
+      <StopSessionDetailsModal
+        visible={stopDetailsEntryId != null}
+        onClose={() => setStopDetailsEntryId(null)}
+        onSave={handleSaveStopDetails}
+        saving={savingStopDetails}
       />
     </div>
   );

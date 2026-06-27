@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { getCurrentUserId } from '@/db/client';
+import { getStopCoordinates } from '@/lib/stopLocation';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
 import { pushChangesInBackground } from '@/services/syncScheduler';
 import { timerService } from '@/services/timerService';
@@ -86,12 +87,16 @@ export async function dismissGeofenceNotification(geofenceId: string): Promise<v
   }
 }
 
-function handleStopTracking(geofenceId?: string): void {
+async function handleStopTracking(geofenceId?: string): Promise<void> {
   try {
     const session = geofenceId ? timerService.getActiveSessionByGeofenceId(geofenceId) : null;
     if (!session) return;
 
-    timerService.stop(session.id);
+    const coords = await getStopCoordinates();
+    timerService.stop(session.id, {
+      stopLatitude: coords?.latitude ?? null,
+      stopLongitude: coords?.longitude ?? null,
+    });
     notifyDataRefresh();
     pushChangesInBackground(getCurrentUserId());
     if (geofenceId) {
@@ -111,7 +116,7 @@ export function registerNotificationResponseHandler(
       | undefined;
 
     if (response.actionIdentifier === GEOFENCE_STOP_ACTION) {
-      handleStopTracking(geofenceId);
+      handleStopTracking(geofenceId).catch(console.warn);
       return;
     }
 

@@ -129,6 +129,9 @@ async function pushInternal(userId: string): Promise<boolean> {
             ended_at: number;
             source: EntrySource;
             geofence_id: string | null;
+            stop_latitude?: number | null;
+            stop_longitude?: number | null;
+            details?: string | null;
             updated_at: string;
             tag_ids: string[];
           };
@@ -139,6 +142,9 @@ async function pushInternal(userId: string): Promise<boolean> {
             ended_at: payload.ended_at,
             source: payload.source,
             geofence_id: payload.geofence_id,
+            stop_latitude: payload.stop_latitude ?? null,
+            stop_longitude: payload.stop_longitude ?? null,
+            details: payload.details ?? null,
             updated_at: payload.updated_at,
           });
           if (entryError) throw entryError;

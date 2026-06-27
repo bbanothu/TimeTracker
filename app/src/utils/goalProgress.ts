@@ -45,6 +45,9 @@ export function computeCategoryDurationsToday(
       endedAt: nowMs,
       source: activeSession.source,
       geofenceId: activeSession.geofenceId,
+      stopLatitude: null,
+      stopLongitude: null,
+      details: null,
       tags: activeSession.tags,
     });
   }

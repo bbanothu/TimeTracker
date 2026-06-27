@@ -6,6 +6,7 @@ import {
   getTodayEntries,
   startSession,
   stopSession,
+  type StopSessionOptions,
 } from '@/db/client';
 import type { ActiveSession, EntrySource, TimeEntry } from '@/types';
 
@@ -26,8 +27,8 @@ export const timerService = {
     return startSession([tagId], 'geofence', geofenceId);
   },
 
-  stop(sessionId: string): TimeEntry | null {
-    return stopSession(sessionId);
+  stop(sessionId: string, options?: StopSessionOptions): TimeEntry | null {
+    return stopSession(sessionId, options);
   },
 
   addManualEntry(tagIds: string[], startedAt: number, endedAt: number): TimeEntry {

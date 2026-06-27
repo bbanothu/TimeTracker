@@ -8,6 +8,7 @@ interface BottomSheetModalProps {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  headerActions?: ReactNode;
   maxHeightFraction?: number;
 }
 
@@ -34,6 +35,7 @@ export function BottomSheetModal({
   title,
   onClose,
   children,
+  headerActions,
   maxHeightFraction = 0.6,
 }: BottomSheetModalProps) {
   const colors = useAppColors();
@@ -68,9 +70,12 @@ export function BottomSheetModal({
             <h3 className="text-lg font-semibold" style={{ color: colors.text }}>
               {title}
             </h3>
-            <button type="button" onClick={onClose} style={{ color: colors.textMuted }}>
-              ✕
-            </button>
+            <div className="ml-3 flex items-center gap-1">
+              {headerActions}
+              <button type="button" onClick={onClose} aria-label="Close" className="rounded-full p-1">
+                <span style={{ color: colors.textMuted }}>✕</span>
+              </button>
+            </div>
           </div>
         </div>
         <div className="px-4">{children}</div>

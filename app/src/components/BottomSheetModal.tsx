@@ -22,6 +22,7 @@ interface BottomSheetModalProps {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
+  headerActions?: React.ReactNode;
   sheetClassName?: ViewProps['className'];
   maxHeightFraction?: number;
 }
@@ -74,6 +75,7 @@ export function BottomSheetModal({
   title,
   onClose,
   children,
+  headerActions,
   sheetClassName,
   maxHeightFraction = 0.6,
 }: BottomSheetModalProps) {
@@ -193,15 +195,18 @@ export function BottomSheetModal({
               <Text className="flex-1 text-lg font-semibold" style={{ color: colors.text }}>
                 {title}
               </Text>
-              <Pressable
-                onPress={onClose}
-                accessibilityRole="button"
-                accessibilityLabel="Close"
-                className="ml-3 rounded-full p-1"
-                hitSlop={8}
-              >
-                <Ionicons name="close" size={22} color={colors.textMuted} />
-              </Pressable>
+              <View className="ml-3 flex-row items-center gap-1">
+                {headerActions}
+                <Pressable
+                  onPress={onClose}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close"
+                  className="rounded-full p-1"
+                  hitSlop={8}
+                >
+                  <Ionicons name="close" size={22} color={colors.textMuted} />
+                </Pressable>
+              </View>
             </View>
           </View>
 

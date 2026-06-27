@@ -17,6 +17,7 @@ interface EditEntryModalProps {
     tagIds: string[],
     startedAt: number,
     endedAt: number,
+    details: string | null,
   ) => Promise<void>;
 }
 
@@ -25,6 +26,7 @@ export function EditEntryModal({ visible, entry, tags, onClose, onSave }: EditEn
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
   const [startValue, setStartValue] = useState('');
   const [endValue, setEndValue] = useState('');
+  const [details, setDetails] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -33,6 +35,7 @@ export function EditEntryModal({ visible, entry, tags, onClose, onSave }: EditEn
     setStartValue(toDatetimeLocalValue(new Date(entry.startedAt)));
     setEndValue(toDatetimeLocalValue(new Date(entry.endedAt)));
     setSelectedTagId(entry.tags[0]?.id ?? null);
+    setDetails(entry.details ?? '');
     setError(null);
     setSaving(false);
   }, [visible, entry]);
@@ -72,7 +75,7 @@ export function EditEntryModal({ visible, entry, tags, onClose, onSave }: EditEn
       }
 
       setSaving(true);
-      await onSave(entry.id, [selectedTagId], startedAt.getTime(), endedAt.getTime());
+      await onSave(entry.id, [selectedTagId], startedAt.getTime(), endedAt.getTime(), details.trim() || null);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save session');
@@ -116,6 +119,19 @@ export function EditEntryModal({ visible, entry, tags, onClose, onSave }: EditEn
           onChange={(event) => setEndValue(event.target.value)}
           disabled={saving}
           className="w-full rounded-xl border px-4 py-3 text-base"
+          style={inputStyle}
+        />
+
+        <p className="mb-2 mt-4 text-sm font-medium" style={{ color: colors.textMuted }}>
+          Details
+        </p>
+        <textarea
+          value={details}
+          onChange={(event) => setDetails(event.target.value)}
+          placeholder="Notes about this session"
+          rows={3}
+          disabled={saving}
+          className="w-full resize-none rounded-xl border px-4 py-3 text-base"
           style={inputStyle}
         />
 

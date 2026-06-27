@@ -27,6 +27,9 @@ export interface TimeEntry {
   endedAt: number;
   source: EntrySource;
   geofenceId: string | null;
+  stopLatitude: number | null;
+  stopLongitude: number | null;
+  details: string | null;
   tags: Tag[];
 }
 

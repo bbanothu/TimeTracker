@@ -69,8 +69,9 @@ export default function HistoryScreen() {
     tagIds: string[],
     startedAt: number,
     endedAt: number,
+    details: string | null,
   ) => {
-    updateEntry(entryId, tagIds, startedAt, endedAt);
+    updateEntry(entryId, tagIds, startedAt, endedAt, details);
     notifyDataRefresh();
     pushChangesInBackground(user?.id);
   };

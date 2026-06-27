@@ -10,6 +10,7 @@ import {
 
 import { useAuth } from '@/contexts/AuthContext';
 import { notifyDataRefresh, subscribeDataRefresh } from '@/lib/dataRefresh';
+import { getStopCoordinates } from '@/lib/stopLocation';
 import {
   createTimeEntry,
   fetchEntries,
@@ -25,7 +26,7 @@ interface TimerContextValue {
   entriesRevision: number;
   tick: number;
   startManual: (tagIds: string[]) => void;
-  stop: (sessionId: string) => Promise<void>;
+  stop: (sessionId: string) => Promise<string | null>;
   addManualEntry: (tagIds: string[], startedAt: number, endedAt: number) => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -102,22 +103,26 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const stop = useCallback(
-    async (sessionId: string) => {
-      if (!user) return;
+    async (sessionId: string): Promise<string | null> => {
+      if (!user) return null;
 
       const session = sessions.find((item) => item.id === sessionId);
-      if (!session) return;
+      if (!session) return null;
 
-      await createTimeEntry(user.id, {
+      const coords = await getStopCoordinates();
+      const entryId = await createTimeEntry(user.id, {
         startedAt: session.startedAt,
         endedAt: Date.now(),
         source: session.source,
         geofenceId: session.geofenceId,
         tagIds: session.tagIds,
+        stopLatitude: coords?.latitude ?? null,
+        stopLongitude: coords?.longitude ?? null,
       });
 
       setSessions((current) => current.filter((item) => item.id !== sessionId));
       await refresh();
+      return entryId;
     },
     [user, sessions, refresh],
   );

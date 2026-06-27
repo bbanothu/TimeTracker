@@ -32,6 +32,9 @@ type EntryRow = {
   ended_at: number;
   source: 'manual' | 'geofence';
   geofence_id: string | null;
+  stop_latitude?: number | null;
+  stop_longitude?: number | null;
+  details?: string | null;
   time_entry_tags: Array<{ tag_id: string; tags: TagRow | null }>;
 };
 
@@ -71,6 +74,9 @@ function mapEntry(row: EntryRow): TimeEntry {
     endedAt: row.ended_at,
     source: row.source,
     geofenceId: row.geofence_id,
+    stopLatitude: row.stop_latitude ?? null,
+    stopLongitude: row.stop_longitude ?? null,
+    details: row.details?.trim() ? row.details.trim() : null,
     tags,
   };
 }

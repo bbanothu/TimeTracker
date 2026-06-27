@@ -7,6 +7,7 @@ import {
   getGeofenceById,
 } from '@/db/client';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
+import { getStopCoordinates } from '@/lib/stopLocation';
 import {
   dismissGeofenceNotification,
   showGeofenceEnterNotification,
@@ -66,7 +67,11 @@ export async function handleGeofenceExit(geofenceId: string): Promise<void> {
     const active = getActiveSessionByGeofenceId(geofenceId);
     if (!active) return;
 
-    timerService.stop(active.id);
+    const coords = await getStopCoordinates();
+    timerService.stop(active.id, {
+      stopLatitude: coords?.latitude ?? null,
+      stopLongitude: coords?.longitude ?? null,
+    });
     await dismissGeofenceNotification(geofenceId);
     notifyDataRefresh();
     pushChangesInBackground(getCurrentUserId());

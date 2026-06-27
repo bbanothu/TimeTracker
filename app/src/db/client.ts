@@ -150,6 +150,17 @@ function migrateToV7(database: SQLite.SQLiteDatabase): void {
   database.execSync('ALTER TABLE tags ADD COLUMN description TEXT');
 }
 
+function migrateToV8(database: SQLite.SQLiteDatabase): void {
+  const hasStopLatitude = database.getFirstSync<{ name: string }>(
+    "SELECT name FROM pragma_table_info('time_entries') WHERE name = 'stop_latitude'",
+  );
+  if (hasStopLatitude) return;
+
+  database.execSync('ALTER TABLE time_entries ADD COLUMN stop_latitude REAL');
+  database.execSync('ALTER TABLE time_entries ADD COLUMN stop_longitude REAL');
+  database.execSync('ALTER TABLE time_entries ADD COLUMN details TEXT');
+}
+
 function validateSiblingName(
   userId: string,
   name: string,
@@ -217,6 +228,76 @@ function loadTagsForSession(sessionId: string): Tag[] {
       [sessionId],
     )
     .map(rowToTag);
+}
+
+const ENTRY_COLUMNS =
+  'id, started_at, ended_at, source, geofence_id, stop_latitude, stop_longitude, details';
+
+type EntryRow = {
+  id: string;
+  started_at: number;
+  ended_at: number;
+  source: EntrySource;
+  geofence_id: string | null;
+  stop_latitude: number | null;
+  stop_longitude: number | null;
+  details: string | null;
+};
+
+function normalizeEntryDetails(details: string | null | undefined): string | null {
+  const trimmed = details?.trim();
+  return trimmed ? trimmed : null;
+}
+
+function mapEntryRow(row: EntryRow): TimeEntry {
+  return {
+    id: row.id,
+    startedAt: row.started_at,
+    endedAt: row.ended_at,
+    source: row.source,
+    geofenceId: row.geofence_id,
+    stopLatitude: row.stop_latitude ?? null,
+    stopLongitude: row.stop_longitude ?? null,
+    details: normalizeEntryDetails(row.details),
+    tags: loadTagsForEntry(row.id),
+  };
+}
+
+function buildEntrySyncPayload(input: {
+  id: string;
+  userId: string;
+  startedAt: number;
+  endedAt: number;
+  source: EntrySource;
+  geofenceId: string | null;
+  stopLatitude: number | null;
+  stopLongitude: number | null;
+  details: string | null;
+  tagIds: string[];
+  updatedAtIso: string;
+}) {
+  return {
+    id: input.id,
+    user_id: input.userId,
+    started_at: input.startedAt,
+    ended_at: input.endedAt,
+    source: input.source,
+    geofence_id: input.geofenceId,
+    stop_latitude: input.stopLatitude,
+    stop_longitude: input.stopLongitude,
+    details: input.details,
+    updated_at: input.updatedAtIso,
+    tag_ids: input.tagIds,
+  };
+}
+
+function getTimeEntryById(id: string): TimeEntry | null {
+  const userId = requireUserId();
+  const row = getDb().getFirstSync<EntryRow>(
+    `SELECT ${ENTRY_COLUMNS} FROM time_entries WHERE id = ? AND user_id = ?`,
+    [id, userId],
+  );
+  return row ? mapEntryRow(row) : null;
 }
 
 export function enqueueSync(
@@ -330,6 +411,7 @@ export function initDatabase(userId: string): void {
   migrateToV5(database);
   migrateToV6(database);
   migrateToV7(database);
+  migrateToV8(database);
   database.execSync(TAGS_V3_INDEX_SQL);
 
   const versionRow = database.getFirstSync<{ value: string }>(
@@ -369,6 +451,9 @@ export function initDatabase(userId: string): void {
       }
       if (storedVersion < 7) {
         migrateToV7(database);
+      }
+      if (storedVersion < 8) {
+        migrateToV8(database);
       }
       database.runSync('UPDATE meta SET value = ? WHERE key = ?', [
         String(SCHEMA_VERSION),
@@ -505,6 +590,9 @@ export function upsertEntryFromRemote(entry: {
   ended_at: number;
   source: EntrySource;
   geofence_id: string | null;
+  stop_latitude?: number | null;
+  stop_longitude?: number | null;
+  details?: string | null;
   updated_at: string;
   tag_ids: string[];
 }): void {
@@ -513,13 +601,16 @@ export function upsertEntryFromRemote(entry: {
   const database = getDb();
 
   database.runSync(
-    `INSERT INTO time_entries (id, user_id, started_at, ended_at, source, geofence_id, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO time_entries (id, user_id, started_at, ended_at, source, geofence_id, stop_latitude, stop_longitude, details, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
        started_at = excluded.started_at,
        ended_at = excluded.ended_at,
        source = excluded.source,
        geofence_id = excluded.geofence_id,
+       stop_latitude = excluded.stop_latitude,
+       stop_longitude = excluded.stop_longitude,
+       details = excluded.details,
        updated_at = excluded.updated_at
      WHERE excluded.updated_at >= time_entries.updated_at`,
     [
@@ -529,6 +620,9 @@ export function upsertEntryFromRemote(entry: {
       entry.ended_at,
       entry.source,
       entry.geofence_id,
+      entry.stop_latitude ?? null,
+      entry.stop_longitude ?? null,
+      normalizeEntryDetails(entry.details),
       updatedAt,
     ],
   );
@@ -829,26 +923,54 @@ export function startSession(
   return session;
 }
 
-export function stopSession(sessionId: string, endedAt: number = Date.now()): TimeEntry | null {
+export interface StopSessionOptions {
+  endedAt?: number;
+  stopLatitude?: number | null;
+  stopLongitude?: number | null;
+  details?: string | null;
+}
+
+export function stopSession(
+  sessionId: string,
+  options: StopSessionOptions = {},
+): TimeEntry | null {
   const session = getActiveSessionById(sessionId);
   if (!session) return null;
 
   const userId = requireUserId();
   const database = getDb();
   const ts = nowMs();
+  const endedAt = options.endedAt ?? Date.now();
+  const stopLatitude = options.stopLatitude ?? null;
+  const stopLongitude = options.stopLongitude ?? null;
+  const details = normalizeEntryDetails(options.details);
   const entry: TimeEntry = {
     id: createId(),
     startedAt: session.startedAt,
-    endedAt: endedAt,
+    endedAt,
     source: session.source,
     geofenceId: session.geofenceId,
+    stopLatitude,
+    stopLongitude,
+    details,
     tags: session.tags,
   };
 
   database.runSync(
-    `INSERT INTO time_entries (id, user_id, started_at, ended_at, source, geofence_id, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [entry.id, userId, entry.startedAt, entry.endedAt, entry.source, entry.geofenceId, ts],
+    `INSERT INTO time_entries (id, user_id, started_at, ended_at, source, geofence_id, stop_latitude, stop_longitude, details, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      entry.id,
+      userId,
+      entry.startedAt,
+      entry.endedAt,
+      entry.source,
+      entry.geofenceId,
+      stopLatitude,
+      stopLongitude,
+      details,
+      ts,
+    ],
   );
 
   for (const tag of session.tags) {
@@ -861,16 +983,24 @@ export function stopSession(sessionId: string, endedAt: number = Date.now()): Ti
   database.runSync('DELETE FROM active_session_tags WHERE session_id = ?', [session.id]);
   database.runSync('DELETE FROM active_session WHERE id = ?', [session.id]);
 
-  enqueueSync('entry', entry.id, 'upsert', {
-    id: entry.id,
-    user_id: userId,
-    started_at: entry.startedAt,
-    ended_at: entry.endedAt,
-    source: entry.source,
-    geofence_id: entry.geofenceId,
-    updated_at: new Date(ts).toISOString(),
-    tag_ids: entry.tags.map((t) => t.id),
-  });
+  enqueueSync(
+    'entry',
+    entry.id,
+    'upsert',
+    buildEntrySyncPayload({
+      id: entry.id,
+      userId,
+      startedAt: entry.startedAt,
+      endedAt: entry.endedAt,
+      source: entry.source,
+      geofenceId: entry.geofenceId,
+      stopLatitude,
+      stopLongitude,
+      details,
+      tagIds: entry.tags.map((t) => t.id),
+      updatedAtIso: new Date(ts).toISOString(),
+    }),
+  );
 
   return entry;
 }
@@ -899,13 +1029,16 @@ export function createManualEntry(
     endedAt,
     source: 'manual',
     geofenceId: null,
+    stopLatitude: null,
+    stopLongitude: null,
+    details: null,
     tags,
   };
 
   database.runSync(
-    `INSERT INTO time_entries (id, user_id, started_at, ended_at, source, geofence_id, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [entry.id, userId, entry.startedAt, entry.endedAt, entry.source, entry.geofenceId, ts],
+    `INSERT INTO time_entries (id, user_id, started_at, ended_at, source, geofence_id, stop_latitude, stop_longitude, details, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [entry.id, userId, entry.startedAt, entry.endedAt, entry.source, entry.geofenceId, null, null, null, ts],
   );
 
   for (const tag of tags) {
@@ -915,18 +1048,77 @@ export function createManualEntry(
     );
   }
 
-  enqueueSync('entry', entry.id, 'upsert', {
-    id: entry.id,
-    user_id: userId,
-    started_at: entry.startedAt,
-    ended_at: entry.endedAt,
-    source: entry.source,
-    geofence_id: entry.geofenceId,
-    updated_at: new Date(ts).toISOString(),
-    tag_ids: tags.map((t) => t.id),
-  });
+  enqueueSync(
+    'entry',
+    entry.id,
+    'upsert',
+    buildEntrySyncPayload({
+      id: entry.id,
+      userId,
+      startedAt: entry.startedAt,
+      endedAt: entry.endedAt,
+      source: entry.source,
+      geofenceId: entry.geofenceId,
+      stopLatitude: null,
+      stopLongitude: null,
+      details: null,
+      tagIds: tags.map((t) => t.id),
+      updatedAtIso: new Date(ts).toISOString(),
+    }),
+  );
 
   return entry;
+}
+
+export function updateEntryStopDetails(
+  id: string,
+  input: {
+    details?: string | null;
+    stopLatitude?: number | null;
+    stopLongitude?: number | null;
+  },
+): TimeEntry {
+  const userId = requireUserId();
+  const existing = getTimeEntryById(id);
+  if (!existing) throw new Error('Entry not found');
+
+  const ts = nowMs();
+  const details =
+    input.details !== undefined ? normalizeEntryDetails(input.details) : existing.details;
+  const stopLatitude =
+    input.stopLatitude !== undefined ? input.stopLatitude : existing.stopLatitude;
+  const stopLongitude =
+    input.stopLongitude !== undefined ? input.stopLongitude : existing.stopLongitude;
+
+  getDb().runSync(
+    `UPDATE time_entries
+     SET details = ?, stop_latitude = ?, stop_longitude = ?, updated_at = ?
+     WHERE id = ? AND user_id = ?`,
+    [details, stopLatitude, stopLongitude, ts, id, userId],
+  );
+
+  enqueueSync(
+    'entry',
+    id,
+    'upsert',
+    buildEntrySyncPayload({
+      id,
+      userId,
+      startedAt: existing.startedAt,
+      endedAt: existing.endedAt,
+      source: existing.source,
+      geofenceId: existing.geofenceId,
+      stopLatitude,
+      stopLongitude,
+      details,
+      tagIds: existing.tags.map((t) => t.id),
+      updatedAtIso: new Date(ts).toISOString(),
+    }),
+  );
+
+  const updated = getTimeEntryById(id);
+  if (!updated) throw new Error('Failed to update entry');
+  return updated;
 }
 
 export function updateEntry(
@@ -934,6 +1126,7 @@ export function updateEntry(
   tagIds: string[],
   startedAt: number,
   endedAt: number,
+  details?: string | null,
 ): TimeEntry {
   const userId = requireUserId();
   if (tagIds.length === 0) throw new Error('Select at least one tag');
@@ -941,14 +1134,8 @@ export function updateEntry(
   if (endedAt > Date.now()) throw new Error('End cannot be in the future');
 
   const database = getDb();
-  const existing = database.getFirstSync<{
-    id: string;
-    started_at: number;
-    ended_at: number;
-    source: EntrySource;
-    geofence_id: string | null;
-  }>(
-    `SELECT id, started_at, ended_at, source, geofence_id
+  const existing = database.getFirstSync<EntryRow>(
+    `SELECT ${ENTRY_COLUMNS}
      FROM time_entries
      WHERE id = ? AND user_id = ?`,
     [id, userId],
@@ -962,11 +1149,13 @@ export function updateEntry(
   if (tags.length === 0) throw new Error('Select at least one tag');
 
   const ts = nowMs();
+  const nextDetails =
+    details !== undefined ? normalizeEntryDetails(details) : normalizeEntryDetails(existing.details);
   database.runSync(
     `UPDATE time_entries
-     SET started_at = ?, ended_at = ?, updated_at = ?
+     SET started_at = ?, ended_at = ?, details = ?, updated_at = ?
      WHERE id = ? AND user_id = ?`,
-    [startedAt, endedAt, ts, id, userId],
+    [startedAt, endedAt, nextDetails, ts, id, userId],
   );
 
   database.runSync('DELETE FROM time_entry_tags WHERE entry_id = ? AND user_id = ?', [id, userId]);
@@ -983,47 +1172,45 @@ export function updateEntry(
     endedAt,
     source: existing.source,
     geofenceId: existing.geofence_id,
+    stopLatitude: existing.stop_latitude ?? null,
+    stopLongitude: existing.stop_longitude ?? null,
+    details: nextDetails,
     tags,
   };
 
-  enqueueSync('entry', id, 'upsert', {
+  enqueueSync(
+    'entry',
     id,
-    user_id: userId,
-    started_at: startedAt,
-    ended_at: endedAt,
-    source: existing.source,
-    geofence_id: existing.geofence_id,
-    updated_at: new Date(ts).toISOString(),
-    tag_ids: tags.map((t) => t.id),
-  });
+    'upsert',
+    buildEntrySyncPayload({
+      id,
+      userId,
+      startedAt,
+      endedAt,
+      source: existing.source,
+      geofenceId: existing.geofence_id,
+      stopLatitude: entry.stopLatitude,
+      stopLongitude: entry.stopLongitude,
+      details: nextDetails,
+      tagIds: tags.map((t) => t.id),
+      updatedAtIso: new Date(ts).toISOString(),
+    }),
+  );
 
   return entry;
 }
 
 export function getEntriesBetween(startMs: number, endMs: number): TimeEntry[] {
   const userId = requireUserId();
-  const rows = getDb().getAllSync<{
-    id: string;
-    started_at: number;
-    ended_at: number;
-    source: EntrySource;
-    geofence_id: string | null;
-  }>(
-    `SELECT id, started_at, ended_at, source, geofence_id
+  const rows = getDb().getAllSync<EntryRow>(
+    `SELECT ${ENTRY_COLUMNS}
      FROM time_entries
      WHERE user_id = ? AND ended_at > ? AND started_at < ?
      ORDER BY started_at DESC`,
     [userId, startMs, endMs],
   );
 
-  return rows.map((row) => ({
-    id: row.id,
-    startedAt: row.started_at,
-    endedAt: row.ended_at,
-    source: row.source,
-    geofenceId: row.geofence_id,
-    tags: loadTagsForEntry(row.id),
-  }));
+  return rows.map(mapEntryRow);
 }
 
 export function getTodayEntries(): TimeEntry[] {
@@ -1036,28 +1223,15 @@ export function getTodayEntries(): TimeEntry[] {
 
 export function getAllEntries(): TimeEntry[] {
   const userId = requireUserId();
-  const rows = getDb().getAllSync<{
-    id: string;
-    started_at: number;
-    ended_at: number;
-    source: EntrySource;
-    geofence_id: string | null;
-  }>(
-    `SELECT id, started_at, ended_at, source, geofence_id
+  const rows = getDb().getAllSync<EntryRow>(
+    `SELECT ${ENTRY_COLUMNS}
      FROM time_entries
      WHERE user_id = ?
      ORDER BY started_at ASC`,
     [userId],
   );
 
-  return rows.map((row) => ({
-    id: row.id,
-    startedAt: row.started_at,
-    endedAt: row.ended_at,
-    source: row.source,
-    geofenceId: row.geofence_id,
-    tags: loadTagsForEntry(row.id),
-  }));
+  return rows.map(mapEntryRow);
 }
 
 export function deleteEntry(id: string): void {
