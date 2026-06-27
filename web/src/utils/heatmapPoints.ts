@@ -41,10 +41,12 @@ export function buildHeatmapSummary(
   const endMs = end.getTime();
   const geofenceById = new Map(geofences.map((geofence) => [geofence.id, geofence]));
 
-  const filtered = entries.filter((entry) => {
-    if (entry.endedAt < startMs || entry.endedAt > endMs) return false;
-    return resolveEntryCoordinates(entry, geofenceById) != null;
-  });
+  const filtered = entries.filter(
+    (entry): entry is TimeEntry & { endedAt: number } => {
+      if (entry.endedAt == null || entry.endedAt < startMs || entry.endedAt > endMs) return false;
+      return resolveEntryCoordinates(entry, geofenceById) != null;
+    },
+  );
 
   let totalDurationMs = 0;
   const rawPoints: HeatmapPoint[] = filtered.map((entry) => {

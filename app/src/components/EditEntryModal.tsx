@@ -1,9 +1,9 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { useEffect, useRef, useState } from 'react';
-import { Platform, Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-import { ActionButton } from '@/components/ActionButton';
 import { BottomSheetModal, getBottomSheetScrollHeight } from '@/components/BottomSheetModal';
 import { TagDropdown } from '@/components/TagDropdown';
 import { useAppColors } from '@/hooks/useAppColors';
@@ -35,15 +35,17 @@ export function EditEntryModal({
   const [pickerField, setPickerField] = useState<PickerField>(null);
   const [details, setDetails] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!visible || !entry) return;
+    if (!visible || !entry || entry.endedAt == null) return;
     setStartAt(new Date(entry.startedAt));
     setEndAt(new Date(entry.endedAt));
     setSelectedTagId(entry.tags[0]?.id ?? null);
     setDetails(entry.details ?? '');
     setPickerField(null);
     setError(null);
+    setSaving(false);
   }, [visible, entry]);
 
   useEffect(() => {
@@ -57,7 +59,7 @@ export function EditEntryModal({
   }, [tags, selectedTagId]);
 
   const handleSave = () => {
-    if (!entry) return;
+    if (!entry || saving) return;
 
     try {
       setError(null);
@@ -65,10 +67,22 @@ export function EditEntryModal({
         setError('Choose an activity.');
         return;
       }
+      if (endAt.getTime() <= startAt.getTime()) {
+        setError('End must be after start.');
+        return;
+      }
+      if (endAt.getTime() > Date.now()) {
+        setError('End cannot be in the future.');
+        return;
+      }
+
+      setSaving(true);
       onSave(entry.id, [selectedTagId], startAt.getTime(), endAt.getTime(), details.trim() || null);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save session');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -79,8 +93,28 @@ export function EditEntryModal({
 
   const scrollMaxHeight = getBottomSheetScrollHeight(windowHeight, pickerField ? 0.45 : 0.55);
 
+  const saveButton = saving ? (
+    <ActivityIndicator size="small" color={colors.primary} />
+  ) : (
+    <Pressable
+      onPress={handleSave}
+      accessibilityRole="button"
+      accessibilityLabel="Save changes"
+      className="rounded-full p-1"
+      hitSlop={8}
+    >
+      <Ionicons name="checkmark" size={24} color={colors.primary} />
+    </Pressable>
+  );
+
   return (
-    <BottomSheetModal visible={visible} title="Edit session" onClose={onClose} maxHeightFraction={0.92}>
+    <BottomSheetModal
+      visible={visible}
+      title="Edit session"
+      onClose={onClose}
+      headerActions={saveButton}
+      maxHeightFraction={0.92}
+    >
       <ScrollView
         ref={scrollRef}
         style={{ maxHeight: scrollMaxHeight }}
@@ -189,10 +223,6 @@ export function EditEntryModal({
           </Text>
         ) : null}
       </ScrollView>
-
-      <View className="mt-4">
-        <ActionButton label="Save changes" onPress={handleSave} size="lg" />
-      </View>
     </BottomSheetModal>
   );
 }

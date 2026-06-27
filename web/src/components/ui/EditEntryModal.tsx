@@ -1,11 +1,24 @@
 import { useEffect, useState } from 'react';
 
-import { ActionButton } from '@/components/ui/ActionButton';
 import { BottomSheetModal, BottomSheetScroll } from '@/components/ui/BottomSheetModal';
 import { TagDropdown } from '@/components/ui/TagDropdown';
 import { useAppColors } from '@/contexts/ThemeContext';
 import type { Tag, TimeEntry } from '@/types';
 import { parseDatetimeLocalValue, toDatetimeLocalValue } from '@/utils/manualEntryDefaults';
+
+function SaveIcon({ color }: { color: string }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M20 6 9 17l-5-5"
+        stroke={color}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 interface EditEntryModalProps {
   visible: boolean;
@@ -31,7 +44,7 @@ export function EditEntryModal({ visible, entry, tags, onClose, onSave }: EditEn
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!visible || !entry) return;
+    if (!visible || !entry || entry.endedAt == null) return;
     setStartValue(toDatetimeLocalValue(new Date(entry.startedAt)));
     setEndValue(toDatetimeLocalValue(new Date(entry.endedAt)));
     setSelectedTagId(entry.tags[0]?.id ?? null);
@@ -90,8 +103,36 @@ export function EditEntryModal({ visible, entry, tags, onClose, onSave }: EditEn
     color: colors.text,
   };
 
+  const saveButton = (
+    <button
+      type="button"
+      onClick={() => {
+        handleSave().catch(console.error);
+      }}
+      disabled={saving}
+      aria-label="Save changes"
+      title="Save"
+      className="rounded-full p-1 transition hover:opacity-80 disabled:opacity-50"
+    >
+      {saving ? (
+        <span
+          className="inline-block h-[22px] w-[22px] animate-spin rounded-full border-2 border-t-transparent"
+          style={{ borderColor: colors.primary, borderTopColor: 'transparent' }}
+        />
+      ) : (
+        <SaveIcon color={colors.primary} />
+      )}
+    </button>
+  );
+
   return (
-    <BottomSheetModal visible={visible} title="Edit session" onClose={onClose} maxHeightFraction={0.85}>
+    <BottomSheetModal
+      visible={visible}
+      title="Edit session"
+      onClose={onClose}
+      headerActions={saveButton}
+      maxHeightFraction={0.85}
+    >
       <BottomSheetScroll maxHeightFraction={0.7}>
         <p className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
           Activity
@@ -140,17 +181,6 @@ export function EditEntryModal({ visible, entry, tags, onClose, onSave }: EditEn
             {error}
           </p>
         ) : null}
-
-        <div className="mt-5 pb-2">
-          <ActionButton
-            label={saving ? 'Saving…' : 'Save changes'}
-            onClick={() => {
-              handleSave().catch(console.error);
-            }}
-            className="w-full"
-            disabled={saving}
-          />
-        </div>
       </BottomSheetScroll>
     </BottomSheetModal>
   );

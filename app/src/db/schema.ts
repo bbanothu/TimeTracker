@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 8;
+export const SCHEMA_VERSION = 9;
 
 export const MIGRATION_SQL = `
 CREATE TABLE IF NOT EXISTS tags (
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS time_entries (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,
   started_at INTEGER NOT NULL,
-  ended_at INTEGER NOT NULL,
+  ended_at INTEGER,
   source TEXT NOT NULL,
   geofence_id TEXT,
   stop_latitude REAL,

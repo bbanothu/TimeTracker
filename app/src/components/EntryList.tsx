@@ -59,6 +59,8 @@ export function EntryList({
   return (
     <ThemedSurface className="overflow-hidden">
       {entries.map((entry, index) => {
+        if (entry.endedAt == null) return null;
+
         const duration = entry.endedAt - entry.startedAt;
         const tagLabel = entry.tags.map((tag) => formatTagName(tag.name)).join(', ') || 'Untagged';
         const geofenceName = entry.geofenceId ? geofenceNames?.get(entry.geofenceId) : null;

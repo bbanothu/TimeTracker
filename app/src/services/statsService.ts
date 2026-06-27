@@ -28,6 +28,7 @@ function aggregateByTag(
   const totals = new Map<string, TagDuration>();
 
   for (const entry of entries) {
+    if (entry.endedAt == null) continue;
     const duration = clipDuration(entry.startedAt, entry.endedAt, rangeStart, rangeEnd);
     const includedTags = analyticsIncludedTags(entry.tags);
     if (duration <= 0 || includedTags.length === 0) continue;
@@ -56,7 +57,7 @@ function aggregateByGeofence(
   const totals = new Map<string, GeofenceDuration>();
 
   for (const entry of entries) {
-    if (!entry.geofenceId) continue;
+    if (!entry.geofenceId || entry.endedAt == null) continue;
     const duration = clipDuration(entry.startedAt, entry.endedAt, rangeStart, rangeEnd);
     if (duration <= 0) continue;
 
@@ -87,6 +88,7 @@ function buildDayBuckets(anchor: Date, entries: TimeEntry[]) {
     let durationMs = 0;
 
     for (const entry of entries) {
+      if (entry.endedAt == null) continue;
       durationMs += analyticsVisibleDurationMs(
         clipDuration(entry.startedAt, entry.endedAt, dayStart, dayEnd),
         entry.tags,
@@ -116,6 +118,7 @@ function buildWeekBuckets(anchor: Date, entries: TimeEntry[]) {
     let durationMs = 0;
 
     for (const entry of entries) {
+      if (entry.endedAt == null) continue;
       durationMs += analyticsVisibleDurationMs(
         clipDuration(entry.startedAt, entry.endedAt, bucketStart, bucketEnd),
         entry.tags,
@@ -144,6 +147,7 @@ function buildBucketTagBreakdown(
     const tagTotals = new Map<string, { tag: Tag; durationMs: number }>();
 
     for (const entry of entries) {
+      if (entry.endedAt == null) continue;
       const duration = clipDuration(entry.startedAt, entry.endedAt, bucket.startMs, bucket.endMs);
       const includedTags = analyticsIncludedTags(entry.tags);
       if (duration <= 0 || includedTags.length === 0) continue;
@@ -179,17 +183,21 @@ export function getStatsSummary(
   const rangeStart = start.getTime();
   const rangeEnd = end.getTime();
   const filtered = entries.filter(
-    (entry) => entry.endedAt > rangeStart && entry.startedAt < rangeEnd,
+    (entry) => entry.endedAt != null && entry.endedAt > rangeStart && entry.startedAt < rangeEnd,
   );
   const byTag = aggregateByTag(filtered, rangeStart, rangeEnd);
   const byGeofence = aggregateByGeofence(filtered, geofences, rangeStart, rangeEnd);
   const totalMs = filtered.reduce(
-    (sum, entry) =>
-      sum +
-      analyticsVisibleDurationMs(
-        clipDuration(entry.startedAt, entry.endedAt, rangeStart, rangeEnd),
-        entry.tags,
-      ),
+    (sum, entry) => {
+      if (entry.endedAt == null) return sum;
+      return (
+        sum +
+        analyticsVisibleDurationMs(
+          clipDuration(entry.startedAt, entry.endedAt, rangeStart, rangeEnd),
+          entry.tags,
+        )
+      );
+    },
     0,
   );
   const topTag: Tag | null = byTag[0]?.tag ?? null;

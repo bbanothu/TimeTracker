@@ -12,10 +12,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { notifyDataRefresh, subscribeDataRefresh } from '@/lib/dataRefresh';
 import { getStopCoordinates } from '@/lib/stopLocation';
 import {
+  completeTimeEntry,
   createTimeEntry,
+  fetchActiveSessions,
   fetchEntries,
-  loadActiveSessions,
-  saveActiveSessions,
+  startActiveEntry,
 } from '@/services/data';
 import type { ActiveSession, Tag, TimeEntry } from '@/types';
 
@@ -25,7 +26,7 @@ interface TimerContextValue {
   todayEntries: TimeEntry[];
   entriesRevision: number;
   tick: number;
-  startManual: (tagIds: string[]) => void;
+  startManual: (tagIds: string[]) => Promise<void>;
   stop: (sessionId: string) => Promise<string | null>;
   addManualEntry: (tagIds: string[], startedAt: number, endedAt: number) => Promise<void>;
   refresh: () => Promise<void>;
@@ -48,19 +49,24 @@ function endOfTodayMs() {
 export function TimerProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [ready, setReady] = useState(false);
-  const [sessions, setSessions] = useState<ActiveSession[]>(() => loadActiveSessions());
+  const [sessions, setSessions] = useState<ActiveSession[]>([]);
   const [todayEntries, setTodayEntries] = useState<TimeEntry[]>([]);
   const [entriesRevision, setEntriesRevision] = useState(0);
   const [tick, setTick] = useState(0);
 
   const refresh = useCallback(async () => {
     if (!user) {
+      setSessions([]);
       setTodayEntries([]);
       setReady(false);
       return;
     }
 
-    const entries = await fetchEntries(user.id, startOfTodayMs(), endOfTodayMs());
+    const [activeSessions, entries] = await Promise.all([
+      fetchActiveSessions(user.id),
+      fetchEntries(user.id, startOfTodayMs(), endOfTodayMs()),
+    ]);
+    setSessions(activeSessions);
     setTodayEntries(entries);
     setEntriesRevision((value) => value + 1);
     setReady(true);
@@ -78,8 +84,28 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   }, [user, refresh]);
 
   useEffect(() => {
-    saveActiveSessions(sessions);
-  }, [sessions]);
+    if (!user || !ready) return;
+
+    const pollActiveSessions = () => {
+      fetchActiveSessions(user.id)
+        .then(setSessions)
+        .catch(console.error);
+    };
+
+    const interval = setInterval(pollActiveSessions, 15000);
+    const handleFocus = () => {
+      pollActiveSessions();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleFocus);
+    };
+  }, [user, ready]);
 
   useEffect(() => {
     if (sessions.length === 0) return;
@@ -87,20 +113,22 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [sessions.length]);
 
-  const startManual = useCallback((tagIds: string[]) => {
-    if (tagIds.length === 0) throw new Error('Select at least one tag');
+  const startManual = useCallback(
+    async (tagIds: string[]) => {
+      if (!user) throw new Error('Sign in to start tracking');
+      if (tagIds.length === 0) throw new Error('Select at least one tag');
 
-    setSessions((current) => [
-      ...current,
-      {
-        id: crypto.randomUUID(),
-        startedAt: Date.now(),
+      await startActiveEntry(user.id, {
         source: 'manual',
         geofenceId: null,
         tagIds,
-      },
-    ]);
-  }, []);
+      });
+
+      notifyDataRefresh();
+      await refresh();
+    },
+    [user, refresh],
+  );
 
   const stop = useCallback(
     async (sessionId: string): Promise<string | null> => {
@@ -110,19 +138,15 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       if (!session) return null;
 
       const coords = await getStopCoordinates();
-      const entryId = await createTimeEntry(user.id, {
-        startedAt: session.startedAt,
+      await completeTimeEntry(user.id, sessionId, {
         endedAt: Date.now(),
-        source: session.source,
-        geofenceId: session.geofenceId,
-        tagIds: session.tagIds,
         stopLatitude: coords?.latitude ?? null,
         stopLongitude: coords?.longitude ?? null,
       });
 
-      setSessions((current) => current.filter((item) => item.id !== sessionId));
+      notifyDataRefresh();
       await refresh();
-      return entryId;
+      return sessionId;
     },
     [user, sessions, refresh],
   );

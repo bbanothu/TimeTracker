@@ -24,7 +24,7 @@ export interface DailyGoalScore {
 export interface TimeEntry {
   id: string;
   startedAt: number;
-  endedAt: number;
+  endedAt: number | null;
   source: EntrySource;
   geofenceId: string | null;
   stopLatitude: number | null;

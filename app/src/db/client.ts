@@ -161,6 +161,83 @@ function migrateToV8(database: SQLite.SQLiteDatabase): void {
   database.execSync('ALTER TABLE time_entries ADD COLUMN details TEXT');
 }
 
+function migrateActiveSessionsToEntries(database: SQLite.SQLiteDatabase, tableName = 'time_entries'): void {
+  const sessions = database.getAllSync<{
+    id: string;
+    user_id: string;
+    started_at: number;
+    source: EntrySource;
+    geofence_id: string | null;
+  }>('SELECT id, user_id, started_at, source, geofence_id FROM active_session');
+
+  for (const session of sessions) {
+    const tagRows = database.getAllSync<{ tag_id: string }>(
+      'SELECT tag_id FROM active_session_tags WHERE session_id = ?',
+      [session.id],
+    );
+    const ts = Date.now();
+
+    database.runSync(
+      `INSERT OR IGNORE INTO ${tableName}
+       (id, user_id, started_at, ended_at, source, geofence_id, stop_latitude, stop_longitude, details, updated_at)
+       VALUES (?, ?, ?, NULL, ?, ?, NULL, NULL, NULL, ?)`,
+      [session.id, session.user_id, session.started_at, session.source, session.geofence_id, ts],
+    );
+
+    for (const tagRow of tagRows) {
+      database.runSync(
+        'INSERT OR IGNORE INTO time_entry_tags (entry_id, tag_id, user_id) VALUES (?, ?, ?)',
+        [session.id, tagRow.tag_id, session.user_id],
+      );
+    }
+  }
+
+  if (sessions.length > 0) {
+    database.execSync('DELETE FROM active_session_tags');
+    database.execSync('DELETE FROM active_session');
+  }
+}
+
+function migrateToV9(database: SQLite.SQLiteDatabase): void {
+  const endedAtCol = database.getFirstSync<{ requiresEnd: number }>(
+    "SELECT \"notnull\" AS requiresEnd FROM pragma_table_info('time_entries') WHERE name = 'ended_at'",
+  );
+
+  if (endedAtCol?.requiresEnd === 0) {
+    migrateActiveSessionsToEntries(database);
+    return;
+  }
+
+  database.execSync(`
+    CREATE TABLE IF NOT EXISTS time_entries_v9 (
+      id TEXT PRIMARY KEY NOT NULL,
+      user_id TEXT NOT NULL,
+      started_at INTEGER NOT NULL,
+      ended_at INTEGER,
+      source TEXT NOT NULL,
+      geofence_id TEXT,
+      stop_latitude REAL,
+      stop_longitude REAL,
+      details TEXT,
+      updated_at INTEGER NOT NULL
+    );
+  `);
+
+  database.execSync(`
+    INSERT INTO time_entries_v9 (
+      id, user_id, started_at, ended_at, source, geofence_id, stop_latitude, stop_longitude, details, updated_at
+    )
+    SELECT
+      id, user_id, started_at, ended_at, source, geofence_id, stop_latitude, stop_longitude, details, updated_at
+    FROM time_entries;
+  `);
+
+  migrateActiveSessionsToEntries(database, 'time_entries_v9');
+
+  database.execSync('DROP TABLE time_entries');
+  database.execSync('ALTER TABLE time_entries_v9 RENAME TO time_entries');
+}
+
 function validateSiblingName(
   userId: string,
   name: string,
@@ -212,22 +289,14 @@ function loadTagsForEntry(entryId: string): Tag[] {
     .map(rowToTag);
 }
 
-function loadTagsForSession(sessionId: string): Tag[] {
-  return getDb()
-    .getAllSync<{
-      id: string;
-      name: string;
-      color: string;
-      parent_id: string | null;
-      include_in_analytics: number;
-    }>(
-      `SELECT t.id, t.name, t.color, t.parent_id, t.include_in_analytics, t.description
-       FROM tags t
-       INNER JOIN active_session_tags ast ON ast.tag_id = t.id
-       WHERE ast.session_id = ?`,
-      [sessionId],
-    )
-    .map(rowToTag);
+function entryToActiveSession(entry: TimeEntry): ActiveSession {
+  return {
+    id: entry.id,
+    startedAt: entry.startedAt,
+    source: entry.source,
+    geofenceId: entry.geofenceId,
+    tags: entry.tags,
+  };
 }
 
 const ENTRY_COLUMNS =
@@ -236,7 +305,7 @@ const ENTRY_COLUMNS =
 type EntryRow = {
   id: string;
   started_at: number;
-  ended_at: number;
+  ended_at: number | null;
   source: EntrySource;
   geofence_id: string | null;
   stop_latitude: number | null;
@@ -267,7 +336,7 @@ function buildEntrySyncPayload(input: {
   id: string;
   userId: string;
   startedAt: number;
-  endedAt: number;
+  endedAt: number | null;
   source: EntrySource;
   geofenceId: string | null;
   stopLatitude: number | null;
@@ -412,6 +481,7 @@ export function initDatabase(userId: string): void {
   migrateToV6(database);
   migrateToV7(database);
   migrateToV8(database);
+  migrateToV9(database);
   database.execSync(TAGS_V3_INDEX_SQL);
 
   const versionRow = database.getFirstSync<{ value: string }>(
@@ -454,6 +524,9 @@ export function initDatabase(userId: string): void {
       }
       if (storedVersion < 8) {
         migrateToV8(database);
+      }
+      if (storedVersion < 9) {
+        migrateToV9(database);
       }
       database.runSync('UPDATE meta SET value = ? WHERE key = ?', [
         String(SCHEMA_VERSION),
@@ -587,7 +660,7 @@ export function upsertEntryFromRemote(entry: {
   id: string;
   user_id: string;
   started_at: number;
-  ended_at: number;
+  ended_at: number | null;
   source: EntrySource;
   geofence_id: string | null;
   stop_latitude?: number | null;
@@ -855,23 +928,15 @@ export function deleteTag(id: string): void {
 
 export function getActiveSessions(): ActiveSession[] {
   const userId = requireUserId();
-  const rows = getDb().getAllSync<{
-    id: string;
-    started_at: number;
-    source: EntrySource;
-    geofence_id: string | null;
-  }>(
-    'SELECT id, started_at, source, geofence_id FROM active_session WHERE user_id = ? ORDER BY started_at ASC',
+  const rows = getDb().getAllSync<EntryRow>(
+    `SELECT ${ENTRY_COLUMNS}
+     FROM time_entries
+     WHERE user_id = ? AND ended_at IS NULL
+     ORDER BY started_at ASC`,
     [userId],
   );
 
-  return rows.map((row) => ({
-    id: row.id,
-    startedAt: row.started_at,
-    source: row.source,
-    geofenceId: row.geofence_id,
-    tags: loadTagsForSession(row.id),
-  }));
+  return rows.map((row) => entryToActiveSession(mapEntryRow(row)));
 }
 
 export function getActiveSession(): ActiveSession | null {
@@ -899,28 +964,58 @@ export function startSession(
     if (existing) return existing;
   }
 
-  const session: ActiveSession = {
+  const allTags = getAllTags();
+  const tags = tagIds
+    .map((tagId) => allTags.find((tag) => tag.id === tagId))
+    .filter((tag): tag is Tag => tag !== undefined);
+  if (tags.length === 0) throw new Error('Select at least one tag');
+
+  const ts = nowMs();
+  const entry: TimeEntry = {
     id: createId(),
-    startedAt: nowMs(),
+    startedAt: ts,
+    endedAt: null,
     source,
     geofenceId,
-    tags: [],
+    stopLatitude: null,
+    stopLongitude: null,
+    details: null,
+    tags,
   };
 
   database.runSync(
-    'INSERT INTO active_session (id, user_id, started_at, source, geofence_id) VALUES (?, ?, ?, ?, ?)',
-    [session.id, userId, session.startedAt, source, geofenceId],
+    `INSERT INTO time_entries (id, user_id, started_at, ended_at, source, geofence_id, stop_latitude, stop_longitude, details, updated_at)
+     VALUES (?, ?, ?, NULL, ?, ?, NULL, NULL, NULL, ?)`,
+    [entry.id, userId, entry.startedAt, entry.source, entry.geofenceId, ts],
   );
 
-  for (const tagId of tagIds) {
+  for (const tag of tags) {
     database.runSync(
-      'INSERT INTO active_session_tags (session_id, tag_id) VALUES (?, ?)',
-      [session.id, tagId],
+      'INSERT INTO time_entry_tags (entry_id, tag_id, user_id) VALUES (?, ?, ?)',
+      [entry.id, tag.id, userId],
     );
   }
 
-  session.tags = loadTagsForSession(session.id);
-  return session;
+  enqueueSync(
+    'entry',
+    entry.id,
+    'upsert',
+    buildEntrySyncPayload({
+      id: entry.id,
+      userId,
+      startedAt: entry.startedAt,
+      endedAt: null,
+      source: entry.source,
+      geofenceId: entry.geofenceId,
+      stopLatitude: null,
+      stopLongitude: null,
+      details: null,
+      tagIds: tags.map((t) => t.id),
+      updatedAtIso: new Date(ts).toISOString(),
+    }),
+  );
+
+  return entryToActiveSession(entry);
 }
 
 export interface StopSessionOptions {
@@ -944,44 +1039,16 @@ export function stopSession(
   const stopLatitude = options.stopLatitude ?? null;
   const stopLongitude = options.stopLongitude ?? null;
   const details = normalizeEntryDetails(options.details);
-  const entry: TimeEntry = {
-    id: createId(),
-    startedAt: session.startedAt,
-    endedAt,
-    source: session.source,
-    geofenceId: session.geofenceId,
-    stopLatitude,
-    stopLongitude,
-    details,
-    tags: session.tags,
-  };
 
   database.runSync(
-    `INSERT INTO time_entries (id, user_id, started_at, ended_at, source, geofence_id, stop_latitude, stop_longitude, details, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      entry.id,
-      userId,
-      entry.startedAt,
-      entry.endedAt,
-      entry.source,
-      entry.geofenceId,
-      stopLatitude,
-      stopLongitude,
-      details,
-      ts,
-    ],
+    `UPDATE time_entries
+     SET ended_at = ?, stop_latitude = ?, stop_longitude = ?, details = ?, updated_at = ?
+     WHERE id = ? AND user_id = ? AND ended_at IS NULL`,
+    [endedAt, stopLatitude, stopLongitude, details, ts, sessionId, userId],
   );
 
-  for (const tag of session.tags) {
-    database.runSync(
-      'INSERT INTO time_entry_tags (entry_id, tag_id, user_id) VALUES (?, ?, ?)',
-      [entry.id, tag.id, userId],
-    );
-  }
-
-  database.runSync('DELETE FROM active_session_tags WHERE session_id = ?', [session.id]);
-  database.runSync('DELETE FROM active_session WHERE id = ?', [session.id]);
+  const entry = getTimeEntryById(sessionId);
+  if (!entry || entry.endedAt == null) return null;
 
   enqueueSync(
     'entry',
@@ -994,9 +1061,9 @@ export function stopSession(
       endedAt: entry.endedAt,
       source: entry.source,
       geofenceId: entry.geofenceId,
-      stopLatitude,
-      stopLongitude,
-      details,
+      stopLatitude: entry.stopLatitude,
+      stopLongitude: entry.stopLongitude,
+      details: entry.details,
       tagIds: entry.tags.map((t) => t.id),
       updatedAtIso: new Date(ts).toISOString(),
     }),
@@ -1141,6 +1208,7 @@ export function updateEntry(
     [id, userId],
   );
   if (!existing) throw new Error('Entry not found');
+  if (existing.ended_at == null) throw new Error('Cannot edit an active session');
 
   const allTags = getAllTags();
   const tags = tagIds
@@ -1205,7 +1273,7 @@ export function getEntriesBetween(startMs: number, endMs: number): TimeEntry[] {
   const rows = getDb().getAllSync<EntryRow>(
     `SELECT ${ENTRY_COLUMNS}
      FROM time_entries
-     WHERE user_id = ? AND ended_at > ? AND started_at < ?
+     WHERE user_id = ? AND ended_at IS NOT NULL AND ended_at > ? AND started_at < ?
      ORDER BY started_at DESC`,
     [userId, startMs, endMs],
   );
@@ -1226,7 +1294,7 @@ export function getAllEntries(): TimeEntry[] {
   const rows = getDb().getAllSync<EntryRow>(
     `SELECT ${ENTRY_COLUMNS}
      FROM time_entries
-     WHERE user_id = ?
+     WHERE user_id = ? AND ended_at IS NOT NULL
      ORDER BY started_at ASC`,
     [userId],
   );

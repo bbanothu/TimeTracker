@@ -8,6 +8,7 @@ interface BottomSheetModalProps {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  headerLeading?: ReactNode;
   headerActions?: ReactNode;
   maxHeightFraction?: number;
 }
@@ -35,6 +36,7 @@ export function BottomSheetModal({
   title,
   onClose,
   children,
+  headerLeading,
   headerActions,
   maxHeightFraction = 0.6,
 }: BottomSheetModalProps) {
@@ -66,11 +68,14 @@ export function BottomSheetModal({
               style={{ backgroundColor: colors.textMuted, opacity: 0.45 }}
             />
           </div>
-          <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-lg font-semibold" style={{ color: colors.text }}>
-              {title}
-            </h3>
-            <div className="ml-3 flex items-center gap-1">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-1 items-center gap-1">
+              {headerLeading}
+              <h3 className="truncate text-lg font-semibold" style={{ color: colors.text }}>
+                {title}
+              </h3>
+            </div>
+            <div className="flex shrink-0 items-center gap-1">
               {headerActions}
               <button type="button" onClick={onClose} aria-label="Close" className="rounded-full p-1">
                 <span style={{ color: colors.textMuted }}>✕</span>

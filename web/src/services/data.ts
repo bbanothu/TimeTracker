@@ -23,7 +23,7 @@ type TagRow = {
 type EntryRow = {
   id: string;
   started_at: number;
-  ended_at: number;
+  ended_at: number | null;
   source: EntrySource;
   geofence_id: string | null;
   stop_latitude?: number | null;
@@ -96,6 +96,16 @@ function mapEntry(row: EntryRow): TimeEntry {
     stopLongitude: row.stop_longitude ?? null,
     details: row.details?.trim() ? row.details.trim() : null,
     tags,
+  };
+}
+
+function mapActiveSession(entry: TimeEntry): ActiveSession {
+  return {
+    id: entry.id,
+    startedAt: entry.startedAt,
+    source: entry.source,
+    geofenceId: entry.geofenceId,
+    tagIds: entry.tags.map((tag) => tag.id),
   };
 }
 
@@ -413,7 +423,8 @@ async function fetchEntriesWithSelect(
       `${ENTRY_SELECT_COLUMNS},
        time_entry_tags(tag_id, tags(${nestedTagSelect}))`,
     )
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    .not('ended_at', 'is', null);
 
   if (filters) {
     query = query.gt('ended_at', filters.startMs).lt('started_at', filters.endMs);
@@ -432,7 +443,8 @@ async function fetchEntriesWithSelect(
         `${ENTRY_SELECT_COLUMNS_LEGACY},
          time_entry_tags(tag_id, tags(${nestedTagSelect}))`,
       )
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .not('ended_at', 'is', null);
 
     if (filters) {
       legacyStopQuery = legacyStopQuery.gt('ended_at', filters.startMs).lt('started_at', filters.endMs);
@@ -449,7 +461,8 @@ async function fetchEntriesWithSelect(
       `${ENTRY_SELECT_COLUMNS_LEGACY},
        time_entry_tags(tag_id, tags(${NESTED_TAG_COLUMNS_LEGACY}))`,
     )
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    .not('ended_at', 'is', null);
 
   if (filters) {
     legacyQuery = legacyQuery.gt('ended_at', filters.startMs).lt('started_at', filters.endMs);
@@ -458,6 +471,90 @@ async function fetchEntriesWithSelect(
   const fallback = await legacyQuery.order('started_at', { ascending: false });
   if (fallback.error) throw fallback.error;
   return (fallback.data ?? []).map((row) => mapEntry(row as unknown as EntryRow));
+}
+
+export async function fetchActiveSessions(userId: string): Promise<ActiveSession[]> {
+  const { data, error } = await supabase
+    .from('time_entries')
+    .select(
+      `${ENTRY_SELECT_COLUMNS},
+       time_entry_tags(tag_id, tags(${NESTED_TAG_COLUMNS}))`,
+    )
+    .eq('user_id', userId)
+    .is('ended_at', null)
+    .order('started_at', { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []).map((row) => mapActiveSession(mapEntry(row as unknown as EntryRow)));
+}
+
+export async function startActiveEntry(
+  userId: string,
+  input: {
+    source: EntrySource;
+    geofenceId?: string | null;
+    tagIds: string[];
+    startedAt?: number;
+  },
+): Promise<string> {
+  if (input.tagIds.length === 0) throw new Error('Select at least one tag');
+
+  const startedAt = input.startedAt ?? Date.now();
+  const { data: entry, error: entryError } = await supabase
+    .from('time_entries')
+    .insert({
+      user_id: userId,
+      started_at: startedAt,
+      ended_at: null,
+      source: input.source,
+      geofence_id: input.geofenceId ?? null,
+      stop_latitude: null,
+      stop_longitude: null,
+      details: null,
+      updated_at: new Date().toISOString(),
+    })
+    .select('id')
+    .single();
+
+  if (entryError) throw entryError;
+
+  const { error: linkError } = await supabase.from('time_entry_tags').insert(
+    input.tagIds.map((tagId) => ({
+      entry_id: entry.id,
+      tag_id: tagId,
+      user_id: userId,
+    })),
+  );
+  if (linkError) throw linkError;
+
+  return entry.id;
+}
+
+export async function completeTimeEntry(
+  userId: string,
+  entryId: string,
+  input: {
+    endedAt: number;
+    stopLatitude?: number | null;
+    stopLongitude?: number | null;
+    details?: string | null;
+  },
+): Promise<void> {
+  const details = input.details?.trim() ? input.details.trim() : null;
+  const { error } = await supabase
+    .from('time_entries')
+    .update({
+      ended_at: input.endedAt,
+      stop_latitude: input.stopLatitude ?? null,
+      stop_longitude: input.stopLongitude ?? null,
+      details,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', entryId)
+    .eq('user_id', userId)
+    .is('ended_at', null);
+
+  if (error) throw error;
 }
 
 export async function fetchEntries(userId: string, startMs: number, endMs: number): Promise<TimeEntry[]> {
@@ -577,7 +674,8 @@ export async function updateTimeEntry(
     .from('time_entries')
     .update(payload)
     .eq('id', entryId)
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    .not('ended_at', 'is', null);
   if (entryError) throw entryError;
 
   const { error: deleteTagsError } = await supabase
@@ -706,32 +804,18 @@ export async function deleteGeofence(userId: string, id: string): Promise<void> 
 }
 
 export function loadActiveSessions(): ActiveSession[] {
+  // Legacy local-only sessions; cloud-backed active entries replaced this.
   try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? (parsed as ActiveSession[]) : [];
-    }
-
-    const legacy = sessionStorage.getItem(LEGACY_SESSION_KEY);
-    if (!legacy) return [];
-
-    const session = JSON.parse(legacy) as ActiveSession;
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify([session]));
-    sessionStorage.removeItem(LEGACY_SESSION_KEY);
-    return [session];
-  } catch {
-    return [];
-  }
-}
-
-export function saveActiveSessions(sessions: ActiveSession[]): void {
-  if (sessions.length === 0) {
     sessionStorage.removeItem(SESSION_KEY);
     sessionStorage.removeItem(LEGACY_SESSION_KEY);
-    return;
+  } catch {
+    // ignore
   }
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessions));
+  return [];
+}
+
+export function saveActiveSessions(_sessions: ActiveSession[]): void {
+  // No-op: active sessions live in Supabase as time_entries with ended_at IS NULL.
 }
 
 export function exportEntriesCsv(entries: TimeEntry[], tags: Tag[], personName: string): string {

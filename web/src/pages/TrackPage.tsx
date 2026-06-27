@@ -70,14 +70,14 @@ export function TrackPage() {
     return <p style={{ color: colors.textMuted }}>Loading…</p>;
   }
 
-  const handleStart = () => {
+  const handleStart = async () => {
     try {
       setError(null);
       if (!selectedTagId) {
         setError('Choose a tag before starting.');
         return;
       }
-      startManual([selectedTagId]);
+      await startManual([selectedTagId]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to start');
     }

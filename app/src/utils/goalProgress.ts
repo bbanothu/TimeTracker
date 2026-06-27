@@ -53,6 +53,7 @@ export function computeCategoryDurationsToday(
   }
 
   for (const entry of allEntries) {
+    if (entry.endedAt == null) continue;
     const duration = clipDuration(entry.startedAt, entry.endedAt, dayStart, dayEnd);
     const includedTags = analyticsIncludedTags(entry.tags);
     if (duration <= 0 || includedTags.length === 0) continue;

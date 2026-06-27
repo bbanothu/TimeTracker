@@ -249,6 +249,7 @@ Supabase migrations live in `app/supabase/migrations/`. Run them in order in the
 | `010_profile_names.sql` | First/last name |
 | `011_tag_descriptions.sql` | Tag description field |
 | `012_entry_stop_details.sql` | Stop lat/lng + session details on entries |
+| `013_active_sessions.sql` | Nullable `ended_at` for in-progress sessions synced across devices |
 
 Mobile SQLite schema mirrors these fields (currently schema v8 in `app/src/db/schema.ts`).
 

@@ -22,6 +22,7 @@ interface BottomSheetModalProps {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
+  headerLeading?: React.ReactNode;
   headerActions?: React.ReactNode;
   sheetClassName?: ViewProps['className'];
   maxHeightFraction?: number;
@@ -75,6 +76,7 @@ export function BottomSheetModal({
   title,
   onClose,
   children,
+  headerLeading,
   headerActions,
   sheetClassName,
   maxHeightFraction = 0.6,
@@ -191,11 +193,14 @@ export function BottomSheetModal({
               />
             </View>
 
-            <View className="mb-2 flex-row items-center justify-between">
-              <Text className="flex-1 text-lg font-semibold" style={{ color: colors.text }}>
-                {title}
-              </Text>
-              <View className="ml-3 flex-row items-center gap-1">
+            <View className="mb-2 flex-row items-center justify-between gap-2">
+              <View className="min-w-0 flex-1 flex-row items-center gap-1">
+                {headerLeading}
+                <Text className="flex-1 text-lg font-semibold" style={{ color: colors.text }} numberOfLines={1}>
+                  {title}
+                </Text>
+              </View>
+              <View className="shrink-0 flex-row items-center gap-1">
                 {headerActions}
                 <Pressable
                   onPress={onClose}

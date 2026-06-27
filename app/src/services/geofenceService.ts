@@ -57,6 +57,7 @@ export async function handleGeofenceEnter(geofenceId: string): Promise<void> {
     const tagName = geofence.tag?.name ?? 'activity';
     await showGeofenceEnterNotification(geofenceId, geofence.name, tagName);
     notifyDataRefresh();
+    pushChangesInBackground(getCurrentUserId());
   } catch (error) {
     console.warn('Geofence enter failed:', error);
   }

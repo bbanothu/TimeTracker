@@ -87,8 +87,12 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     (tagIds: string[]) => {
       timerService.startManual(tagIds);
       refresh();
+      notifyDataRefresh();
+      if (user) {
+        pushChangesInBackground(user.id);
+      }
     },
-    [refresh],
+    [refresh, user],
   );
 
   const stop = useCallback(

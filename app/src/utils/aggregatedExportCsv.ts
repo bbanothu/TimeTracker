@@ -36,6 +36,8 @@ export function buildAggregatedExportCsv(
   const byDate = new Map<string, Map<string, number>>();
 
   for (const entry of entries) {
+    if (entry.endedAt == null) continue;
+
     let dayCursor = startOfDay(new Date(entry.startedAt));
 
     while (dayCursor.getTime() < entry.endedAt) {
@@ -78,6 +80,8 @@ export function aggregatedExportDayCount(entries: TimeEntry[]): number {
   const dates = new Set<string>();
 
   for (const entry of entries) {
+    if (entry.endedAt == null) continue;
+
     let dayCursor = startOfDay(new Date(entry.startedAt));
     while (dayCursor.getTime() < entry.endedAt) {
       dates.add(format(dayCursor, 'yyyy-MM-dd'));

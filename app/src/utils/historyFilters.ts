@@ -54,7 +54,10 @@ export function filterHistoryEntries(entries: TimeEntry[], filters: HistoryFilte
 
   if (range) {
     result = result.filter(
-      (entry) => entry.startedAt <= range.endMs && entry.endedAt >= range.startMs,
+      (entry) =>
+        entry.endedAt != null &&
+        entry.startedAt <= range.endMs &&
+        entry.endedAt >= range.startMs,
     );
   }
 
