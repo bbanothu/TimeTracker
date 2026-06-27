@@ -54,7 +54,9 @@ export function BottomSheetModal({
   if (!visible) return null;
 
   return (
-    <div className={`fixed inset-0 ${zIndexClass} flex flex-col justify-end sm:justify-center sm:p-4`}>
+    <div
+      className={`fixed inset-0 ${zIndexClass} flex flex-col justify-end sm:justify-center sm:p-4`}
+    >
       <button
         type="button"
         aria-label="Close"

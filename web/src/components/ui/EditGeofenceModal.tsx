@@ -195,7 +195,10 @@ export function EditGeofenceModal({
           </div>
 
           <div className="min-w-0">
-            <p className="mb-2 mt-4 text-sm font-medium lg:mt-0" style={{ color: colors.textMuted }}>
+            <p
+              className="mb-2 mt-4 text-sm font-medium lg:mt-0"
+              style={{ color: colors.textMuted }}
+            >
               Location
             </p>
             <p className="mb-2 text-xs" style={{ color: colors.textMuted }}>

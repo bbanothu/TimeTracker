@@ -3,6 +3,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AppBackground } from '@/components/layout/AppBackground';
 import { AppShell } from '@/components/layout/AppShell';
 import { DesktopSidebar } from '@/components/layout/DesktopSidebar';
+import { DesktopTopBar, DESKTOP_TOP_BAR_PADDING_CLASS } from '@/components/layout/DesktopTopBar';
 import { TabNav } from '@/components/layout/TabNav';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,7 +18,10 @@ export function ProtectedLayout() {
   if (loading) {
     return (
       <AppBackground>
-        <div className="min-h-dvh w-full lg:h-dvh lg:overflow-hidden lg:pl-60">
+        <div
+          className={`min-h-dvh w-full lg:h-dvh lg:overflow-hidden lg:pl-60 ${DESKTOP_TOP_BAR_PADDING_CLASS}`}
+        >
+          <DesktopTopBar />
           <DesktopSidebar />
           <AppShell>
             <p className="text-center" style={{ color: colors.textMuted }}>
@@ -34,7 +38,10 @@ export function ProtectedLayout() {
   return (
     <AppDataProviders>
       <AppBackground>
-        <div className="min-h-dvh w-full lg:h-dvh lg:overflow-hidden lg:pl-60">
+        <div
+          className={`min-h-dvh w-full lg:h-dvh lg:overflow-hidden lg:pl-60 ${DESKTOP_TOP_BAR_PADDING_CLASS}`}
+        >
+          <DesktopTopBar />
           <DesktopSidebar />
           <AppShell className={hideTabNav ? 'pb-10 lg:pb-8' : undefined}>
             <Outlet />

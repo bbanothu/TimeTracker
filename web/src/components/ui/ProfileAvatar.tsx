@@ -6,19 +6,22 @@ import { useAppColors } from '@/contexts/ThemeContext';
 interface ProfileAvatarProps {
   fallbackLabel: string;
   compact?: boolean;
+  size?: number;
   editable?: boolean;
 }
 
 export function ProfileAvatar({
   fallbackLabel,
   compact = false,
+  size: sizeProp,
   editable = true,
 }: ProfileAvatarProps) {
   const colors = useAppColors();
   const { photoUrl, uploadPhoto } = useProfilePhoto();
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const size = compact ? 52 : 80;
+  const size = sizeProp ?? (compact ? 52 : 80);
+  const initialClass = size <= 36 ? 'text-xs' : compact ? 'text-sm' : 'text-xl';
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -37,7 +40,7 @@ export function ProfileAvatar({
   };
 
   return (
-    <div className={`relative ${compact ? '' : 'mb-3'}`}>
+    <div className={`relative shrink-0 ${compact || sizeProp != null ? '' : 'mb-3'}`}>
       <div
         className="flex items-center justify-center overflow-hidden rounded-full"
         style={{ width: size, height: size, backgroundColor: colors.selectedBg }}
@@ -49,10 +52,7 @@ export function ProfileAvatar({
         ) : photoUrl ? (
           <img src={photoUrl} alt="" className="h-full w-full object-cover" />
         ) : (
-          <span
-            className={`font-bold ${compact ? 'text-sm' : 'text-xl'}`}
-            style={{ color: colors.selectedText }}
-          >
+          <span className={`font-bold ${initialClass}`} style={{ color: colors.selectedText }}>
             {fallbackLabel}
           </span>
         )}

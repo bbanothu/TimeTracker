@@ -49,7 +49,10 @@ const PaddedHeatLayer = BaseHeatLayer.extend({
     const data: number[][] = [];
     const kernelRadius = this._heat._r;
     const size = this._map.getSize();
-    const bounds = new L.Bounds(L.point([-kernelRadius, -kernelRadius]), size.add([kernelRadius, kernelRadius]));
+    const bounds = new L.Bounds(
+      L.point([-kernelRadius, -kernelRadius]),
+      size.add([kernelRadius, kernelRadius]),
+    );
 
     const max = this.options.max ?? 1;
     const maxZoom = this.options.maxZoom ?? this._map.getMaxZoom();
@@ -91,11 +94,7 @@ const PaddedHeatLayer = BaseHeatLayer.extend({
         const cell = gridRow[col];
         if (!cell) continue;
 
-        data.push([
-          Math.round(cell[0] + pad),
-          Math.round(cell[1] + pad),
-          Math.min(cell[2], max),
-        ]);
+        data.push([Math.round(cell[0] + pad), Math.round(cell[1] + pad), Math.min(cell[2], max)]);
       }
     }
 
