@@ -25,7 +25,15 @@ import type { Geofence, PeriodType, TimeEntry } from '@/types';
 import { formatDurationLong } from '@/utils/formatDuration';
 import { buildHeatmapSummary } from '@/utils/heatmapPoints';
 
-function StepLabel({ step, label, colors }: { step: number; label: string; colors: ReturnType<typeof useAppColors> }) {
+function StepLabel({
+  step,
+  label,
+  colors,
+}: {
+  step: number;
+  label: string;
+  colors: ReturnType<typeof useAppColors>;
+}) {
   return (
     <p className="mb-2 text-sm font-semibold" style={{ color: colors.textSecondary }}>
       {step}. {label}
@@ -186,8 +194,8 @@ export function MapPage() {
         <>
           <ThemedSurface className="mb-4 p-4 lg:mb-5">
             <p className="text-sm leading-6" style={{ color: colors.textOnBg }}>
-              Drop a pin to save a place on web. Auto-tracking when you arrive still requires the iOS
-              or Android app — saved places sync everywhere.
+              Drop a pin to save a place on web. Auto-tracking when you arrive still requires the
+              iOS or Android app — saved places sync everywhere.
             </p>
           </ThemedSurface>
 

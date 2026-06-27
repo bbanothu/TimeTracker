@@ -7,7 +7,13 @@ import { EntryList } from '@/components/EntryList';
 import { HistoryFilters } from '@/components/HistoryFilters';
 import { TabScrollView } from '@/components/TabScrollView';
 import { TabScreenContainer } from '@/components/TabScreenContainer';
-import { deleteEntry, getAllEntries, getAllGeofences, getGeofenceById, updateEntry } from '@/db/client';
+import {
+  deleteEntry,
+  getAllEntries,
+  getAllGeofences,
+  getGeofenceById,
+  updateEntry,
+} from '@/db/client';
 import { useActiveSession } from '@/hooks/useActiveSession';
 import { useAppColors } from '@/hooks/useAppColors';
 import { useAuth } from '@/hooks/useAuth';
@@ -37,10 +43,7 @@ export default function HistoryScreen() {
     setEntries([...getAllEntries()].reverse());
   }, [ready, entriesRevision]);
 
-  const filteredEntries = useMemo(
-    () => filterHistoryEntries(entries, filters),
-    [entries, filters],
-  );
+  const filteredEntries = useMemo(() => filterHistoryEntries(entries, filters), [entries, filters]);
 
   const geofenceNames = useMemo(() => {
     if (!ready) return new Map<string, string>();
@@ -94,7 +97,12 @@ export default function HistoryScreen() {
     <AppBackground>
       <TabScreenContainer>
         <TabScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-2">
-          <HistoryFilters tags={tags} geofences={geofences} filters={filters} onChange={setFilters} />
+          <HistoryFilters
+            tags={tags}
+            geofences={geofences}
+            filters={filters}
+            onChange={setFilters}
+          />
 
           <Text className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
             {filteredEntries.length} of {entries.length} records

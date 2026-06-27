@@ -23,8 +23,7 @@ function parseProgressParams(
   const anchorRaw = Array.isArray(anchorDateParam) ? anchorDateParam[0] : anchorDateParam;
   const periodRaw = Array.isArray(periodParam) ? periodParam[0] : periodParam;
   const anchorDate = anchorRaw ? new Date(anchorRaw) : new Date();
-  const period: PeriodType =
-    periodRaw === 'week' || periodRaw === 'month' ? periodRaw : 'day';
+  const period: PeriodType = periodRaw === 'week' || periodRaw === 'month' ? periodRaw : 'day';
 
   return {
     anchorDate: Number.isNaN(anchorDate.getTime()) ? new Date() : anchorDate,
@@ -56,7 +55,19 @@ export default function ProgressScreen() {
       anchorDate,
       period,
     );
-  }, [ready, goalsReady, scoresReady, scores, tags, goals, entriesRevision, sessions, tick, anchorDate, period]);
+  }, [
+    ready,
+    goalsReady,
+    scoresReady,
+    scores,
+    tags,
+    goals,
+    entriesRevision,
+    sessions,
+    tick,
+    anchorDate,
+    period,
+  ]);
 
   const subtitle = formatPeriodLabel(anchorDate, period);
 

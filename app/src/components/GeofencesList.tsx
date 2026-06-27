@@ -36,7 +36,9 @@ function GeofenceRow({
   indented?: boolean;
 }) {
   const tagLabel = formatTagName(geofence.tag?.name ?? 'tag');
-  const subtitle = indented ? `${geofence.radiusMeters}m` : `${tagLabel} · ${geofence.radiusMeters}m`;
+  const subtitle = indented
+    ? `${geofence.radiusMeters}m`
+    : `${tagLabel} · ${geofence.radiusMeters}m`;
 
   return (
     <>
@@ -46,7 +48,7 @@ function GeofenceRow({
             className="h-2 w-2 shrink-0 rounded-full"
             style={{
               backgroundColor: geofence.enabled
-                ? geofence.tag?.color ?? colors.primary
+                ? (geofence.tag?.color ?? colors.primary)
                 : colors.textMuted,
             }}
           />
@@ -143,7 +145,11 @@ export function GeofencesList({
         if (!isMultiPlace) {
           const geofence = group.geofences[0];
           return (
-            <View key={group.key} className="flex-row items-center gap-2 px-3 py-2.5" style={borderStyle}>
+            <View
+              key={group.key}
+              className="flex-row items-center gap-2 px-3 py-2.5"
+              style={borderStyle}
+            >
               <GeofenceRow
                 geofence={geofence}
                 colors={colors}
@@ -179,7 +185,11 @@ export function GeofencesList({
                     {group.tagLabel}
                   </Text>
                 </View>
-                <Text className="ml-3.5 text-xs" style={{ color: colors.textMuted }} numberOfLines={1}>
+                <Text
+                  className="ml-3.5 text-xs"
+                  style={{ color: colors.textMuted }}
+                  numberOfLines={1}
+                >
                   {tagGroupSubtitle(group.geofences)}
                 </Text>
               </View>

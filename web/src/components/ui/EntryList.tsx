@@ -93,7 +93,9 @@ export function EntryList({
         const geofenceName = entry.geofenceId ? geofenceNames?.get(entry.geofenceId) : null;
         const timeRange = formatTimeRange(entry.startedAt, entry.endedAt, showDate);
         const subtitle =
-          entry.source === 'geofence' && geofenceName ? `${timeRange} · @ ${geofenceName}` : timeRange;
+          entry.source === 'geofence' && geofenceName
+            ? `${timeRange} · @ ${geofenceName}`
+            : timeRange;
 
         return (
           <div
@@ -123,7 +125,10 @@ export function EntryList({
                 {subtitle}
               </p>
             </div>
-            <span className="shrink-0 text-sm font-medium tabular-nums" style={{ color: colors.textSecondary }}>
+            <span
+              className="shrink-0 text-sm font-medium tabular-nums"
+              style={{ color: colors.textSecondary }}
+            >
               {formatDurationLong(duration)}
             </span>
             {onEdit ? (

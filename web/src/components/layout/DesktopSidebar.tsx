@@ -57,18 +57,20 @@ export function DesktopSidebar() {
 
       <nav className="flex-1 px-3 pt-4">
         {mainNavTabs.map((tab) => (
-          <NavItem key={tab.to} to={tab.to} label={tab.label} icon={tab.icon} end={tab.to === '/'} />
+          <NavItem
+            key={tab.to}
+            to={tab.to}
+            label={tab.label}
+            icon={tab.icon}
+            end={tab.to === '/'}
+          />
         ))}
         <div
           className="my-3 border-t"
           style={{ borderColor: colors.surfaceBorder }}
           role="presentation"
         />
-        <NavItem
-          to={accountNavItem.to}
-          label={accountNavItem.label}
-          icon={accountNavItem.icon}
-        />
+        <NavItem to={accountNavItem.to} label={accountNavItem.label} icon={accountNavItem.icon} />
       </nav>
 
       <div

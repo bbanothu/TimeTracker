@@ -1,6 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useRef, useState } from 'react';
-import { Alert, Keyboard, Platform, Pressable, ScrollView, Text, TextInput, View, type ScrollView as ScrollViewType } from 'react-native';
+import {
+  Alert,
+  Keyboard,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+  type ScrollView as ScrollViewType,
+} from 'react-native';
 
 import { ActionButton } from '@/components/ActionButton';
 import { BottomSheetModal, BottomSheetScrollView } from '@/components/BottomSheetModal';
@@ -108,14 +118,16 @@ export default function TagsScreen() {
         />
 
         <Text className="mb-2 text-base font-medium" style={{ color: colors.textMuted }}>
-        Tags ({flatTags.length})
-      </Text>
-      <TagsList
-        items={flatTags}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onToggleAnalytics={(tag, includeInAnalytics) => toggleTagAnalytics(tag.id, includeInAnalytics)}
-      />
+          Tags ({flatTags.length})
+        </Text>
+        <TagsList
+          items={flatTags}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onToggleAnalytics={(tag, includeInAnalytics) =>
+            toggleTagAnalytics(tag.id, includeInAnalytics)
+          }
+        />
       </TabScrollView>
 
       <BottomSheetModal

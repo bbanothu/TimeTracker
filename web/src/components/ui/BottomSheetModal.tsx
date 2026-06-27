@@ -77,7 +77,12 @@ export function BottomSheetModal({
             </div>
             <div className="flex shrink-0 items-center gap-1">
               {headerActions}
-              <button type="button" onClick={onClose} aria-label="Close" className="rounded-full p-1">
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close"
+                className="rounded-full p-1"
+              >
                 <span style={{ color: colors.textMuted }}>✕</span>
               </button>
             </div>

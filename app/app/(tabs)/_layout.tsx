@@ -47,7 +47,13 @@ function TabsNavigator() {
           title: 'Track',
           tabBarLabel: 'Track',
           tabBarIcon: ({ color, size, focused }) => (
-            <TabIcon focused={focused} color={color} size={size} active="timer" inactive="timer-outline" />
+            <TabIcon
+              focused={focused}
+              color={color}
+              size={size}
+              active="timer"
+              inactive="timer-outline"
+            />
           ),
         }}
       />
@@ -73,7 +79,13 @@ function TabsNavigator() {
           title: 'Map',
           tabBarLabel: 'Map',
           tabBarIcon: ({ color, size, focused }) => (
-            <TabIcon focused={focused} color={color} size={size} active="map" inactive="map-outline" />
+            <TabIcon
+              focused={focused}
+              color={color}
+              size={size}
+              active="map"
+              inactive="map-outline"
+            />
           ),
         }}
       />

@@ -10,7 +10,12 @@ import type { Tag } from '@/types';
 interface TagsContextValue {
   tags: Tag[];
   refresh: () => void;
-  addTag: (name: string, color: string, parentId?: string | null, description?: string | null) => void;
+  addTag: (
+    name: string,
+    color: string,
+    parentId?: string | null,
+    description?: string | null,
+  ) => void;
   editTag: (
     id: string,
     name: string,
@@ -51,7 +56,12 @@ export function TagsProvider({ children }: { children: React.ReactNode }) {
   }, [refresh, user?.id]);
 
   const addTag = useCallback(
-    (name: string, color: string, parentId: string | null = null, description: string | null = null) => {
+    (
+      name: string,
+      color: string,
+      parentId: string | null = null,
+      description: string | null = null,
+    ) => {
       createTag(name, color, parentId, description);
       syncAfterMutation();
     },

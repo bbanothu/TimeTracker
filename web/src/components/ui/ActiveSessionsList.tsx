@@ -10,7 +10,12 @@ interface ActiveSessionsListProps {
   onStop: (sessionId: string) => void;
 }
 
-export function ActiveSessionsList({ sessions, tags, geofenceNames, onStop }: ActiveSessionsListProps) {
+export function ActiveSessionsList({
+  sessions,
+  tags,
+  geofenceNames,
+  onStop,
+}: ActiveSessionsListProps) {
   const colors = useAppColors();
 
   return (
@@ -20,8 +25,7 @@ export function ActiveSessionsList({ sessions, tags, geofenceNames, onStop }: Ac
         const elapsed = Date.now() - session.startedAt;
         const geofenceName = session.geofenceId ? geofenceNames?.get(session.geofenceId) : null;
         const tagLabel = sessionTags.map((tag) => formatTagName(tag.name)).join(', ');
-        const subtitle =
-          session.source === 'geofence' && geofenceName ? `@ ${geofenceName}` : null;
+        const subtitle = session.source === 'geofence' && geofenceName ? `@ ${geofenceName}` : null;
 
         return (
           <div

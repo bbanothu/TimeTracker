@@ -1,13 +1,7 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-} from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text } from 'react-native';
 
 import { AppBackground } from '@/components/AppBackground';
 import { ProfileIdentityCard } from '@/components/ProfileIdentityCard';
@@ -50,7 +44,9 @@ export default function ProfileScreen() {
     useCallback(() => {
       loadPendingCount();
       reloadProfile().catch(console.error);
-      getLastAutoSyncAt().then(setLastSyncedAt).catch(() => undefined);
+      getLastAutoSyncAt()
+        .then(setLastSyncedAt)
+        .catch(() => undefined);
     }, [loadPendingCount, reloadProfile]),
   );
 
@@ -119,7 +115,10 @@ export default function ProfileScreen() {
                 );
               })
               .catch((error) => {
-                Alert.alert('Clear failed', error instanceof Error ? error.message : 'Unknown error');
+                Alert.alert(
+                  'Clear failed',
+                  error instanceof Error ? error.message : 'Unknown error',
+                );
               })
               .finally(() => setClearing(false));
           },
@@ -138,7 +137,10 @@ export default function ProfileScreen() {
           signOut()
             .then(() => router.replace('/(auth)/login'))
             .catch((error) => {
-              Alert.alert('Sign out failed', error instanceof Error ? error.message : 'Unknown error');
+              Alert.alert(
+                'Sign out failed',
+                error instanceof Error ? error.message : 'Unknown error',
+              );
             });
         },
       },
@@ -186,9 +188,7 @@ export default function ProfileScreen() {
             disabled={profileLoading}
           />
 
-          {profileError ? (
-            <Text className="mb-3 text-sm text-rose-500">{profileError}</Text>
-          ) : null}
+          {profileError ? <Text className="mb-3 text-sm text-rose-500">{profileError}</Text> : null}
 
           <ProfileLinkRows
             rows={[

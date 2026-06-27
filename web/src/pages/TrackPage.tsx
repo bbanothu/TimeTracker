@@ -116,33 +116,33 @@ export function TrackPage() {
       <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-8">
         <div>
           <ThemedSurface className="mb-6 p-4 lg:mb-4">
-        <div className="mb-3 flex items-center justify-between">
-          <p className="text-sm font-medium" style={{ color: colors.textMuted }}>
-            Start new session
-          </p>
-          <button
-            type="button"
-            onClick={() => setManualModalOpen(true)}
-            aria-label="Add past session"
-            className="rounded-full p-1 transition hover:opacity-70"
-          >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="12" cy="12" r="9" stroke={colors.primary} strokeWidth="1.5" />
-              <path
-                d="M12 8v8M8 12h8"
-                stroke={colors.primary}
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
-        </div>
-        <TagDropdown tags={tags} selectedId={selectedTagId} onSelect={setSelectedTagId} />
-        {error ? <p className="mt-3 text-sm text-rose-500">{error}</p> : null}
-        <div className="mt-4">
-          <ActionButton label="Start" onClick={handleStart} className="w-full" />
-        </div>
-      </ThemedSurface>
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-sm font-medium" style={{ color: colors.textMuted }}>
+                Start new session
+              </p>
+              <button
+                type="button"
+                onClick={() => setManualModalOpen(true)}
+                aria-label="Add past session"
+                className="rounded-full p-1 transition hover:opacity-70"
+              >
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" stroke={colors.primary} strokeWidth="1.5" />
+                  <path
+                    d="M12 8v8M8 12h8"
+                    stroke={colors.primary}
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            </div>
+            <TagDropdown tags={tags} selectedId={selectedTagId} onSelect={setSelectedTagId} />
+            {error ? <p className="mt-3 text-sm text-rose-500">{error}</p> : null}
+            <div className="mt-4">
+              <ActionButton label="Start" onClick={handleStart} className="w-full" />
+            </div>
+          </ThemedSurface>
 
           {sessions.length > 0 ? (
             <section className="mb-4">

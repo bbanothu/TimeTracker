@@ -67,7 +67,10 @@ export function useStats(initialPeriod: PeriodType = 'day', subjectUserId?: stri
   }, [loadData, entriesRevision, focusRevision]);
 
   const summary: StatsSummary = useMemo(
-    () => (ready && !dataLoading ? getStatsSummary(anchorDate, period, entries, geofences) : EMPTY_SUMMARY),
+    () =>
+      ready && !dataLoading
+        ? getStatsSummary(anchorDate, period, entries, geofences)
+        : EMPTY_SUMMARY,
     [ready, dataLoading, anchorDate, period, entries, geofences],
   );
 

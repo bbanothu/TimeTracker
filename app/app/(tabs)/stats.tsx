@@ -83,8 +83,17 @@ export default function StatsScreen() {
           }
           progressDisabled={isViewingFriend}
         />
-        <ChartTypeSelector period={period} visualization={visualization} onChange={setVisualization} />
-        <StatsCharts summary={summary} visualization={visualization} period={period} scrollEnabled={false} />
+        <ChartTypeSelector
+          period={period}
+          visualization={visualization}
+          onChange={setVisualization}
+        />
+        <StatsCharts
+          summary={summary}
+          visualization={visualization}
+          period={period}
+          scrollEnabled={false}
+        />
       </TabScrollView>
     </TabScreenContainer>
   );

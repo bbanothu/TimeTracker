@@ -57,7 +57,8 @@ function rowToTag(row: {
     name: row.name,
     color: row.color,
     parentId: row.parent_id ?? null,
-    includeInAnalytics: row.include_in_analytics === 0 || row.include_in_analytics === false ? false : true,
+    includeInAnalytics:
+      row.include_in_analytics === 0 || row.include_in_analytics === false ? false : true,
     description: row.description?.trim() ? row.description.trim() : null,
   };
 }
@@ -99,9 +100,7 @@ function migrateTagsToV4(database: SQLite.SQLiteDatabase): void {
   );
   if (hasIncludeInAnalytics) return;
 
-  database.execSync(
-    'ALTER TABLE tags ADD COLUMN include_in_analytics INTEGER NOT NULL DEFAULT 1',
-  );
+  database.execSync('ALTER TABLE tags ADD COLUMN include_in_analytics INTEGER NOT NULL DEFAULT 1');
 }
 
 function migrateToV5(database: SQLite.SQLiteDatabase): void {
@@ -161,7 +160,10 @@ function migrateToV8(database: SQLite.SQLiteDatabase): void {
   database.execSync('ALTER TABLE time_entries ADD COLUMN details TEXT');
 }
 
-function migrateActiveSessionsToEntries(database: SQLite.SQLiteDatabase, tableName = 'time_entries'): void {
+function migrateActiveSessionsToEntries(
+  database: SQLite.SQLiteDatabase,
+  tableName = 'time_entries',
+): void {
   const sessions = database.getAllSync<{
     id: string;
     user_id: string;
@@ -396,7 +398,9 @@ export function getSyncQueue(): Array<{
       entity_id: string;
       operation: SyncOperation;
       payload: string;
-    }>('SELECT id, entity_type, entity_id, operation, payload FROM sync_queue ORDER BY created_at ASC')
+    }>(
+      'SELECT id, entity_type, entity_id, operation, payload FROM sync_queue ORDER BY created_at ASC',
+    )
     .map((row) => ({
       id: row.id,
       entityType: row.entity_type,
@@ -471,71 +475,71 @@ export function initDatabase(userId: string): void {
     currentUserId = userId;
     initialized = false;
 
-  const database = getDb();
-  database.execSync(MIGRATION_SQL);
+    const database = getDb();
+    database.execSync(MIGRATION_SQL);
 
-  // Existing v2 databases have a tags table without parent_id; migrate before index creation.
-  migrateTagsToV3(database);
-  migrateTagsToV4(database);
-  migrateToV5(database);
-  migrateToV6(database);
-  migrateToV7(database);
-  migrateToV8(database);
-  migrateToV9(database);
-  database.execSync(TAGS_V3_INDEX_SQL);
+    // Existing v2 databases have a tags table without parent_id; migrate before index creation.
+    migrateTagsToV3(database);
+    migrateTagsToV4(database);
+    migrateToV5(database);
+    migrateToV6(database);
+    migrateToV7(database);
+    migrateToV8(database);
+    migrateToV9(database);
+    database.execSync(TAGS_V3_INDEX_SQL);
 
-  const versionRow = database.getFirstSync<{ value: string }>(
-    'SELECT value FROM meta WHERE key = ?',
-    ['schema_version'],
-  );
-
-  if (!versionRow) {
-    database.runSync('INSERT INTO meta (key, value) VALUES (?, ?)', [
-      'schema_version',
-      String(SCHEMA_VERSION),
-    ]);
-    database.runSync(
-      'INSERT INTO sync_state (user_id, last_pulled_at) VALUES (?, ?)',
-      [userId, 0],
-    );
-  } else {
-    database.runSync(
-      `INSERT INTO sync_state (user_id, last_pulled_at) VALUES (?, ?)
-       ON CONFLICT(user_id) DO NOTHING`,
-      [userId, 0],
+    const versionRow = database.getFirstSync<{ value: string }>(
+      'SELECT value FROM meta WHERE key = ?',
+      ['schema_version'],
     );
 
-    const storedVersion = parseInt(versionRow.value, 10);
-    if (storedVersion < SCHEMA_VERSION) {
-      if (storedVersion < 3) {
-        migrateTagsToV3(database);
-      }
-      if (storedVersion < 4) {
-        migrateTagsToV4(database);
-      }
-      if (storedVersion < 5) {
-        migrateToV5(database);
-      }
-      if (storedVersion < 6) {
-        migrateToV6(database);
-      }
-      if (storedVersion < 7) {
-        migrateToV7(database);
-      }
-      if (storedVersion < 8) {
-        migrateToV8(database);
-      }
-      if (storedVersion < 9) {
-        migrateToV9(database);
-      }
-      database.runSync('UPDATE meta SET value = ? WHERE key = ?', [
-        String(SCHEMA_VERSION),
+    if (!versionRow) {
+      database.runSync('INSERT INTO meta (key, value) VALUES (?, ?)', [
         'schema_version',
+        String(SCHEMA_VERSION),
       ]);
-    }
-  }
+      database.runSync('INSERT INTO sync_state (user_id, last_pulled_at) VALUES (?, ?)', [
+        userId,
+        0,
+      ]);
+    } else {
+      database.runSync(
+        `INSERT INTO sync_state (user_id, last_pulled_at) VALUES (?, ?)
+       ON CONFLICT(user_id) DO NOTHING`,
+        [userId, 0],
+      );
 
-  initialized = true;
+      const storedVersion = parseInt(versionRow.value, 10);
+      if (storedVersion < SCHEMA_VERSION) {
+        if (storedVersion < 3) {
+          migrateTagsToV3(database);
+        }
+        if (storedVersion < 4) {
+          migrateTagsToV4(database);
+        }
+        if (storedVersion < 5) {
+          migrateToV5(database);
+        }
+        if (storedVersion < 6) {
+          migrateToV6(database);
+        }
+        if (storedVersion < 7) {
+          migrateToV7(database);
+        }
+        if (storedVersion < 8) {
+          migrateToV8(database);
+        }
+        if (storedVersion < 9) {
+          migrateToV9(database);
+        }
+        database.runSync('UPDATE meta SET value = ? WHERE key = ?', [
+          String(SCHEMA_VERSION),
+          'schema_version',
+        ]);
+      }
+    }
+
+    initialized = true;
   } finally {
     if (initializingUserId === userId) {
       initializingUserId = null;
@@ -595,13 +599,19 @@ export function upsertTagFromRemote(tag: {
 
   if (duplicate) {
     database.execSync('PRAGMA foreign_keys = OFF');
-    database.runSync('UPDATE time_entry_tags SET tag_id = ? WHERE tag_id = ?', [tag.id, duplicate.id]);
+    database.runSync('UPDATE time_entry_tags SET tag_id = ? WHERE tag_id = ?', [
+      tag.id,
+      duplicate.id,
+    ]);
     database.runSync('UPDATE active_session_tags SET tag_id = ? WHERE tag_id = ?', [
       tag.id,
       duplicate.id,
     ]);
     database.runSync('UPDATE geofences SET tag_id = ? WHERE tag_id = ?', [tag.id, duplicate.id]);
-    database.runSync('UPDATE tag_daily_goals SET tag_id = ? WHERE tag_id = ?', [tag.id, duplicate.id]);
+    database.runSync('UPDATE tag_daily_goals SET tag_id = ? WHERE tag_id = ?', [
+      tag.id,
+      duplicate.id,
+    ]);
     database.runSync('UPDATE tags SET parent_id = ? WHERE parent_id = ?', [tag.id, duplicate.id]);
     database.runSync('DELETE FROM tags WHERE id = ?', [duplicate.id]);
     database.execSync('PRAGMA foreign_keys = ON');
@@ -702,10 +712,11 @@ export function upsertEntryFromRemote(entry: {
 
   database.runSync('DELETE FROM time_entry_tags WHERE entry_id = ?', [entry.id]);
   for (const tagId of entry.tag_ids) {
-    database.runSync(
-      'INSERT INTO time_entry_tags (entry_id, tag_id, user_id) VALUES (?, ?, ?)',
-      [entry.id, tagId, userId],
-    );
+    database.runSync('INSERT INTO time_entry_tags (entry_id, tag_id, user_id) VALUES (?, ?, ?)', [
+      entry.id,
+      tagId,
+      userId,
+    ]);
   }
 }
 
@@ -831,7 +842,9 @@ export function updateTag(
 
   const resolvedParentId = parentId !== undefined ? parentId : existing.parent_id;
   const resolvedDescription =
-    description !== undefined ? normalizeDescription(description) : normalizeDescription(existing.description);
+    description !== undefined
+      ? normalizeDescription(description)
+      : normalizeDescription(existing.description);
   const normalized = name.replace(/^#/, '').trim().toLowerCase();
   if (!normalized) throw new Error('Tag name is required');
 
@@ -990,10 +1003,11 @@ export function startSession(
   );
 
   for (const tag of tags) {
-    database.runSync(
-      'INSERT INTO time_entry_tags (entry_id, tag_id, user_id) VALUES (?, ?, ?)',
-      [entry.id, tag.id, userId],
-    );
+    database.runSync('INSERT INTO time_entry_tags (entry_id, tag_id, user_id) VALUES (?, ?, ?)', [
+      entry.id,
+      tag.id,
+      userId,
+    ]);
   }
 
   enqueueSync(
@@ -1025,10 +1039,7 @@ export interface StopSessionOptions {
   details?: string | null;
 }
 
-export function stopSession(
-  sessionId: string,
-  options: StopSessionOptions = {},
-): TimeEntry | null {
+export function stopSession(sessionId: string, options: StopSessionOptions = {}): TimeEntry | null {
   const session = getActiveSessionById(sessionId);
   if (!session) return null;
 
@@ -1072,11 +1083,7 @@ export function stopSession(
   return entry;
 }
 
-export function createManualEntry(
-  tagIds: string[],
-  startedAt: number,
-  endedAt: number,
-): TimeEntry {
+export function createManualEntry(tagIds: string[], startedAt: number, endedAt: number): TimeEntry {
   const userId = requireUserId();
   if (tagIds.length === 0) throw new Error('Select at least one tag');
   if (endedAt <= startedAt) throw new Error('End must be after start');
@@ -1105,14 +1112,26 @@ export function createManualEntry(
   database.runSync(
     `INSERT INTO time_entries (id, user_id, started_at, ended_at, source, geofence_id, stop_latitude, stop_longitude, details, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [entry.id, userId, entry.startedAt, entry.endedAt, entry.source, entry.geofenceId, null, null, null, ts],
+    [
+      entry.id,
+      userId,
+      entry.startedAt,
+      entry.endedAt,
+      entry.source,
+      entry.geofenceId,
+      null,
+      null,
+      null,
+      ts,
+    ],
   );
 
   for (const tag of tags) {
-    database.runSync(
-      'INSERT INTO time_entry_tags (entry_id, tag_id, user_id) VALUES (?, ?, ?)',
-      [entry.id, tag.id, userId],
-    );
+    database.runSync('INSERT INTO time_entry_tags (entry_id, tag_id, user_id) VALUES (?, ?, ?)', [
+      entry.id,
+      tag.id,
+      userId,
+    ]);
   }
 
   enqueueSync(
@@ -1218,7 +1237,9 @@ export function updateEntry(
 
   const ts = nowMs();
   const nextDetails =
-    details !== undefined ? normalizeEntryDetails(details) : normalizeEntryDetails(existing.details);
+    details !== undefined
+      ? normalizeEntryDetails(details)
+      : normalizeEntryDetails(existing.details);
   database.runSync(
     `UPDATE time_entries
      SET started_at = ?, ended_at = ?, details = ?, updated_at = ?
@@ -1228,10 +1249,11 @@ export function updateEntry(
 
   database.runSync('DELETE FROM time_entry_tags WHERE entry_id = ? AND user_id = ?', [id, userId]);
   for (const tag of tags) {
-    database.runSync(
-      'INSERT INTO time_entry_tags (entry_id, tag_id, user_id) VALUES (?, ?, ?)',
-      [id, tag.id, userId],
-    );
+    database.runSync('INSERT INTO time_entry_tags (entry_id, tag_id, user_id) VALUES (?, ?, ?)', [
+      id,
+      tag.id,
+      userId,
+    ]);
   }
 
   const entry: TimeEntry = {
@@ -1362,7 +1384,14 @@ export function getAllGeofences(): Geofence[] {
     longitude: row.longitude,
     radiusMeters: row.radius_meters,
     enabled: row.enabled === 1,
-    tag: { id: row.tag_id, name: row.tag_name, color: row.tag_color, parentId: null, includeInAnalytics: true, description: null },
+    tag: {
+      id: row.tag_id,
+      name: row.tag_name,
+      color: row.tag_color,
+      parentId: null,
+      includeInAnalytics: true,
+      description: null,
+    },
   }));
 }
 
@@ -1397,7 +1426,14 @@ export function getGeofenceById(id: string): Geofence | null {
     longitude: row.longitude,
     radiusMeters: row.radius_meters,
     enabled: row.enabled === 1,
-    tag: { id: row.tag_id, name: row.tag_name, color: row.tag_color, parentId: null, includeInAnalytics: true, description: null },
+    tag: {
+      id: row.tag_id,
+      name: row.tag_name,
+      color: row.tag_color,
+      parentId: null,
+      includeInAnalytics: true,
+      description: null,
+    },
   };
 }
 
@@ -1494,11 +1530,7 @@ export function getEnabledGeofences(): Geofence[] {
   return getAllGeofences().filter((g) => g.enabled);
 }
 
-function rowToGoal(row: {
-  id: string;
-  tag_id: string;
-  target_minutes: number;
-}): TagDailyGoal {
+function rowToGoal(row: { id: string; tag_id: string; target_minutes: number }): TagDailyGoal {
   return {
     id: row.id,
     tagId: row.tag_id,
@@ -1566,10 +1598,7 @@ export function removeGoal(tagId: string): void {
   const existing = getGoalByTagId(tagId);
   if (!existing) return;
 
-  getDb().runSync('DELETE FROM tag_daily_goals WHERE user_id = ? AND tag_id = ?', [
-    userId,
-    tagId,
-  ]);
+  getDb().runSync('DELETE FROM tag_daily_goals WHERE user_id = ? AND tag_id = ?', [userId, tagId]);
   enqueueSync('goal', existing.id, 'delete', {
     id: existing.id,
     user_id: userId,

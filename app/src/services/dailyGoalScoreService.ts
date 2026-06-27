@@ -10,10 +10,7 @@ import {
 } from '@/db/client';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
 import { pushChangesInBackground } from '@/services/syncScheduler';
-import {
-  computeDailyAverageScore,
-  formatDateKey,
-} from '@/utils/goalProgressHistory';
+import { computeDailyAverageScore, formatDateKey } from '@/utils/goalProgressHistory';
 
 function getEarliestEntryDay(): Date | null {
   const entries = getAllEntries();

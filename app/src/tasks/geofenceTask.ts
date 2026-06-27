@@ -1,11 +1,7 @@
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 
-import {
-  GEOFENCE_TASK,
-  handleGeofenceEnter,
-  handleGeofenceExit,
-} from '@/services/geofenceService';
+import { GEOFENCE_TASK, handleGeofenceEnter, handleGeofenceExit } from '@/services/geofenceService';
 
 TaskManager.defineTask(GEOFENCE_TASK, async ({ data, error }) => {
   if (error) {

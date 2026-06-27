@@ -29,7 +29,10 @@ export function getHistoryDatePresetLabel(preset: HistoryDatePreset): string {
   return DATE_PRESET_LABELS[preset];
 }
 
-function getDateRange(preset: HistoryDatePreset, reference = new Date()): { startMs: number; endMs: number } | null {
+function getDateRange(
+  preset: HistoryDatePreset,
+  reference = new Date(),
+): { startMs: number; endMs: number } | null {
   if (preset === 'all') return null;
 
   switch (preset) {
@@ -48,16 +51,17 @@ function getDateRange(preset: HistoryDatePreset, reference = new Date()): { star
   }
 }
 
-export function filterHistoryEntries(entries: TimeEntry[], filters: HistoryFilterState): TimeEntry[] {
+export function filterHistoryEntries(
+  entries: TimeEntry[],
+  filters: HistoryFilterState,
+): TimeEntry[] {
   let result = entries;
   const range = getDateRange(filters.datePreset);
 
   if (range) {
     result = result.filter(
       (entry) =>
-        entry.endedAt != null &&
-        entry.startedAt <= range.endMs &&
-        entry.endedAt >= range.startMs,
+        entry.endedAt != null && entry.startedAt <= range.endMs && entry.endedAt >= range.startMs,
     );
   }
 

@@ -1,7 +1,13 @@
 import { supabase } from '@/lib/supabase';
 import { buildProfileDisplayName } from '@/services/profileService';
 import { fetchAllEntries, fetchGeofences } from '@/services/data';
-import type { Friendship, FriendshipOtherUser, FriendshipStatus, Geofence, TimeEntry } from '@/types';
+import type {
+  Friendship,
+  FriendshipOtherUser,
+  FriendshipStatus,
+  Geofence,
+  TimeEntry,
+} from '@/types';
 
 type FriendshipRow = {
   id: string;
@@ -44,7 +50,11 @@ async function fetchProfiles(userIds: string[]): Promise<Map<string, ProfileRow>
   return new Map((data ?? []).map((row) => [row.user_id, row as ProfileRow]));
 }
 
-function mapFriendship(row: FriendshipRow, me: string, profiles: Map<string, ProfileRow>): Friendship {
+function mapFriendship(
+  row: FriendshipRow,
+  me: string,
+  profiles: Map<string, ProfileRow>,
+): Friendship {
   const otherId = row.requester_id === me ? row.addressee_id : row.requester_id;
   const profile = profiles.get(otherId);
   const otherUser: FriendshipOtherUser = {
@@ -91,7 +101,9 @@ export async function fetchFriendships(): Promise<Friendship[]> {
   if (error) throw error;
 
   const rows = (data ?? []) as FriendshipRow[];
-  const otherIds = rows.map((row) => (row.requester_id === me ? row.addressee_id : row.requester_id));
+  const otherIds = rows.map((row) =>
+    row.requester_id === me ? row.addressee_id : row.requester_id,
+  );
   const profiles = await fetchProfiles([...new Set(otherIds)]);
 
   return rows.map((row) => mapFriendship(row, me, profiles));

@@ -33,10 +33,7 @@ const DISMISS_VELOCITY = 0.45;
 const SHEET_HEADER_HEIGHT = 96;
 const SHEET_BOTTOM_PADDING = 32;
 
-export function getBottomSheetScrollHeight(
-  windowHeight: number,
-  maxHeightFraction = 0.6,
-): number {
+export function getBottomSheetScrollHeight(windowHeight: number, maxHeightFraction = 0.6): number {
   const maxSheetHeight = Math.round(windowHeight * maxHeightFraction);
   return maxSheetHeight - SHEET_HEADER_HEIGHT - SHEET_BOTTOM_PADDING;
 }
@@ -196,7 +193,11 @@ export function BottomSheetModal({
             <View className="mb-2 flex-row items-center justify-between gap-2">
               <View className="min-w-0 flex-1 flex-row items-center gap-1">
                 {headerLeading}
-                <Text className="flex-1 text-lg font-semibold" style={{ color: colors.text }} numberOfLines={1}>
+                <Text
+                  className="flex-1 text-lg font-semibold"
+                  style={{ color: colors.text }}
+                  numberOfLines={1}
+                >
                   {title}
                 </Text>
               </View>

@@ -1,7 +1,16 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { BottomSheetModal, getBottomSheetScrollHeight } from '@/components/BottomSheetModal';
@@ -14,18 +23,18 @@ interface EditEntryModalProps {
   entry: TimeEntry | null;
   tags: Tag[];
   onClose: () => void;
-  onSave: (entryId: string, tagIds: string[], startedAt: number, endedAt: number, details: string | null) => void;
+  onSave: (
+    entryId: string,
+    tagIds: string[],
+    startedAt: number,
+    endedAt: number,
+    details: string | null,
+  ) => void;
 }
 
 type PickerField = 'start' | 'end' | null;
 
-export function EditEntryModal({
-  visible,
-  entry,
-  tags,
-  onClose,
-  onSave,
-}: EditEntryModalProps) {
+export function EditEntryModal({ visible, entry, tags, onClose, onSave }: EditEntryModalProps) {
   const colors = useAppColors();
   const { height: windowHeight } = useWindowDimensions();
   const scrollRef = useRef<ScrollView>(null);

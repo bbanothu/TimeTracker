@@ -134,7 +134,17 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
       stop,
       addManualEntry,
     }),
-    [ready, sessions, todayEntries, entriesRevision, tick, refresh, startManual, stop, addManualEntry],
+    [
+      ready,
+      sessions,
+      todayEntries,
+      entriesRevision,
+      tick,
+      refresh,
+      startManual,
+      stop,
+      addManualEntry,
+    ],
   );
 
   return <TimerContext.Provider value={value}>{children}</TimerContext.Provider>;

@@ -2,13 +2,7 @@ import { useAppColors } from '@/contexts/ThemeContext';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 
 export type ProfileLinkIcon =
-  | 'friends'
-  | 'history'
-  | 'password'
-  | 'sync'
-  | 'export'
-  | 'clear'
-  | 'signout';
+  'friends' | 'history' | 'password' | 'sync' | 'export' | 'clear' | 'signout';
 
 export interface ProfileLinkRow {
   id: string;

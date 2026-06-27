@@ -3,10 +3,7 @@ import { addDays, parse, startOfDay } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import { fetchAllEntries, fetchGoals } from '@/services/data';
 import type { DailyGoalScore, Tag, TagDailyGoal, TimeEntry } from '@/types';
-import {
-  computeDailyAverageScore,
-  formatDateKey,
-} from '@/utils/goalProgressHistory';
+import { computeDailyAverageScore, formatDateKey } from '@/utils/goalProgressHistory';
 
 type ScoreRow = {
   id: string;

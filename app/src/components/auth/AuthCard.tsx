@@ -8,7 +8,11 @@ interface AuthCardProps {
 }
 
 export function AuthCard({ children }: AuthCardProps) {
-  const inner = <View style={Platform.OS === 'android' ? androidStyles.inner : styles.cardInner}>{children}</View>;
+  const inner = (
+    <View style={Platform.OS === 'android' ? androidStyles.inner : styles.cardInner}>
+      {children}
+    </View>
+  );
 
   if (Platform.OS === 'android') {
     return <View style={androidStyles.card}>{inner}</View>;

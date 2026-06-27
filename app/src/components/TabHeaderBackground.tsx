@@ -29,9 +29,7 @@ export function TabHeaderBackground() {
         StyleSheet.absoluteFillObject,
         {
           backgroundColor:
-            colors.blurTint === 'dark'
-              ? 'rgba(28, 25, 23, 0.42)'
-              : 'rgba(255, 252, 245, 0.38)',
+            colors.blurTint === 'dark' ? 'rgba(28, 25, 23, 0.42)' : 'rgba(255, 252, 245, 0.38)',
         },
       ]}
     />

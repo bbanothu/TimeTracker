@@ -107,13 +107,9 @@ async function handleStopTracking(geofenceId?: string): Promise<void> {
   }
 }
 
-export function registerNotificationResponseHandler(
-  navigateToTrack?: () => void,
-): () => void {
+export function registerNotificationResponseHandler(navigateToTrack?: () => void): () => void {
   const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
-    const geofenceId = response.notification.request.content.data?.geofenceId as
-      | string
-      | undefined;
+    const geofenceId = response.notification.request.content.data?.geofenceId as string | undefined;
 
     if (response.actionIdentifier === GEOFENCE_STOP_ACTION) {
       handleStopTracking(geofenceId).catch(console.warn);

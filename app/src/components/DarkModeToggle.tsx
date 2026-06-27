@@ -20,11 +20,7 @@ export function DarkModeToggle() {
         borderColor: colors.glassBorder,
       }}
     >
-      <Ionicons
-        name={isDark ? 'sunny-outline' : 'moon-outline'}
-        size={20}
-        color={colors.text}
-      />
+      <Ionicons name={isDark ? 'sunny-outline' : 'moon-outline'} size={20} color={colors.text} />
     </Pressable>
   );
 }

@@ -34,7 +34,11 @@ export function StackedBarChart({ bars, chartHeight = 140 }: StackedBarChartProp
     <div className="flex gap-3 pt-2">
       <div className="flex flex-col justify-between pb-6" style={{ height: chartHeight + 28 }}>
         {[...yTicks].reverse().map((tickMs) => (
-          <span key={tickMs} className="text-right text-[11px] leading-none" style={{ color: colors.textMuted }}>
+          <span
+            key={tickMs}
+            className="text-right text-[11px] leading-none"
+            style={{ color: colors.textMuted }}
+          >
             {formatDurationLong(tickMs)}
           </span>
         ))}

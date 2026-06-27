@@ -7,7 +7,12 @@ interface TabScreenContainerProps extends ViewProps {
   className?: string;
 }
 
-export function TabScreenContainer({ children, className, style, ...props }: TabScreenContainerProps) {
+export function TabScreenContainer({
+  children,
+  className,
+  style,
+  ...props
+}: TabScreenContainerProps) {
   const paddingTop = useScreenTopPadding();
 
   return (

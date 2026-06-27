@@ -42,11 +42,7 @@ export function getDescendantIds(tagId: string, tags: Tag[]): Set<string> {
   return descendants;
 }
 
-export function wouldCreateCycle(
-  tagId: string,
-  newParentId: string | null,
-  tags: Tag[],
-): boolean {
+export function wouldCreateCycle(tagId: string, newParentId: string | null, tags: Tag[]): boolean {
   if (!newParentId) return false;
   if (newParentId === tagId) return true;
   const descendants = getDescendantIds(tagId, tags);

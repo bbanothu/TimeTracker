@@ -39,10 +39,7 @@ export function DailyGoalScoreList({
           <span className="text-sm font-medium" style={{ color: colors.textOnBg }}>
             {formatScoreDateLabel(score.dateKey, score.isLive)}
           </span>
-          <span
-            className="text-sm font-semibold tabular-nums"
-            style={{ color: colors.textOnBg }}
-          >
+          <span className="text-sm font-semibold tabular-nums" style={{ color: colors.textOnBg }}>
             {formatGoalPercent(score.scorePercent)}
           </span>
         </div>

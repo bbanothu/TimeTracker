@@ -40,7 +40,12 @@ function VisualizationContent({
   }
 }
 
-export function StatsCharts({ summary, visualization, period, scrollEnabled = true }: StatsChartsProps) {
+export function StatsCharts({
+  summary,
+  visualization,
+  period,
+  scrollEnabled = true,
+}: StatsChartsProps) {
   const content = (
     <>
       <StatsKpiCard summary={summary} />

@@ -1,6 +1,12 @@
 import type { ReactNode } from 'react';
 
-export function AuthBackground({ children, image = '/assets/login1.jpg' }: { children: ReactNode; image?: string }) {
+export function AuthBackground({
+  children,
+  image = '/assets/login1.jpg',
+}: {
+  children: ReactNode;
+  image?: string;
+}) {
   return (
     <div className="relative min-h-dvh overflow-hidden">
       <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover" />

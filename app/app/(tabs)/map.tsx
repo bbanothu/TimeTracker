@@ -1,11 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Alert,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Alert, Pressable, Text, TextInput, View } from 'react-native';
 import MapView, { Circle, Marker, type MapPressEvent } from 'react-native-maps';
 import * as Location from 'expo-location';
 
@@ -16,12 +10,7 @@ import { TabScrollView } from '@/components/TabScrollView';
 import { TabScreenContainer } from '@/components/TabScreenContainer';
 import { TagDropdown } from '@/components/TagDropdown';
 import { ThemedSurface } from '@/components/ThemedSurface';
-import {
-  createGeofence,
-  deleteGeofence,
-  getAllGeofences,
-  updateGeofence,
-} from '@/db/client';
+import { createGeofence, deleteGeofence, getAllGeofences, updateGeofence } from '@/db/client';
 import { useActiveSession } from '@/hooks/useActiveSession';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppColors } from '@/hooks/useAppColors';
@@ -43,7 +32,15 @@ const DEFAULT_REGION = {
   longitudeDelta: 0.04,
 };
 
-function StepLabel({ step, label, colors }: { step: number; label: string; colors: ReturnType<typeof useAppColors> }) {
+function StepLabel({
+  step,
+  label,
+  colors,
+}: {
+  step: number;
+  label: string;
+  colors: ReturnType<typeof useAppColors>;
+}) {
   return (
     <Text className="mb-2 text-sm font-semibold" style={{ color: colors.textSecondary }}>
       {step}. {label}
@@ -285,7 +282,7 @@ export default function MapScreen() {
                 key={geofence.id}
                 center={{ latitude: geofence.latitude, longitude: geofence.longitude }}
                 radius={geofence.radiusMeters}
-                strokeColor={geofence.enabled ? geofence.tag?.color ?? colors.primary : '#94A3B8'}
+                strokeColor={geofence.enabled ? (geofence.tag?.color ?? colors.primary) : '#94A3B8'}
                 fillColor={`${geofence.tag?.color ?? colors.primary}33`}
               />
             ))}
@@ -362,7 +359,11 @@ export default function MapScreen() {
 
   return (
     <TabScreenContainer>
-      <TabScrollView className="flex-1" contentContainerClassName="pb-6" onRefreshExtra={refreshMapData}>
+      <TabScrollView
+        className="flex-1"
+        contentContainerClassName="pb-6"
+        onRefreshExtra={refreshMapData}
+      >
         {setupHeader}
       </TabScrollView>
 

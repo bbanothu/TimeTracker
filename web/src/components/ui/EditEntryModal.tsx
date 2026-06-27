@@ -88,7 +88,13 @@ export function EditEntryModal({ visible, entry, tags, onClose, onSave }: EditEn
       }
 
       setSaving(true);
-      await onSave(entry.id, [selectedTagId], startedAt.getTime(), endedAt.getTime(), details.trim() || null);
+      await onSave(
+        entry.id,
+        [selectedTagId],
+        startedAt.getTime(),
+        endedAt.getTime(),
+        details.trim() || null,
+      );
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save session');

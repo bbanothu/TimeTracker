@@ -61,10 +61,7 @@ export function HistoryPage() {
     });
   }, [user, loadEntries]);
 
-  const filteredEntries = useMemo(
-    () => filterHistoryEntries(entries, filters),
-    [entries, filters],
-  );
+  const filteredEntries = useMemo(() => filterHistoryEntries(entries, filters), [entries, filters]);
 
   const geofenceNames = useMemo(
     () => new Map(geofences.map((geofence) => [geofence.id, geofence.name])),

@@ -66,10 +66,7 @@ export function FriendsPage() {
     load().catch(console.error);
   }, [load]);
 
-  const accepted = useMemo(
-    () => friendships.filter((f) => f.status === 'accepted'),
-    [friendships],
-  );
+  const accepted = useMemo(() => friendships.filter((f) => f.status === 'accepted'), [friendships]);
 
   const inputStyle = {
     backgroundColor: colors.inputBg,
@@ -183,7 +180,12 @@ export function FriendsPage() {
             className="min-w-0 flex-1 rounded-xl border px-4 py-3"
             style={inputStyle}
           />
-          <ActionButton label="Send request" type="submit" loading={sending} disabled={sending || !email.trim()} />
+          <ActionButton
+            label="Send request"
+            type="submit"
+            loading={sending}
+            disabled={sending || !email.trim()}
+          />
         </form>
       </ThemedSurface>
 
@@ -203,34 +205,31 @@ export function FriendsPage() {
                     className="flex items-center gap-3 rounded-xl border px-3 py-3"
                     style={{ borderColor: colors.glassBorder }}
                   >
-                    <p
-                      className="min-w-0 flex-1 truncate text-sm"
-                      style={{ color: colors.text }}
-                    >
+                    <p className="min-w-0 flex-1 truncate text-sm" style={{ color: colors.text }}>
                       {friendLabel(friendship.otherUser)}
                     </p>
                     <div className="flex shrink-0 gap-2">
-                        <button
-                          type="button"
-                          aria-label="Accept friend request"
-                          onClick={() => handleRespond(friendship.id, true)}
-                          disabled={actingId !== null}
-                          className="rounded-full p-2 disabled:opacity-50"
-                          style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)' }}
-                        >
-                          <CheckIcon color={colors.primaryBright} />
-                        </button>
-                        <button
-                          type="button"
-                          aria-label="Decline friend request"
-                          onClick={() => handleRespond(friendship.id, false)}
-                          disabled={actingId !== null}
-                          className="rounded-full p-2 disabled:opacity-50"
-                          style={{ backgroundColor: colors.destructiveBg }}
-                        >
-                          <XIcon color={colors.destructive} />
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        aria-label="Accept friend request"
+                        onClick={() => handleRespond(friendship.id, true)}
+                        disabled={actingId !== null}
+                        className="rounded-full p-2 disabled:opacity-50"
+                        style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)' }}
+                      >
+                        <CheckIcon color={colors.primaryBright} />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Decline friend request"
+                        onClick={() => handleRespond(friendship.id, false)}
+                        disabled={actingId !== null}
+                        className="rounded-full p-2 disabled:opacity-50"
+                        style={{ backgroundColor: colors.destructiveBg }}
+                      >
+                        <XIcon color={colors.destructive} />
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -249,10 +248,7 @@ export function FriendsPage() {
                     className="flex items-center gap-3 rounded-xl border px-3 py-3"
                     style={{ borderColor: colors.glassBorder }}
                   >
-                    <p
-                      className="min-w-0 flex-1 truncate text-sm"
-                      style={{ color: colors.text }}
-                    >
+                    <p className="min-w-0 flex-1 truncate text-sm" style={{ color: colors.text }}>
                       {friendLabel(friendship.otherUser)}
                     </p>
                     <button
@@ -287,10 +283,7 @@ export function FriendsPage() {
                     className="flex items-center gap-3 rounded-xl border px-3 py-3"
                     style={{ borderColor: colors.glassBorder }}
                   >
-                    <p
-                      className="min-w-0 flex-1 truncate text-sm"
-                      style={{ color: colors.text }}
-                    >
+                    <p className="min-w-0 flex-1 truncate text-sm" style={{ color: colors.text }}>
                       {friendLabel(friendship.otherUser)}
                     </p>
                     <button

@@ -1,12 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Platform,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Platform, Pressable, Text, TextInput, View } from 'react-native';
 
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAppColors } from '@/hooks/useAppColors';
@@ -69,7 +62,9 @@ function GoalTargetInputs({
     fontWeight: '600' as const,
     textAlign: 'center' as const,
     color: colors.text,
-    ...(Platform.OS === 'android' ? { includeFontPadding: false, textAlignVertical: 'center' as const } : {}),
+    ...(Platform.OS === 'android'
+      ? { includeFontPadding: false, textAlignVertical: 'center' as const }
+      : {}),
   };
 
   const unitStyle = {
@@ -171,7 +166,10 @@ function GoalTargetInputs({
         </Pressable>
       </View>
       {error ? (
-        <Text className="mt-1.5 text-right text-xs font-medium" style={{ color: colors.destructive }}>
+        <Text
+          className="mt-1.5 text-right text-xs font-medium"
+          style={{ color: colors.destructive }}
+        >
           {error}
         </Text>
       ) : null}
@@ -187,10 +185,7 @@ export function GoalsList({
   onInputFocus,
 }: GoalsListProps) {
   const colors = useAppColors();
-  const goalsByTagId = useMemo(
-    () => new Map(goals.map((goal) => [goal.tagId, goal])),
-    [goals],
-  );
+  const goalsByTagId = useMemo(() => new Map(goals.map((goal) => [goal.tagId, goal])), [goals]);
 
   if (categories.length === 0) {
     return (
@@ -208,8 +203,7 @@ export function GoalsList({
         const todayMs = progressByTagId.get(tag.id) ?? 0;
         const hasTarget = targetMinutes !== null;
         const targetMs = hasTarget ? targetMinutes * 60_000 : 0;
-        const ratio =
-          targetMs > 0 ? Math.min(todayMs / targetMs, 1) : todayMs > 0 ? 1 : 0;
+        const ratio = targetMs > 0 ? Math.min(todayMs / targetMs, 1) : todayMs > 0 ? 1 : 0;
         const overGoal = hasTarget && (targetMs === 0 ? todayMs > 0 : todayMs > targetMs);
 
         return (
@@ -226,7 +220,10 @@ export function GoalsList({
               <Text className="flex-1 text-sm font-semibold" style={{ color: colors.textOnBg }}>
                 {formatTagName(tag.name)}
               </Text>
-              <Text className="text-sm font-semibold tabular-nums" style={{ color: colors.textOnBg }}>
+              <Text
+                className="text-sm font-semibold tabular-nums"
+                style={{ color: colors.textOnBg }}
+              >
                 {formatDurationLong(todayMs)}
               </Text>
             </View>

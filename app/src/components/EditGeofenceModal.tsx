@@ -115,7 +115,12 @@ export function EditGeofenceModal({
   const pinColor = selectedTag?.color ?? colors.primary;
 
   return (
-    <BottomSheetModal visible={visible} title="Edit place" onClose={onClose} maxHeightFraction={0.92}>
+    <BottomSheetModal
+      visible={visible}
+      title="Edit place"
+      onClose={onClose}
+      maxHeightFraction={0.92}
+    >
       <BottomSheetScrollView maxHeightFraction={0.78} contentContainerStyle={{ paddingBottom: 24 }}>
         <Text className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
           Activity
@@ -184,7 +189,12 @@ export function EditGeofenceModal({
           </Text>
         ) : null}
 
-        <ActionButton label="Save changes" onPress={handleSave} disabled={!canSave} className="mt-4" />
+        <ActionButton
+          label="Save changes"
+          onPress={handleSave}
+          disabled={!canSave}
+          className="mt-4"
+        />
       </BottomSheetScrollView>
     </BottomSheetModal>
   );

@@ -188,7 +188,8 @@ export function HistoryFilters({ tags, geofences, filters, onChange }: HistoryFi
             }}
             className="mb-2 rounded-xl px-4 py-3"
             style={{
-              backgroundColor: filters.tagId === null ? colors.selectedBgSolid : colors.secondaryBgSolid,
+              backgroundColor:
+                filters.tagId === null ? colors.selectedBgSolid : colors.secondaryBgSolid,
             }}
           >
             <Text className="text-base" style={{ color: colors.text }}>
@@ -237,7 +238,8 @@ export function HistoryFilters({ tags, geofences, filters, onChange }: HistoryFi
             }}
             className="mb-2 rounded-xl px-4 py-3"
             style={{
-              backgroundColor: filters.geofenceId === null ? colors.selectedBgSolid : colors.secondaryBgSolid,
+              backgroundColor:
+                filters.geofenceId === null ? colors.selectedBgSolid : colors.secondaryBgSolid,
             }}
           >
             <Text className="text-base" style={{ color: colors.text }}>

@@ -110,7 +110,12 @@ export function EditGeofenceModal({
   };
 
   return (
-    <BottomSheetModal visible={visible} title="Edit place" onClose={onClose} maxHeightFraction={0.92}>
+    <BottomSheetModal
+      visible={visible}
+      title="Edit place"
+      onClose={onClose}
+      maxHeightFraction={0.92}
+    >
       <BottomSheetScroll maxHeightFraction={0.78}>
         <p className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
           Activity

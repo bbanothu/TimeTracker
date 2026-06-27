@@ -65,11 +65,7 @@ export function TrendChart({ buckets, className = '', minHeight = 220 }: TrendCh
   const areaPath = `${linePath} L ${points[points.length - 1].x} ${baseline} L ${points[0].x} ${baseline} Z`;
 
   return (
-    <div
-      ref={containerRef}
-      className={`w-full ${className}`}
-      style={{ minHeight }}
-    >
+    <div ref={containerRef} className={`w-full ${className}`} style={{ minHeight }}>
       {size.width > 0 ? (
         <svg
           width="100%"
@@ -124,22 +120,10 @@ export function TrendChart({ buckets, className = '', minHeight = 220 }: TrendCh
                 fill={colors.chartPrimary}
                 vectorEffect="non-scaling-stroke"
               />
-              <text
-                x={x}
-                y={y - 12}
-                textAnchor="middle"
-                fontSize={12}
-                fill={colors.textSecondary}
-              >
+              <text x={x} y={y - 12} textAnchor="middle" fontSize={12} fill={colors.textSecondary}>
                 {formatDurationLong(bucket.durationMs)}
               </text>
-              <text
-                x={x}
-                y={height - 10}
-                textAnchor="middle"
-                fontSize={12}
-                fill={colors.textMuted}
-              >
+              <text x={x} y={height - 10} textAnchor="middle" fontSize={12} fill={colors.textMuted}>
                 {bucket.label}
               </text>
             </g>

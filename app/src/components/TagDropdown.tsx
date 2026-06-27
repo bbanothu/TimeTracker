@@ -87,7 +87,9 @@ export function TagDropdown({ tags, selectedId, onSelect, disabled }: TagDropdow
                       {formatTagName(item.path)}
                     </Text>
                   </View>
-                  {isSelected ? <Ionicons name="checkmark" size={20} color={colors.primary} /> : null}
+                  {isSelected ? (
+                    <Ionicons name="checkmark" size={20} color={colors.primary} />
+                  ) : null}
                 </Pressable>
               );
             })

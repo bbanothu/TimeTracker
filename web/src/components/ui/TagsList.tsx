@@ -80,7 +80,8 @@ export function TagsList({
             className="flex items-center gap-2.5 py-3.5 pr-3"
             style={{
               paddingLeft: 14 + indent,
-              borderBottom: index < items.length - 1 ? `1px solid ${colors.surfaceBorder}` : undefined,
+              borderBottom:
+                index < items.length - 1 ? `1px solid ${colors.surfaceBorder}` : undefined,
             }}
           >
             <span

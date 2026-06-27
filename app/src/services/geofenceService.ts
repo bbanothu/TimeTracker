@@ -17,12 +17,7 @@ import { timerService } from '@/services/timerService';
 
 export const GEOFENCE_TASK = 'TIMETRACKER_GEOFENCE';
 
-function distanceMeters(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number,
-): number {
+function distanceMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const toRad = (deg: number) => (deg * Math.PI) / 180;
   const earthRadius = 6371000;
   const dLat = toRad(lat2 - lat1);

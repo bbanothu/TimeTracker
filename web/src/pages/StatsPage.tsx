@@ -24,7 +24,14 @@ import {
   fetchFriendGeofences,
 } from '@/services/friendsService';
 import { getStatsSummary } from '@/services/statsService';
-import type { FriendshipOtherUser, Geofence, PeriodType, StatsSummary, StatsVisualization, TimeEntry } from '@/types';
+import type {
+  FriendshipOtherUser,
+  Geofence,
+  PeriodType,
+  StatsSummary,
+  StatsVisualization,
+  TimeEntry,
+} from '@/types';
 
 function VisualizationContent({
   summary,
@@ -65,9 +72,7 @@ export function StatsPage() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const isViewingFriend = Boolean(
-    user && selectedUserId && selectedUserId !== user.id,
-  );
+  const isViewingFriend = Boolean(user && selectedUserId && selectedUserId !== user.id);
 
   const loadFriends = useCallback(async () => {
     try {
@@ -86,8 +91,7 @@ export function StatsPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const targetId =
-        selectedUserId && selectedUserId !== user.id ? selectedUserId : user.id;
+      const targetId = selectedUserId && selectedUserId !== user.id ? selectedUserId : user.id;
       const [nextEntries, nextGeofences] = await Promise.all([
         targetId === user.id ? fetchAllEntries(user.id) : fetchFriendEntries(targetId),
         targetId === user.id ? fetchGeofences(user.id) : fetchFriendGeofences(targetId),

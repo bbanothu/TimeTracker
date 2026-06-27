@@ -20,7 +20,9 @@ export function ProtectedLayout() {
         <div className="min-h-dvh w-full lg:h-dvh lg:overflow-hidden lg:pl-60">
           <DesktopSidebar />
           <AppShell>
-            <p className="text-center" style={{ color: colors.textMuted }}>Loading…</p>
+            <p className="text-center" style={{ color: colors.textMuted }}>
+              Loading…
+            </p>
           </AppShell>
         </div>
       </AppBackground>

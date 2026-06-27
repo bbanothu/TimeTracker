@@ -48,9 +48,14 @@ const TAG_COLUMNS_LEGACY = 'id, name, color, parent_id';
 const NESTED_TAG_COLUMNS = 'id, name, color, parent_id, include_in_analytics, description';
 const NESTED_TAG_COLUMNS_LEGACY = 'id, name, color, parent_id';
 
-function isMissingTagColumn(error: { code?: string; message?: string } | null, column: string): boolean {
+function isMissingTagColumn(
+  error: { code?: string; message?: string } | null,
+  column: string,
+): boolean {
   if (!error) return false;
-  return error.code === '42703' || (typeof error.message === 'string' && error.message.includes(column));
+  return (
+    error.code === '42703' || (typeof error.message === 'string' && error.message.includes(column))
+  );
 }
 
 function isMissingAnalyticsColumn(error: { code?: string; message?: string } | null): boolean {
@@ -59,7 +64,10 @@ function isMissingAnalyticsColumn(error: { code?: string; message?: string } | n
 
 function isMissingStopDetailsColumn(error: { code?: string; message?: string } | null): boolean {
   if (!error) return false;
-  return error.code === '42703' || (typeof error.message === 'string' && error.message.includes('stop_latitude'));
+  return (
+    error.code === '42703' ||
+    (typeof error.message === 'string' && error.message.includes('stop_latitude'))
+  );
 }
 
 const ENTRY_SELECT_COLUMNS =
@@ -447,7 +455,9 @@ async function fetchEntriesWithSelect(
       .not('ended_at', 'is', null);
 
     if (filters) {
-      legacyStopQuery = legacyStopQuery.gt('ended_at', filters.startMs).lt('started_at', filters.endMs);
+      legacyStopQuery = legacyStopQuery
+        .gt('ended_at', filters.startMs)
+        .lt('started_at', filters.endMs);
     }
 
     const stopFallback = await legacyStopQuery.order('started_at', { ascending: false });
@@ -557,7 +567,11 @@ export async function completeTimeEntry(
   if (error) throw error;
 }
 
-export async function fetchEntries(userId: string, startMs: number, endMs: number): Promise<TimeEntry[]> {
+export async function fetchEntries(
+  userId: string,
+  startMs: number,
+  endMs: number,
+): Promise<TimeEntry[]> {
   return fetchEntriesWithSelect(userId, NESTED_TAG_COLUMNS, { startMs, endMs });
 }
 
@@ -643,7 +657,11 @@ export async function deleteTimeEntry(userId: string, entryId: string): Promise<
     .eq('user_id', userId);
   if (tagsError) throw tagsError;
 
-  const { error } = await supabase.from('time_entries').delete().eq('id', entryId).eq('user_id', userId);
+  const { error } = await supabase
+    .from('time_entries')
+    .delete()
+    .eq('id', entryId)
+    .eq('user_id', userId);
   if (error) throw error;
 }
 
@@ -761,7 +779,9 @@ export async function createGeofence(
   let { data, error } = await supabase
     .from('geofences')
     .insert(payload)
-    .select(`id, tag_id, name, latitude, longitude, radius_meters, enabled, tags(${NESTED_TAG_COLUMNS})`)
+    .select(
+      `id, tag_id, name, latitude, longitude, radius_meters, enabled, tags(${NESTED_TAG_COLUMNS})`,
+    )
     .single();
 
   if (isMissingAnalyticsColumn(error)) {
@@ -789,12 +809,17 @@ export async function updateGeofence(
   const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (patch.enabled !== undefined) payload.enabled = patch.enabled;
   if (patch.name !== undefined) payload.name = patch.name.trim();
-  if (patch.radiusMeters !== undefined) payload.radius_meters = Math.max(25, Math.round(patch.radiusMeters));
+  if (patch.radiusMeters !== undefined)
+    payload.radius_meters = Math.max(25, Math.round(patch.radiusMeters));
   if (patch.tagId !== undefined) payload.tag_id = patch.tagId;
   if (patch.latitude !== undefined) payload.latitude = patch.latitude;
   if (patch.longitude !== undefined) payload.longitude = patch.longitude;
 
-  const { error } = await supabase.from('geofences').update(payload).eq('id', id).eq('user_id', userId);
+  const { error } = await supabase
+    .from('geofences')
+    .update(payload)
+    .eq('id', id)
+    .eq('user_id', userId);
   if (error) throw error;
 }
 

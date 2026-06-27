@@ -12,7 +12,10 @@ export function TimerDisplay({ startedAt, isRunning }: TimerDisplayProps) {
 
   return (
     <div className="mb-6 text-center">
-      <div className="font-mono text-5xl font-bold tracking-tight" style={{ color: colors.textOnBg }}>
+      <div
+        className="font-mono text-5xl font-bold tracking-tight"
+        style={{ color: colors.textOnBg }}
+      >
         {formatDuration(elapsed)}
       </div>
       <p className="mt-2 text-sm" style={{ color: colors.textMuted }}>

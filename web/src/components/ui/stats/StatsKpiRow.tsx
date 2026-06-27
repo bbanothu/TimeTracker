@@ -3,15 +3,7 @@ import { useAppColors } from '@/contexts/ThemeContext';
 import type { StatsSummary } from '@/types';
 import { formatDurationLong, formatTagName } from '@/utils/formatDuration';
 
-function KpiTile({
-  label,
-  value,
-  detail,
-}: {
-  label: string;
-  value: string;
-  detail?: string;
-}) {
+function KpiTile({ label, value, detail }: { label: string; value: string; detail?: string }) {
   const colors = useAppColors();
 
   return (
@@ -51,7 +43,9 @@ export function StatsKpiRow({ summary }: { summary: StatsSummary }) {
       <KpiTile
         label="Top tag"
         value={topTag ? formatTagName(topTag.name) : '—'}
-        detail={topTagDuration !== undefined ? formatDurationLong(topTagDuration) : 'No tagged time'}
+        detail={
+          topTagDuration !== undefined ? formatDurationLong(topTagDuration) : 'No tagged time'
+        }
       />
     </div>
   );

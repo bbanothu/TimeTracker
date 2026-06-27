@@ -8,13 +8,7 @@ import { useAppColors } from '@/hooks/useAppColors';
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
 export type ProfileLinkIcon =
-  | 'friends'
-  | 'history'
-  | 'password'
-  | 'sync'
-  | 'export'
-  | 'clear'
-  | 'signout';
+  'friends' | 'history' | 'password' | 'sync' | 'export' | 'clear' | 'signout';
 
 export interface ProfileLinkRow {
   id: string;

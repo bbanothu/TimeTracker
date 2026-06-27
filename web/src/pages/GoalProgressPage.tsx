@@ -8,10 +8,7 @@ import { useAppColors } from '@/contexts/ThemeContext';
 import { useTags } from '@/contexts/TagsContext';
 import { useTimer } from '@/contexts/TimerContext';
 import { subscribeDataRefresh } from '@/lib/dataRefresh';
-import {
-  fetchDailyGoalScores,
-  snapshotDailyGoalScores,
-} from '@/services/dailyGoalScoreService';
+import { fetchDailyGoalScores, snapshotDailyGoalScores } from '@/services/dailyGoalScoreService';
 import { fetchAllEntries } from '@/services/data';
 import type { DailyGoalScore, PeriodType, TimeEntry } from '@/types';
 import { formatPeriodLabel } from '@/utils/periodBounds';
@@ -24,8 +21,7 @@ function parseProgressParams(searchParams: URLSearchParams): {
   const anchorRaw = searchParams.get('date');
   const periodRaw = searchParams.get('period');
   const anchorDate = anchorRaw ? new Date(anchorRaw) : new Date();
-  const period: PeriodType =
-    periodRaw === 'week' || periodRaw === 'month' ? periodRaw : 'day';
+  const period: PeriodType = periodRaw === 'week' || periodRaw === 'month' ? periodRaw : 'day';
 
   return {
     anchorDate: Number.isNaN(anchorDate.getTime()) ? new Date() : anchorDate,
@@ -72,15 +68,7 @@ export function GoalProgressPage() {
 
   const displayScores = useMemo(() => {
     if (!ready || !goalsReady || loading) return [];
-    return buildProgressDisplayScores(
-      scores,
-      entries,
-      tags,
-      goals,
-      sessions,
-      anchorDate,
-      period,
-    );
+    return buildProgressDisplayScores(scores, entries, tags, goals, sessions, anchorDate, period);
   }, [
     ready,
     goalsReady,

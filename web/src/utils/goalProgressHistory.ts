@@ -36,8 +36,7 @@ export function computeDailyAverageScore(
 
   const goalsByTagId = new Map(goals.map((goal) => [goal.tagId, goal]));
   const categoriesWithGoals = tags.filter(
-    (tag) =>
-      tag.parentId === null && goalsByTagId.has(tag.id) && isTagIncludedInAnalytics(tag),
+    (tag) => tag.parentId === null && goalsByTagId.has(tag.id) && isTagIncludedInAnalytics(tag),
   );
 
   if (categoriesWithGoals.length === 0) return null;

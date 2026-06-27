@@ -2,19 +2,29 @@ import { addDays, addWeeks, endOfDay, endOfWeek, format, startOfDay, startOfWeek
 
 import { getPeriodBounds } from '@/utils/periodBounds';
 import { analyticsIncludedTags, analyticsVisibleDurationMs } from '@/utils/tagAnalytics';
-import type { Geofence, PeriodType, StatsSummary, Tag, TagDuration, TimeEntry, BucketTagBreakdown, BucketDuration } from '@/types';
+import type {
+  Geofence,
+  PeriodType,
+  StatsSummary,
+  Tag,
+  TagDuration,
+  TimeEntry,
+  BucketTagBreakdown,
+  BucketDuration,
+} from '@/types';
 
-function clipDuration(startMs: number, endMs: number, rangeStart: number, rangeEnd: number): number {
+function clipDuration(
+  startMs: number,
+  endMs: number,
+  rangeStart: number,
+  rangeEnd: number,
+): number {
   const clippedStart = Math.max(startMs, rangeStart);
   const clippedEnd = Math.min(endMs, rangeEnd);
   return Math.max(0, clippedEnd - clippedStart);
 }
 
-function aggregateByTag(
-  entries: TimeEntry[],
-  rangeStart: number,
-  rangeEnd: number,
-): TagDuration[] {
+function aggregateByTag(entries: TimeEntry[], rangeStart: number, rangeEnd: number): TagDuration[] {
   const totals = new Map<string, TagDuration>();
 
   for (const entry of entries) {
@@ -164,26 +174,30 @@ export function getStatsSummary(
   );
   const byTag = aggregateByTag(filtered, rangeStart, rangeEnd);
   const byGeofence = aggregateByGeofence(filtered, geofences, rangeStart, rangeEnd);
-  const totalMs = filtered.reduce(
-    (sum, entry) => {
-      if (entry.endedAt == null) return sum;
-      return (
-        sum +
-        analyticsVisibleDurationMs(
-          clipDuration(entry.startedAt, entry.endedAt, rangeStart, rangeEnd),
-          entry.tags,
-        )
-      );
-    },
-    0,
-  );
+  const totalMs = filtered.reduce((sum, entry) => {
+    if (entry.endedAt == null) return sum;
+    return (
+      sum +
+      analyticsVisibleDurationMs(
+        clipDuration(entry.startedAt, entry.endedAt, rangeStart, rangeEnd),
+        entry.tags,
+      )
+    );
+  }, 0);
 
   const buckets =
     period === 'week'
       ? buildDayBuckets(anchor, filtered)
       : period === 'month'
         ? buildWeekBuckets(anchor, filtered)
-        : [{ label: format(anchor, 'EEE'), startMs: rangeStart, endMs: rangeEnd, durationMs: totalMs }];
+        : [
+            {
+              label: format(anchor, 'EEE'),
+              startMs: rangeStart,
+              endMs: rangeEnd,
+              durationMs: totalMs,
+            },
+          ];
 
   return {
     totalMs,

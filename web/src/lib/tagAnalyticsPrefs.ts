@@ -16,7 +16,11 @@ export function loadTagAnalyticsPrefs(userId: string): Record<string, boolean> {
   }
 }
 
-export function saveTagAnalyticsPref(userId: string, tagId: string, includeInAnalytics: boolean): void {
+export function saveTagAnalyticsPref(
+  userId: string,
+  tagId: string,
+  includeInAnalytics: boolean,
+): void {
   const prefs = loadTagAnalyticsPrefs(userId);
   prefs[tagId] = includeInAnalytics;
   localStorage.setItem(storageKey(userId), JSON.stringify(prefs));
@@ -32,7 +36,5 @@ export function applyTagAnalyticsPrefs(userId: string, tags: Tag[]): Tag[] {
   const prefs = loadTagAnalyticsPrefs(userId);
   if (Object.keys(prefs).length === 0) return tags;
 
-  return tags.map((tag) =>
-    tag.id in prefs ? { ...tag, includeInAnalytics: prefs[tag.id] } : tag,
-  );
+  return tags.map((tag) => (tag.id in prefs ? { ...tag, includeInAnalytics: prefs[tag.id] } : tag));
 }

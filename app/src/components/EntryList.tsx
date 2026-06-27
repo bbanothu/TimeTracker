@@ -66,7 +66,9 @@ export function EntryList({
         const geofenceName = entry.geofenceId ? geofenceNames?.get(entry.geofenceId) : null;
         const timeRange = formatTimeRange(entry.startedAt, entry.endedAt, showDate);
         const subtitle =
-          entry.source === 'geofence' && geofenceName ? `${timeRange} · @ ${geofenceName}` : timeRange;
+          entry.source === 'geofence' && geofenceName
+            ? `${timeRange} · @ ${geofenceName}`
+            : timeRange;
 
         return (
           <View
@@ -92,11 +94,18 @@ export function EntryList({
                   {tagLabel}
                 </Text>
               </View>
-              <Text className="ml-3.5 text-xs" style={{ color: colors.textMuted }} numberOfLines={1}>
+              <Text
+                className="ml-3.5 text-xs"
+                style={{ color: colors.textMuted }}
+                numberOfLines={1}
+              >
                 {subtitle}
               </Text>
             </View>
-            <Text className="shrink-0 text-sm font-medium tabular-nums" style={{ color: colors.textSecondary }}>
+            <Text
+              className="shrink-0 text-sm font-medium tabular-nums"
+              style={{ color: colors.textSecondary }}
+            >
               {formatDurationLong(duration)}
             </Text>
             {onEdit ? (
@@ -113,14 +122,18 @@ export function EntryList({
             {onDelete ? (
               <Pressable
                 onPress={() => {
-                  Alert.alert('Delete entry', 'Remove this tracked session permanently? This cannot be undone.', [
-                    { text: 'Cancel', style: 'cancel' },
-                    {
-                      text: 'Delete',
-                      style: 'destructive',
-                      onPress: () => onDelete(entry.id),
-                    },
-                  ]);
+                  Alert.alert(
+                    'Delete entry',
+                    'Remove this tracked session permanently? This cannot be undone.',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Delete',
+                        style: 'destructive',
+                        onPress: () => onDelete(entry.id),
+                      },
+                    ],
+                  );
                 }}
                 accessibilityRole="button"
                 accessibilityLabel={`Delete ${tagLabel}`}

@@ -89,7 +89,12 @@ export function AddManualSessionModal({
   };
 
   return (
-    <BottomSheetModal visible={visible} title="Add past session" onClose={onClose} maxHeightFraction={0.75}>
+    <BottomSheetModal
+      visible={visible}
+      title="Add past session"
+      onClose={onClose}
+      maxHeightFraction={0.75}
+    >
       <p className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
         Activity
       </p>

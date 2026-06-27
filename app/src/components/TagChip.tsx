@@ -16,7 +16,9 @@ export function TagChip({ tag, selected = false, onPress, disabled }: TagChipPro
       disabled={disabled || !onPress}
       onPress={onPress}
       className={`mr-2 mb-2 rounded-full border px-3 py-2 ${
-        selected ? 'border-transparent' : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800'
+        selected
+          ? 'border-transparent'
+          : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800'
       }`}
       style={selected ? { backgroundColor: tag.color } : undefined}
     >

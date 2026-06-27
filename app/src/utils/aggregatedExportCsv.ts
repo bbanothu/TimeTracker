@@ -4,7 +4,12 @@ import type { Tag, TimeEntry } from '@/types';
 import { formatDurationLong } from '@/utils/formatDuration';
 import { analyticsIncludedTags, analyticsVisibleDurationMs } from '@/utils/tagAnalytics';
 
-function clipDuration(startMs: number, endMs: number, rangeStart: number, rangeEnd: number): number {
+function clipDuration(
+  startMs: number,
+  endMs: number,
+  rangeStart: number,
+  rangeEnd: number,
+): number {
   const clippedStart = Math.max(startMs, rangeStart);
   const clippedEnd = Math.min(endMs, rangeEnd);
   return Math.max(0, clippedEnd - clippedStart);

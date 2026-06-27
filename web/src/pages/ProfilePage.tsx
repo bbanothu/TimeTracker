@@ -43,9 +43,7 @@ export function ProfilePage() {
   } = useProfileName();
 
   const loadPendingCount = useCallback(() => {
-    fetchIncomingPendingCount()
-      .then(setPendingFriendCount)
-      .catch(console.error);
+    fetchIncomingPendingCount().then(setPendingFriendCount).catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -77,8 +75,7 @@ export function ProfilePage() {
         setError('No time entries to export.');
         return;
       }
-      const personName =
-        buildProfileDisplayName({ firstName, lastName }) ?? user.email ?? 'Me';
+      const personName = buildProfileDisplayName({ firstName, lastName }) ?? user.email ?? 'Me';
       const csv = exportEntriesCsv(entries, tags, personName);
       downloadCsv(`timetracker-export-${new Date().toISOString().slice(0, 10)}.csv`, csv);
       const dayCount = aggregatedExportDayCount(entries);

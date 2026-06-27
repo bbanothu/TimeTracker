@@ -75,11 +75,7 @@ export function getEligibleParents(editingTagId: string | null, tags: Tag[]): Fl
   return flattenTags(tags).filter((item) => !excluded.has(item.tag.id));
 }
 
-export function wouldCreateCycle(
-  tagId: string,
-  newParentId: string | null,
-  tags: Tag[],
-): boolean {
+export function wouldCreateCycle(tagId: string, newParentId: string | null, tags: Tag[]): boolean {
   if (!newParentId) return false;
   if (newParentId === tagId) return true;
   const childrenByParent = new Map<string, Tag[]>();

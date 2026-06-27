@@ -1,7 +1,12 @@
 import { Text, View } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 
-import { buildBucketLineData, chartYAxisProps, hasBucketData, hasTagData } from '@/components/stats/chartUtils';
+import {
+  buildBucketLineData,
+  chartYAxisProps,
+  hasBucketData,
+  hasTagData,
+} from '@/components/stats/chartUtils';
 import { TagLegend } from '@/components/stats/TagLegend';
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAppColors } from '@/hooks/useAppColors';

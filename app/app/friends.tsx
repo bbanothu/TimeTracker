@@ -53,10 +53,7 @@ export default function FriendsScreen() {
     }, [load]),
   );
 
-  const accepted = useMemo(
-    () => friendships.filter((f) => f.status === 'accepted'),
-    [friendships],
-  );
+  const accepted = useMemo(() => friendships.filter((f) => f.status === 'accepted'), [friendships]);
   const incomingRequests = friendships.filter(
     (f) => f.status === 'pending' && f.requesterId === f.otherUser.userId,
   );
@@ -110,7 +107,10 @@ export default function FriendsScreen() {
           removeFriend(id)
             .then(() => load())
             .catch((error) => {
-              Alert.alert('Remove failed', error instanceof Error ? error.message : 'Unknown error');
+              Alert.alert(
+                'Remove failed',
+                error instanceof Error ? error.message : 'Unknown error',
+              );
             })
             .finally(() => setActingId(null));
         },
@@ -189,31 +189,31 @@ export default function FriendsScreen() {
                         {friendLabel(friendship.otherUser)}
                       </Text>
                       <View className="flex-row gap-2">
-                          <Pressable
-                            onPress={() => handleRespond(friendship.id, true)}
-                            disabled={actingId !== null}
-                            accessibilityLabel="Accept friend request"
-                            className="rounded-full p-2"
-                            style={{
-                              backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                              opacity: actingId !== null ? 0.5 : 1,
-                            }}
-                          >
-                            <Ionicons name="checkmark" size={20} color={colors.primaryBright} />
-                          </Pressable>
-                          <Pressable
-                            onPress={() => handleRespond(friendship.id, false)}
-                            disabled={actingId !== null}
-                            accessibilityLabel="Decline friend request"
-                            className="rounded-full p-2"
-                            style={{
-                              backgroundColor: colors.destructiveBg,
-                              opacity: actingId !== null ? 0.5 : 1,
-                            }}
-                          >
-                            <Ionicons name="close" size={20} color={colors.destructive} />
-                          </Pressable>
-                        </View>
+                        <Pressable
+                          onPress={() => handleRespond(friendship.id, true)}
+                          disabled={actingId !== null}
+                          accessibilityLabel="Accept friend request"
+                          className="rounded-full p-2"
+                          style={{
+                            backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                            opacity: actingId !== null ? 0.5 : 1,
+                          }}
+                        >
+                          <Ionicons name="checkmark" size={20} color={colors.primaryBright} />
+                        </Pressable>
+                        <Pressable
+                          onPress={() => handleRespond(friendship.id, false)}
+                          disabled={actingId !== null}
+                          accessibilityLabel="Decline friend request"
+                          className="rounded-full p-2"
+                          style={{
+                            backgroundColor: colors.destructiveBg,
+                            opacity: actingId !== null ? 0.5 : 1,
+                          }}
+                        >
+                          <Ionicons name="close" size={20} color={colors.destructive} />
+                        </Pressable>
+                      </View>
                     </View>
                   ))}
                 </ThemedSurface>

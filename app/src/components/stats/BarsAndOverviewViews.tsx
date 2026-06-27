@@ -40,12 +40,7 @@ export function OverviewView({ summary }: ChartViewProps) {
           </Text>
         ) : (
           <View className="items-center">
-            <PieChart
-              data={pieData}
-              donut
-              radius={90}
-              innerRadius={55}
-            />
+            <PieChart data={pieData} donut radius={90} innerRadius={55} />
             <TagLegend items={summary.byTag} />
           </View>
         )}

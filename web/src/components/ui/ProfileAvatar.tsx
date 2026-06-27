@@ -9,7 +9,11 @@ interface ProfileAvatarProps {
   editable?: boolean;
 }
 
-export function ProfileAvatar({ fallbackLabel, compact = false, editable = true }: ProfileAvatarProps) {
+export function ProfileAvatar({
+  fallbackLabel,
+  compact = false,
+  editable = true,
+}: ProfileAvatarProps) {
   const colors = useAppColors();
   const { photoUrl, uploadPhoto } = useProfilePhoto();
   const [uploading, setUploading] = useState(false);

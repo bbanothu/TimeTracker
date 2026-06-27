@@ -88,7 +88,9 @@ function GeofenceRow({
   indented?: boolean;
 }) {
   const tagLabel = formatTagName(geofence.tag?.name ?? 'tag');
-  const subtitle = indented ? `${geofence.radiusMeters}m` : `${tagLabel} · ${geofence.radiusMeters}m`;
+  const subtitle = indented
+    ? `${geofence.radiusMeters}m`
+    : `${tagLabel} · ${geofence.radiusMeters}m`;
 
   return (
     <>
@@ -98,7 +100,7 @@ function GeofenceRow({
             className="h-2 w-2 shrink-0 rounded-full"
             style={{
               backgroundColor: geofence.enabled
-                ? geofence.tag?.color ?? colors.chartPrimary
+                ? (geofence.tag?.color ?? colors.chartPrimary)
                 : colors.textMuted,
             }}
           />
@@ -199,7 +201,11 @@ export function GeofencesList({
         if (!isMultiPlace) {
           const geofence = group.geofences[0];
           return (
-            <div key={group.key} className="flex items-center gap-2 px-3 py-2.5" style={borderStyle}>
+            <div
+              key={group.key}
+              className="flex items-center gap-2 px-3 py-2.5"
+              style={borderStyle}
+            >
               <GeofenceRow
                 geofence={geofence}
                 colors={colors}

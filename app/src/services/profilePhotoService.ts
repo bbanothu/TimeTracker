@@ -62,10 +62,12 @@ export async function uploadProfilePhotoToCloud(userId: string, localUri: string
   const response = await fetch(localUri);
   const arrayBuffer = await response.arrayBuffer();
 
-  const { error } = await supabase.storage.from(PROFILE_BUCKET).upload(storagePath(userId), arrayBuffer, {
-    contentType: 'image/jpeg',
-    upsert: true,
-  });
+  const { error } = await supabase.storage
+    .from(PROFILE_BUCKET)
+    .upload(storagePath(userId), arrayBuffer, {
+      contentType: 'image/jpeg',
+      upsert: true,
+    });
 
   if (error) throw error;
 }

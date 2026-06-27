@@ -21,7 +21,7 @@ async function upsertTagToRemote(payload: Record<string, unknown>): Promise<bool
   if (
     error?.code === 'PGRST204' &&
     typeof error.message === 'string' &&
-  (error.message.includes('include_in_analytics') || error.message.includes('description'))
+    (error.message.includes('include_in_analytics') || error.message.includes('description'))
   ) {
     const {
       include_in_analytics: _ignoredAnalytics,
@@ -188,7 +188,10 @@ async function pushInternal(userId: string): Promise<boolean> {
         }
       } else if (item.entityType === 'daily_score') {
         if (item.operation === 'delete') {
-          const { error } = await supabase.from('daily_goal_scores').delete().eq('id', item.entityId);
+          const { error } = await supabase
+            .from('daily_goal_scores')
+            .delete()
+            .eq('id', item.entityId);
           if (error) throw error;
         } else {
           const { error } = await supabase.from('daily_goal_scores').upsert(item.payload);
@@ -241,38 +244,40 @@ async function pullInternal(userId: string, options: SyncOptions = {}): Promise<
     ? new Date(0).toISOString()
     : new Date(Math.max(0, lastPulledAt - 5000)).toISOString();
 
-  const [tagsResult, entriesResult, geofencesResult, goalsResult, scoresResult] = await Promise.all([
-    supabase
-      .from('tags')
-      .select('*')
-      .eq('user_id', userId)
-      .gt('updated_at', sinceIso)
-      .order('updated_at', { ascending: true }),
-    supabase
-      .from('time_entries')
-      .select('*')
-      .eq('user_id', userId)
-      .gt('updated_at', sinceIso)
-      .order('updated_at', { ascending: true }),
-    supabase
-      .from('geofences')
-      .select('*')
-      .eq('user_id', userId)
-      .gt('updated_at', sinceIso)
-      .order('updated_at', { ascending: true }),
-    supabase
-      .from('tag_daily_goals')
-      .select('*')
-      .eq('user_id', userId)
-      .gt('updated_at', sinceIso)
-      .order('updated_at', { ascending: true }),
-    supabase
-      .from('daily_goal_scores')
-      .select('*')
-      .eq('user_id', userId)
-      .gt('updated_at', sinceIso)
-      .order('updated_at', { ascending: true }),
-  ]);
+  const [tagsResult, entriesResult, geofencesResult, goalsResult, scoresResult] = await Promise.all(
+    [
+      supabase
+        .from('tags')
+        .select('*')
+        .eq('user_id', userId)
+        .gt('updated_at', sinceIso)
+        .order('updated_at', { ascending: true }),
+      supabase
+        .from('time_entries')
+        .select('*')
+        .eq('user_id', userId)
+        .gt('updated_at', sinceIso)
+        .order('updated_at', { ascending: true }),
+      supabase
+        .from('geofences')
+        .select('*')
+        .eq('user_id', userId)
+        .gt('updated_at', sinceIso)
+        .order('updated_at', { ascending: true }),
+      supabase
+        .from('tag_daily_goals')
+        .select('*')
+        .eq('user_id', userId)
+        .gt('updated_at', sinceIso)
+        .order('updated_at', { ascending: true }),
+      supabase
+        .from('daily_goal_scores')
+        .select('*')
+        .eq('user_id', userId)
+        .gt('updated_at', sinceIso)
+        .order('updated_at', { ascending: true }),
+    ],
+  );
 
   if (tagsResult.error) throw tagsResult.error;
   if (entriesResult.error) throw entriesResult.error;
@@ -292,9 +297,7 @@ async function pullInternal(userId: string, options: SyncOptions = {}): Promise<
   const pendingTags = [...(tagsResult.data ?? [])];
   const upsertedTagIds = new Set<string>();
   while (pendingTags.length > 0) {
-    const batch = pendingTags.filter(
-      (tag) => !tag.parent_id || upsertedTagIds.has(tag.parent_id),
-    );
+    const batch = pendingTags.filter((tag) => !tag.parent_id || upsertedTagIds.has(tag.parent_id));
     if (batch.length === 0) {
       for (const tag of pendingTags) {
         bumpCursor(tag.updated_at);

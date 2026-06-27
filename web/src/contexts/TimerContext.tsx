@@ -87,9 +87,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     if (!user || !ready) return;
 
     const pollActiveSessions = () => {
-      fetchActiveSessions(user.id)
-        .then(setSessions)
-        .catch(console.error);
+      fetchActiveSessions(user.id).then(setSessions).catch(console.error);
     };
 
     const interval = setInterval(pollActiveSessions, 15000);
@@ -184,7 +182,17 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       addManualEntry,
       refresh,
     }),
-    [ready, sessions, todayEntries, entriesRevision, tick, startManual, stop, addManualEntry, refresh],
+    [
+      ready,
+      sessions,
+      todayEntries,
+      entriesRevision,
+      tick,
+      startManual,
+      stop,
+      addManualEntry,
+      refresh,
+    ],
   );
 
   return <TimerContext.Provider value={value}>{children}</TimerContext.Provider>;

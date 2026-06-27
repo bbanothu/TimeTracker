@@ -6,12 +6,7 @@ import { TrendChart } from '@/components/ui/stats/TrendChart';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-import {
-  buildPieData,
-  buildStackData,
-  hasBucketData,
-  hasTagData,
-} from '@/utils/chartUtils';
+import { buildPieData, buildStackData, hasBucketData, hasTagData } from '@/utils/chartUtils';
 import type { GeofenceDuration, PeriodType, StatsSummary, TagDuration } from '@/types';
 import { formatDurationLong, formatTagName } from '@/utils/formatDuration';
 
@@ -45,7 +40,10 @@ function TagProgressList({
                 {formatDurationLong(item.durationMs)}
               </span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full" style={{ backgroundColor: colors.secondaryBg }}>
+            <div
+              className="h-2 overflow-hidden rounded-full"
+              style={{ backgroundColor: colors.secondaryBg }}
+            >
               <div
                 className="h-full rounded-full"
                 style={{
@@ -79,7 +77,10 @@ function PlaceProgressList({ items, totalMs }: { items: GeofenceDuration[]; tota
                 {formatDurationLong(item.durationMs)}
               </span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full" style={{ backgroundColor: colors.secondaryBg }}>
+            <div
+              className="h-2 overflow-hidden rounded-full"
+              style={{ backgroundColor: colors.secondaryBg }}
+            >
               <div
                 className="h-full rounded-full"
                 style={{
@@ -242,7 +243,10 @@ export function TrendView({ summary }: ChartViewProps) {
 
   return (
     <ThemedSurface className="mb-8 flex flex-col p-4 lg:mb-0 lg:min-h-[calc(100dvh-16rem)] lg:p-6">
-      <h2 className="mb-4 shrink-0 text-base font-semibold lg:text-lg" style={{ color: colors.text }}>
+      <h2
+        className="mb-4 shrink-0 text-base font-semibold lg:text-lg"
+        style={{ color: colors.text }}
+      >
         Tracked over time
       </h2>
       {!hasBucketData(summary) ? (
@@ -251,10 +255,7 @@ export function TrendView({ summary }: ChartViewProps) {
         </p>
       ) : (
         <>
-          <TrendChart
-            buckets={summary.buckets}
-            className="min-h-[220px] flex-1 lg:min-h-[400px]"
-          />
+          <TrendChart buckets={summary.buckets} className="min-h-[220px] flex-1 lg:min-h-[400px]" />
           <TagLegend items={summary.byTag} className="mt-4 w-full shrink-0 lg:mt-6" />
         </>
       )}

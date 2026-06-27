@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useGoals } from '@/contexts/GoalsContext';
@@ -43,10 +36,7 @@ export function RefreshProvider({ children }: { children: ReactNode }) {
     }
   }, [refreshTags, refreshGoals, refreshTimer, refreshPhoto, user, tags, goals]);
 
-  const value = useMemo(
-    () => ({ refreshing, refreshAll }),
-    [refreshing, refreshAll],
-  );
+  const value = useMemo(() => ({ refreshing, refreshAll }), [refreshing, refreshAll]);
 
   return <RefreshContext.Provider value={value}>{children}</RefreshContext.Provider>;
 }

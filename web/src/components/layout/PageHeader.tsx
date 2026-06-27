@@ -44,7 +44,9 @@ export function PageHeader({
       <h1 className="text-2xl font-bold lg:text-3xl" style={{ color: colors.headerText }}>
         {title}
       </h1>
-      {mobileActions ? <div className="flex items-center gap-2 lg:hidden">{mobileActions}</div> : null}
+      {mobileActions ? (
+        <div className="flex items-center gap-2 lg:hidden">{mobileActions}</div>
+      ) : null}
     </div>
   );
 }

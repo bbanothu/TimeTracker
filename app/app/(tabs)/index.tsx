@@ -149,7 +149,11 @@ export default function TrackScreen() {
             <Text className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
               Active ({sessions.length})
             </Text>
-            <ActiveSessionsList sessions={sessions} geofenceNames={geofenceNames} onStop={handleStop} />
+            <ActiveSessionsList
+              sessions={sessions}
+              geofenceNames={geofenceNames}
+              onStop={handleStop}
+            />
           </View>
         ) : (
           <Text className="mb-4 text-center text-sm" style={{ color: colors.textMuted }}>

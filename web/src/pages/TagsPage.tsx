@@ -33,11 +33,7 @@ export function TagsPage() {
     [editingTag, tags],
   );
 
-  const formTitle = parentPickerOpen
-    ? 'Select parent'
-    : editingTag
-      ? 'Edit tag'
-      : 'New tag';
+  const formTitle = parentPickerOpen ? 'Select parent' : editingTag ? 'Edit tag' : 'New tag';
 
   const resetForm = () => {
     setName('');

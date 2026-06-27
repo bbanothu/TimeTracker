@@ -128,8 +128,10 @@ function GoalTargetInputs({
               className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-r-transparent"
               aria-hidden
             />
+          ) : buttonState === 'saved' ? (
+            'Saved'
           ) : (
-            (buttonState === 'saved' ? 'Saved' : 'Save')
+            'Save'
           )}
         </button>
       </div>
@@ -142,17 +144,9 @@ function GoalTargetInputs({
   );
 }
 
-export function GoalsList({
-  categories,
-  goals,
-  progressByTagId,
-  onSaveGoal,
-}: GoalsListProps) {
+export function GoalsList({ categories, goals, progressByTagId, onSaveGoal }: GoalsListProps) {
   const colors = useAppColors();
-  const goalsByTagId = useMemo(
-    () => new Map(goals.map((goal) => [goal.tagId, goal])),
-    [goals],
-  );
+  const goalsByTagId = useMemo(() => new Map(goals.map((goal) => [goal.tagId, goal])), [goals]);
 
   if (categories.length === 0) {
     return (
@@ -170,8 +164,7 @@ export function GoalsList({
         const todayMs = progressByTagId.get(tag.id) ?? 0;
         const hasTarget = targetMinutes !== null;
         const targetMs = hasTarget ? targetMinutes * 60_000 : 0;
-        const ratio =
-          targetMs > 0 ? Math.min(todayMs / targetMs, 1) : todayMs > 0 ? 1 : 0;
+        const ratio = targetMs > 0 ? Math.min(todayMs / targetMs, 1) : todayMs > 0 ? 1 : 0;
         const overGoal = hasTarget && (targetMs === 0 ? todayMs > 0 : todayMs > targetMs);
 
         return (

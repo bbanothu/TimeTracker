@@ -59,12 +59,7 @@ export function GeofenceMap({
 
   return (
     <div className={`overflow-hidden rounded-xl ${className}`}>
-      <MapContainer
-        center={center}
-        zoom={DEFAULT_ZOOM}
-        className="h-full w-full"
-        scrollWheelZoom
-      >
+      <MapContainer center={center} zoom={DEFAULT_ZOOM} className="h-full w-full" scrollWheelZoom>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

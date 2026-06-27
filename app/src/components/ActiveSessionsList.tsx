@@ -20,8 +20,7 @@ export function ActiveSessionsList({ sessions, geofenceNames, onStop }: ActiveSe
         const elapsed = Date.now() - session.startedAt;
         const geofenceName = session.geofenceId ? geofenceNames.get(session.geofenceId) : null;
         const tagLabel = session.tags.map((tag) => formatTagName(tag.name)).join(', ');
-        const subtitle =
-          session.source === 'geofence' && geofenceName ? `@ ${geofenceName}` : null;
+        const subtitle = session.source === 'geofence' && geofenceName ? `@ ${geofenceName}` : null;
 
         return (
           <View
@@ -48,7 +47,11 @@ export function ActiveSessionsList({ sessions, geofenceNames, onStop }: ActiveSe
                 </Text>
               </View>
               {subtitle ? (
-                <Text className="ml-3.5 text-xs" style={{ color: colors.textMuted }} numberOfLines={1}>
+                <Text
+                  className="ml-3.5 text-xs"
+                  style={{ color: colors.textMuted }}
+                  numberOfLines={1}
+                >
                   {subtitle}
                 </Text>
               ) : null}

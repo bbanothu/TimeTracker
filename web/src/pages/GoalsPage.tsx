@@ -42,7 +42,10 @@ export function GoalsPage() {
     <div className="lg:max-w-4xl">
       <PageHeader title="Goals" />
       <div className="lg:grid lg:grid-cols-[minmax(240px,280px)_minmax(0,1fr)] lg:items-start lg:gap-8">
-        <p className="mb-4 text-sm leading-6 lg:mb-0 lg:sticky lg:top-8" style={{ color: colors.textOnBg }}>
+        <p
+          className="mb-4 text-sm leading-6 lg:mb-0 lg:sticky lg:top-8"
+          style={{ color: colors.textOnBg }}
+        >
           Set daily targets for your top-level categories. Saved targets stay on your account and
           apply every day until you change them. Time tracked on sub-tags counts toward the parent.
         </p>

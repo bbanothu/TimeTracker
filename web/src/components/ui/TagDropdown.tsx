@@ -26,12 +26,19 @@ export function TagDropdown({ tags, selectedId, onSelect }: TagDropdownProps) {
         onClick={() => setOpen(true)}
         disabled={tags.length === 0}
         className="flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left disabled:opacity-100"
-        style={{ backgroundColor: colors.inputBgSolid, borderColor: colors.inputBorder, color: colors.text }}
+        style={{
+          backgroundColor: colors.inputBgSolid,
+          borderColor: colors.inputBorder,
+          color: colors.text,
+        }}
       >
         <span className="flex min-w-0 flex-1 items-center gap-2">
           {selectedTag ? (
             <>
-              <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: selectedTag.color }} />
+              <span
+                className="h-3 w-3 shrink-0 rounded-full"
+                style={{ backgroundColor: selectedTag.color }}
+              />
               <span className="truncate">{formatTagName(selectedLabel ?? '')}</span>
             </>
           ) : (
@@ -69,7 +76,10 @@ export function TagDropdown({ tags, selectedId, onSelect }: TagDropdownProps) {
                     }}
                   >
                     <span className="flex items-center gap-3">
-                      <span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.tag.color }} />
+                      <span
+                        className="h-3 w-3 rounded-full"
+                        style={{ backgroundColor: item.tag.color }}
+                      />
                       {formatTagName(item.path)}
                     </span>
                     {selected ? '✓' : null}

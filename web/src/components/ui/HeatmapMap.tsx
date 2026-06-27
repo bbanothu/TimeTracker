@@ -74,7 +74,15 @@ function HeatLayer({ points }: { points: HeatmapPoint[] }) {
   return null;
 }
 
-function MapRecenter({ center, zoom, hasPoints }: { center: [number, number]; zoom: number; hasPoints: boolean }) {
+function MapRecenter({
+  center,
+  zoom,
+  hasPoints,
+}: {
+  center: [number, number];
+  zoom: number;
+  hasPoints: boolean;
+}) {
   const map = useMap();
 
   useEffect(() => {
@@ -94,7 +102,12 @@ export function HeatmapMap({ points, center, className = '' }: HeatmapMapProps) 
 
   return (
     <div className={`overflow-hidden rounded-xl ${className}`}>
-      <MapContainer center={mapCenter} zoom={DEFAULT_ZOOM} className="h-full w-full" scrollWheelZoom>
+      <MapContainer
+        center={mapCenter}
+        zoom={DEFAULT_ZOOM}
+        className="h-full w-full"
+        scrollWheelZoom
+      >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

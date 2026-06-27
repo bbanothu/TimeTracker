@@ -46,7 +46,11 @@ export function DarkModeToggle({ size = 52 }: { size?: number }) {
         backgroundColor: 'transparent',
       }}
     >
-      {isDark ? <SunIcon color={colors.text} size={iconSize} /> : <MoonIcon color={colors.text} size={iconSize} />}
+      {isDark ? (
+        <SunIcon color={colors.text} size={iconSize} />
+      ) : (
+        <MoonIcon color={colors.text} size={iconSize} />
+      )}
     </button>
   );
 }
