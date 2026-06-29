@@ -68,8 +68,8 @@ export function ActiveSessionsList({ sessions, geofenceNames, onStop }: ActiveSe
               accessibilityLabel="Stop session"
               className="items-center justify-center rounded-full active:opacity-80"
               style={{
-                width: 40,
-                height: 40,
+                width: 28,
+                height: 28,
                 borderWidth: 2.5,
                 borderColor: colors.stop,
                 backgroundColor: 'transparent',
@@ -77,8 +77,8 @@ export function ActiveSessionsList({ sessions, geofenceNames, onStop }: ActiveSe
             >
               <View
                 style={{
-                  width: 14,
-                  height: 14,
+                  width: 10,
+                  height: 10,
                   borderRadius: 2.5,
                   backgroundColor: colors.stop,
                 }}

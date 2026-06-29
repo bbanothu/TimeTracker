@@ -1,9 +1,11 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Pressable, Text, TextInput, View } from 'react-native';
+import { Alert, Keyboard, Pressable, Text, TextInput, View } from 'react-native';
 import MapView, { Circle, Marker, type MapPressEvent } from 'react-native-maps';
 import * as Location from 'expo-location';
 
 import { ActionButton } from '@/components/ActionButton';
+import { AddressSearchModal } from '@/components/AddressSearchModal';
 import { EditGeofenceModal } from '@/components/EditGeofenceModal';
 import { GeofencesList } from '@/components/GeofencesList';
 import { TabScrollView } from '@/components/TabScrollView';
@@ -14,6 +16,7 @@ import { createGeofence, deleteGeofence, getAllGeofences, updateGeofence } from 
 import { useActiveSession } from '@/hooks/useActiveSession';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppColors } from '@/hooks/useAppColors';
+import { useSelectedTag } from '@/hooks/useSelectedTag';
 import { useTags } from '@/hooks/useTags';
 import {
   geofenceService,
@@ -36,20 +39,44 @@ function StepLabel({
   step,
   label,
   colors,
+  className = 'mb-2',
 }: {
   step: number;
   label: string;
   colors: ReturnType<typeof useAppColors>;
+  className?: string;
 }) {
   return (
-    <Text className="mb-2 text-sm font-semibold" style={{ color: colors.textSecondary }}>
+    <Text className={`text-sm font-semibold ${className}`} style={{ color: colors.textSecondary }}>
       {step}. {label}
     </Text>
   );
 }
 
+function DropPinHeader({
+  colors,
+  onOpenAddressSearch,
+}: {
+  colors: ReturnType<typeof useAppColors>;
+  onOpenAddressSearch: () => void;
+}) {
+  return (
+    <View className="mb-2 flex-row items-center justify-between">
+      <StepLabel step={2} label="Drop pin on map" colors={colors} className="mb-0" />
+      <Pressable
+        onPress={onOpenAddressSearch}
+        accessibilityLabel="Find address"
+        className="rounded-full p-1"
+      >
+        <Ionicons name="add-circle-outline" size={26} color={colors.primary} />
+      </Pressable>
+    </View>
+  );
+}
+
 export default function MapScreen() {
   const { tags } = useTags();
+  const { selectedTagId, setSelectedTagId } = useSelectedTag(tags);
   const colors = useAppColors();
   const { user } = useAuth();
   const { ready, refresh } = useActiveSession();
@@ -58,11 +85,11 @@ export default function MapScreen() {
   const [draftLng, setDraftLng] = useState<number | null>(null);
   const [name, setName] = useState('');
   const [radius, setRadius] = useState('150');
-  const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
   const [region, setRegion] = useState(DEFAULT_REGION);
   const [showBanner, setShowBanner] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingGeofence, setEditingGeofence] = useState<Geofence | null>(null);
+  const [addressModalOpen, setAddressModalOpen] = useState(false);
   const insideIdsRef = useRef<Set<string>>(new Set());
 
   const hasPin = draftLat != null && draftLng != null;
@@ -80,10 +107,7 @@ export default function MapScreen() {
   useEffect(() => {
     if (!ready) return;
     loadGeofences();
-    if (tags.length > 0 && !selectedTagId) {
-      setSelectedTagId(tags[0].id);
-    }
-  }, [ready, loadGeofences, tags, selectedTagId]);
+  }, [ready, loadGeofences]);
 
   useEffect(() => {
     let cancelled = false;
@@ -132,6 +156,17 @@ export default function MapScreen() {
   const handleMapPress = (event: MapPressEvent) => {
     setDraftLat(event.nativeEvent.coordinate.latitude);
     setDraftLng(event.nativeEvent.coordinate.longitude);
+  };
+
+  const handleAddressSelect = (latitude: number, longitude: number) => {
+    setDraftLat(latitude);
+    setDraftLng(longitude);
+    setRegion({
+      latitude,
+      longitude,
+      latitudeDelta: 0.04,
+      longitudeDelta: 0.04,
+    });
   };
 
   const handleSaveGeofence = async () => {
@@ -248,7 +283,13 @@ export default function MapScreen() {
       </ThemedSurface>
 
       <ThemedSurface className="mx-4 mt-3 overflow-hidden p-4">
-        <StepLabel step={2} label="Drop pin on map" colors={colors} />
+        <DropPinHeader
+          colors={colors}
+          onOpenAddressSearch={() => {
+            Keyboard.dismiss();
+            setAddressModalOpen(true);
+          }}
+        />
         <Text className="mb-3 text-sm" style={{ color: colors.textMuted }}>
           Tap the map where you want tracking to start.
         </Text>
@@ -362,10 +403,18 @@ export default function MapScreen() {
       <TabScrollView
         className="flex-1"
         contentContainerClassName="pb-6"
+        scrollEnabled={!addressModalOpen}
+        keyboardShouldPersistTaps="handled"
         onRefreshExtra={refreshMapData}
       >
         {setupHeader}
       </TabScrollView>
+
+      <AddressSearchModal
+        visible={addressModalOpen}
+        onClose={() => setAddressModalOpen(false)}
+        onSelect={handleAddressSelect}
+      />
 
       <EditGeofenceModal
         visible={editingGeofence != null}

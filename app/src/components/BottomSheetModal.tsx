@@ -26,6 +26,8 @@ interface BottomSheetModalProps {
   headerActions?: React.ReactNode;
   sheetClassName?: ViewProps['className'];
   maxHeightFraction?: number;
+  /** `offset` moves the sheet above the keyboard without shrinking it. */
+  keyboardAdjust?: 'offset' | 'resize';
 }
 
 const DISMISS_DISTANCE = 64;
@@ -77,11 +79,15 @@ export function BottomSheetModal({
   headerActions,
   sheetClassName,
   maxHeightFraction = 0.6,
+  keyboardAdjust = 'resize',
 }: BottomSheetModalProps) {
   const colors = useAppColors();
   const { height: windowHeight } = useWindowDimensions();
   const [keyboardInset, setKeyboardInset] = useState(0);
-  const availableHeight = Math.max(windowHeight - keyboardInset, windowHeight * 0.4);
+  const availableHeight =
+    keyboardAdjust === 'offset'
+      ? windowHeight
+      : Math.max(windowHeight - keyboardInset, windowHeight * 0.4);
   const maxSheetHeight = Math.round(availableHeight * maxHeightFraction);
   const maxContentHeight = maxSheetHeight - SHEET_HEADER_HEIGHT - SHEET_BOTTOM_PADDING;
   const translateY = useRef(new Animated.Value(0)).current;

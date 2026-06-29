@@ -1,11 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { BottomSheetModal, BottomSheetScrollView } from '@/components/BottomSheetModal';
 import { useAppColors } from '@/hooks/useAppColors';
+import { useFlatTagsByUsage } from '@/hooks/useFlatTagsByUsage';
 import type { Tag } from '@/types';
-import { flattenTags, getTagPath } from '@/utils/tagTree';
+import { getTagPath } from '@/utils/tagTree';
 import { formatTagName } from '@/utils/formatDuration';
 
 interface TagDropdownProps {
@@ -18,7 +19,7 @@ interface TagDropdownProps {
 export function TagDropdown({ tags, selectedId, onSelect, disabled }: TagDropdownProps) {
   const colors = useAppColors();
   const [open, setOpen] = useState(false);
-  const flatTags = useMemo(() => flattenTags(tags), [tags]);
+  const flatTags = useFlatTagsByUsage(tags);
   const selectedTag = tags.find((tag) => tag.id === selectedId) ?? null;
   const selectedLabel = selectedTag ? getTagPath(selectedTag.id, tags) : null;
 

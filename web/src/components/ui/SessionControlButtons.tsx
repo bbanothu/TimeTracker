@@ -2,7 +2,7 @@ import { useAppColors } from '@/contexts/ThemeContext';
 
 function PlayIcon({ color }: { color: string }) {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M8 5v14l11-7L8 5Z" fill={color} />
     </svg>
   );
@@ -26,8 +26,8 @@ export function StartSessionButton({ onClick, disabled, className = '' }: StartS
       title="Start session"
       className={`inline-flex shrink-0 items-center justify-center rounded-full border-[2.5px] transition hover:opacity-80 disabled:opacity-50 ${className}`}
       style={{
-        width: 48,
-        height: 48,
+        width: 28,
+        height: 28,
         borderColor: colors.primary,
         backgroundColor: 'transparent',
       }}
@@ -55,8 +55,8 @@ export function StopSessionButton({ onClick, className = '' }: StopSessionButton
       title="Stop session"
       className={`inline-flex shrink-0 items-center justify-center rounded-full border-[2.5px] transition hover:opacity-80 ${className}`}
       style={{
-        width: 40,
-        height: 40,
+        width: 28,
+        height: 28,
         borderColor: colors.stop,
         backgroundColor: 'transparent',
       }}
@@ -64,8 +64,8 @@ export function StopSessionButton({ onClick, className = '' }: StopSessionButton
       <span
         className="rounded-[2.5px]"
         style={{
-          width: 14,
-          height: 14,
+          width: 10,
+          height: 10,
           backgroundColor: colors.stop,
         }}
       />

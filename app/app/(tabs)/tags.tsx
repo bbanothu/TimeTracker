@@ -19,9 +19,10 @@ import { TabScreenContainer } from '@/components/TabScreenContainer';
 import { TagsList } from '@/components/TagsList';
 import { useAppColors } from '@/hooks/useAppColors';
 import { useTags } from '@/hooks/useTags';
+import { useFlatTagsByUsage } from '@/hooks/useFlatTagsByUsage';
 import { TAG_COLOR_OPTIONS } from '@/theme/colors';
 import type { Tag } from '@/types';
-import { flattenTags, getEligibleParents, wouldCreateCycle } from '@/utils/tagTree';
+import { getEligibleParents, wouldCreateCycle } from '@/utils/tagTree';
 import { formatTagName } from '@/utils/formatDuration';
 
 export default function TagsScreen() {
@@ -38,7 +39,7 @@ export default function TagsScreen() {
   const [error, setError] = useState<string | null>(null);
   const tagFormScrollRef = useRef<ScrollViewType>(null);
 
-  const flatTags = useMemo(() => flattenTags(tags), [tags]);
+  const flatTags = useFlatTagsByUsage(tags);
   const parentOptions = useMemo(
     () => getEligibleParents(editingTag?.id ?? null, tags),
     [editingTag, tags],

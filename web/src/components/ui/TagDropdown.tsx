@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { BottomSheetModal, BottomSheetScroll } from '@/components/ui/BottomSheetModal';
 import { useAppColors } from '@/contexts/ThemeContext';
+import { useFlatTagsByUsage } from '@/hooks/useFlatTagsByUsage';
 import type { Tag } from '@/types';
-import { flattenTags, getTagPath } from '@/utils/tagTree';
+import { getTagPath } from '@/utils/tagTree';
 import { formatTagName } from '@/utils/formatDuration';
 
 interface TagDropdownProps {
@@ -15,7 +16,7 @@ interface TagDropdownProps {
 export function TagDropdown({ tags, selectedId, onSelect }: TagDropdownProps) {
   const colors = useAppColors();
   const [open, setOpen] = useState(false);
-  const flatTags = useMemo(() => flattenTags(tags), [tags]);
+  const flatTags = useFlatTagsByUsage(tags);
   const selectedTag = tags.find((tag) => tag.id === selectedId) ?? null;
   const selectedLabel = selectedTag ? getTagPath(selectedTag.id, tags) : null;
 

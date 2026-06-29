@@ -10,8 +10,9 @@ import { TAG_COLOR_OPTIONS } from '@/theme/colors';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { useTags } from '@/contexts/TagsContext';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useFlatTagsByUsage } from '@/hooks/useFlatTagsByUsage';
 import type { Tag } from '@/types';
-import { flattenTags, getEligibleParents, wouldCreateCycle } from '@/utils/tagTree';
+import { getEligibleParents, wouldCreateCycle } from '@/utils/tagTree';
 
 export function TagsPage() {
   const colors = useAppColors();
@@ -27,7 +28,7 @@ export function TagsPage() {
   const [showDescription, setShowDescription] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const flatTags = useMemo(() => flattenTags(tags), [tags]);
+  const flatTags = useFlatTagsByUsage(tags);
   const parentOptions = useMemo(
     () => getEligibleParents(editingTag?.id ?? null, tags),
     [editingTag, tags],

@@ -2,10 +2,12 @@ import '../global.css';
 import '@/tasks/geofenceTask';
 
 import { Stack, useRouter, useSegments } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
 
+import { AppBootGate } from '@/components/AppBootGate';
+import { AppBootSplash } from '@/components/AppBootSplash';
 import { TimerProvider } from '@/hooks/useActiveSession';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
 import { useAppColors } from '@/hooks/useAppColors';
@@ -17,14 +19,7 @@ import {
   setupNotifications,
 } from '@/services/notificationService';
 
-function LoadingScreen() {
-  return (
-    <View className="flex-1 items-center justify-center bg-slate-50 dark:bg-slate-950">
-      <ActivityIndicator size="large" />
-      <Text className="mt-3 text-slate-500 dark:text-slate-400">Loading...</Text>
-    </View>
-  );
-}
+SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 function RootNavigator() {
   const { isDark } = useTheme();
@@ -55,7 +50,7 @@ function RootNavigator() {
   }, [session, router]);
 
   if (loading) {
-    return <LoadingScreen />;
+    return <AppBootSplash />;
   }
 
   return (
@@ -63,60 +58,62 @@ function RootNavigator() {
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <TimerProvider>
         <TagsProvider>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(auth)" options={{ title: '' }} />
-            <Stack.Screen name="(tabs)" options={{ title: '' }} />
-            <Stack.Screen
-              name="profile"
-              options={{
-                headerShown: true,
-                title: 'Account',
-                headerBackTitle: '',
-                headerBackButtonDisplayMode: 'minimal',
-                ...getAppHeaderOptions(colors),
-              }}
-            />
-            <Stack.Screen
-              name="friends"
-              options={{
-                headerShown: true,
-                title: 'Friends',
-                headerBackTitle: '',
-                headerBackButtonDisplayMode: 'minimal',
-                ...getAppHeaderOptions(colors),
-              }}
-            />
-            <Stack.Screen
-              name="change-password"
-              options={{
-                headerShown: true,
-                title: 'Password',
-                headerBackTitle: '',
-                headerBackButtonDisplayMode: 'minimal',
-                ...getAppHeaderOptions(colors),
-              }}
-            />
-            <Stack.Screen
-              name="history"
-              options={{
-                headerShown: true,
-                title: 'History',
-                headerBackTitle: '',
-                headerBackButtonDisplayMode: 'minimal',
-                ...getAppHeaderOptions(colors),
-              }}
-            />
-            <Stack.Screen
-              name="progress"
-              options={{
-                headerShown: true,
-                title: 'Progress',
-                headerBackTitle: '',
-                headerBackButtonDisplayMode: 'minimal',
-                ...getAppHeaderOptions(colors),
-              }}
-            />
-          </Stack>
+          <AppBootGate>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(auth)" options={{ title: '' }} />
+              <Stack.Screen name="(tabs)" options={{ title: '' }} />
+              <Stack.Screen
+                name="profile"
+                options={{
+                  headerShown: true,
+                  title: 'Account',
+                  headerBackTitle: '',
+                  headerBackButtonDisplayMode: 'minimal',
+                  ...getAppHeaderOptions(colors),
+                }}
+              />
+              <Stack.Screen
+                name="friends"
+                options={{
+                  headerShown: true,
+                  title: 'Friends',
+                  headerBackTitle: '',
+                  headerBackButtonDisplayMode: 'minimal',
+                  ...getAppHeaderOptions(colors),
+                }}
+              />
+              <Stack.Screen
+                name="change-password"
+                options={{
+                  headerShown: true,
+                  title: 'Password',
+                  headerBackTitle: '',
+                  headerBackButtonDisplayMode: 'minimal',
+                  ...getAppHeaderOptions(colors),
+                }}
+              />
+              <Stack.Screen
+                name="history"
+                options={{
+                  headerShown: true,
+                  title: 'History',
+                  headerBackTitle: '',
+                  headerBackButtonDisplayMode: 'minimal',
+                  ...getAppHeaderOptions(colors),
+                }}
+              />
+              <Stack.Screen
+                name="progress"
+                options={{
+                  headerShown: true,
+                  title: 'Progress',
+                  headerBackTitle: '',
+                  headerBackButtonDisplayMode: 'minimal',
+                  ...getAppHeaderOptions(colors),
+                }}
+              />
+            </Stack>
+          </AppBootGate>
         </TagsProvider>
       </TimerProvider>
     </>

@@ -36,13 +36,11 @@ export default function ProgressScreen() {
   const params = useLocalSearchParams<{ anchorDate?: string; period?: string }>();
   const { anchorDate, period } = parseProgressParams(params.anchorDate, params.period);
   const { tags } = useTags();
-  const { goals, ready: goalsReady } = useGoals();
-  const { scores, ready: scoresReady } = useDailyGoalScores();
-  const { ready, entriesRevision, sessions, tick } = useActiveSession();
+  const { goals } = useGoals();
+  const { scores } = useDailyGoalScores();
+  const { entriesRevision, sessions, tick } = useActiveSession();
 
   const displayScores = useMemo(() => {
-    if (!ready || !goalsReady || !scoresReady) return [];
-
     const entries = getAllEntries();
     const loadedGoals = goals.length > 0 ? goals : getGoals();
 
@@ -55,31 +53,9 @@ export default function ProgressScreen() {
       anchorDate,
       period,
     );
-  }, [
-    ready,
-    goalsReady,
-    scoresReady,
-    scores,
-    tags,
-    goals,
-    entriesRevision,
-    sessions,
-    tick,
-    anchorDate,
-    period,
-  ]);
+  }, [scores, tags, goals, entriesRevision, sessions, tick, anchorDate, period]);
 
   const subtitle = formatPeriodLabel(anchorDate, period);
-
-  if (!ready || !goalsReady || !scoresReady) {
-    return (
-      <AppBackground>
-        <TabScreenContainer className="items-center justify-center">
-          <Text style={{ color: colors.textMuted }}>Loading...</Text>
-        </TabScreenContainer>
-      </AppBackground>
-    );
-  }
 
   return (
     <AppBackground>

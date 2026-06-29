@@ -14,6 +14,7 @@ import { getGeofenceById, updateEntryStopDetails } from '@/db/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useActiveSession } from '@/hooks/useActiveSession';
 import { useAppColors } from '@/hooks/useAppColors';
+import { useSelectedTag } from '@/hooks/useSelectedTag';
 import { useTags } from '@/hooks/useTags';
 import { getStopCoordinates } from '@/lib/stopLocation';
 import { dismissGeofenceNotification } from '@/services/notificationService';
@@ -25,8 +26,8 @@ export default function TrackScreen() {
   const { ready, sessions, todayEntries, tick, startManual, addManualEntry, refresh } =
     useActiveSession();
   const { tags } = useTags();
+  const { selectedTagId, setSelectedTagId } = useSelectedTag(tags);
   const colors = useAppColors();
-  const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
   const [manualModalOpen, setManualModalOpen] = useState(false);
   const [stopDetailsEntryId, setStopDetailsEntryId] = useState<string | null>(null);
   const [savingStopDetails, setSavingStopDetails] = useState(false);
@@ -53,17 +54,6 @@ export default function TrackScreen() {
 
     return map;
   }, [ready, sessions, todayEntries]);
-
-  useEffect(() => {
-    if (tags.length === 0) {
-      setSelectedTagId(null);
-      return;
-    }
-
-    if (!selectedTagId || !tags.some((tag) => tag.id === selectedTagId)) {
-      setSelectedTagId(tags[0].id);
-    }
-  }, [tags, selectedTagId]);
 
   const handleStart = () => {
     try {
@@ -112,14 +102,6 @@ export default function TrackScreen() {
     }
   };
 
-  if (!ready) {
-    return (
-      <TabScreenContainer className="items-center justify-center">
-        <Text style={{ color: colors.textMuted }}>Loading...</Text>
-      </TabScreenContainer>
-    );
-  }
-
   return (
     <TabScreenContainer>
       <TabScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-2">
@@ -134,7 +116,7 @@ export default function TrackScreen() {
               accessibilityRole="button"
               className="rounded-full p-1 active:opacity-70"
             >
-              <Ionicons name="add-circle-outline" size={40} color={colors.primary} />
+              <Ionicons name="add-circle-outline" size={34} color={colors.primary} />
             </Pressable>
           </View>
           <View className="flex-row items-center gap-2">
@@ -147,14 +129,14 @@ export default function TrackScreen() {
               accessibilityLabel="Start session"
               className="items-center justify-center rounded-full active:opacity-80"
               style={{
-                width: 48,
-                height: 48,
+                width: 28,
+                height: 28,
                 borderWidth: 2.5,
                 borderColor: colors.primary,
                 backgroundColor: 'transparent',
               }}
             >
-              <Ionicons name="play" size={20} color={colors.primary} style={{ marginLeft: 2 }} />
+              <Ionicons name="play" size={12} color={colors.primary} style={{ marginLeft: 1 }} />
             </Pressable>
           </View>
         </ThemedSurface>

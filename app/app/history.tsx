@@ -79,16 +79,6 @@ export default function HistoryScreen() {
     pushChangesInBackground(user?.id);
   };
 
-  if (!ready) {
-    return (
-      <AppBackground>
-        <TabScreenContainer className="items-center justify-center">
-          <Text style={{ color: colors.textMuted }}>Loading...</Text>
-        </TabScreenContainer>
-      </AppBackground>
-    );
-  }
-
   const emptyMessage = hasActiveHistoryFilters(filters)
     ? 'No records match these filters.'
     : 'Nothing recorded yet.';

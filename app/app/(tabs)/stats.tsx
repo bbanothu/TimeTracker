@@ -8,15 +8,12 @@ import { StatsPersonSelector } from '@/components/StatsPersonSelector';
 import { TabScrollView } from '@/components/TabScrollView';
 import { TabScreenContainer } from '@/components/TabScreenContainer';
 import { useAuth } from '@/hooks/useAuth';
-import { useAppColors } from '@/hooks/useAppColors';
 import { useStats } from '@/hooks/useStats';
 import { useStatsVisualization } from '@/hooks/useStatsVisualization';
 import { fetchAcceptedFriends } from '@/services/friendsService';
 import type { FriendshipOtherUser } from '@/types';
-import { Text } from 'react-native';
 
 export default function StatsScreen() {
-  const colors = useAppColors();
   const router = useRouter();
   const { user } = useAuth();
   const [friends, setFriends] = useState<FriendshipOtherUser[]>([]);
@@ -41,19 +38,13 @@ export default function StatsScreen() {
     }, [loadFriends]),
   );
 
-  const { ready, period, setPeriod, anchorDate, summary, shift, isViewingFriend } = useStats(
+  const { period, setPeriod, anchorDate, summary, shift, isViewingFriend } = useStats(
     'day',
     selectedUserId,
   );
-  const { visualization, setVisualization, ready: vizReady } = useStatsVisualization();
+  const { visualization, setVisualization } = useStatsVisualization();
 
-  if (!ready || !vizReady || !user) {
-    return (
-      <TabScreenContainer className="items-center justify-center">
-        <Text style={{ color: colors.textMuted }}>Loading...</Text>
-      </TabScreenContainer>
-    );
-  }
+  if (!user) return null;
 
   return (
     <TabScreenContainer className="px-4 pt-2">

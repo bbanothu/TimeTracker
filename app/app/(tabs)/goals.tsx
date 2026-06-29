@@ -20,8 +20,8 @@ export default function GoalsScreen() {
   const scrollYRef = useRef(0);
   const keyboardHeightRef = useRef(Platform.OS === 'ios' ? 320 : 280);
   const { tags } = useTags();
-  const { goals, ready: goalsReady, saveGoal } = useGoals();
-  const { ready, todayEntries, sessions, tick } = useActiveSession();
+  const { goals, saveGoal } = useGoals();
+  const { todayEntries, sessions, tick } = useActiveSession();
 
   const categories = useMemo(() => goalCategories(tags), [tags]);
 
@@ -69,14 +69,6 @@ export default function GoalsScreen() {
       });
     }
   }, []);
-
-  if (!ready || !goalsReady) {
-    return (
-      <TabScreenContainer className="items-center justify-center">
-        <Text style={{ color: colors.textMuted }}>Loading...</Text>
-      </TabScreenContainer>
-    );
-  }
 
   return (
     <TabScreenContainer>

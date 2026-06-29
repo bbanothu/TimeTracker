@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTimer } from '@/contexts/TimerContext';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { useTags } from '@/contexts/TagsContext';
+import { useSelectedTag } from '@/hooks/useSelectedTag';
 import { StopSessionDetailsModal } from '@/components/ui/StopSessionDetailsModal';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
 import { fetchGeofences, updateTimeEntryStopDetails } from '@/services/data';
@@ -20,7 +21,7 @@ export function TrackPage() {
   const { user } = useAuth();
   const { ready, sessions, todayEntries, tick, startManual, stop, addManualEntry } = useTimer();
   const { tags } = useTags();
-  const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
+  const { selectedTagId, setSelectedTagId } = useSelectedTag(tags);
   const [manualModalOpen, setManualModalOpen] = useState(false);
   const [stopDetailsEntryId, setStopDetailsEntryId] = useState<string | null>(null);
   const [savingStopDetails, setSavingStopDetails] = useState(false);
@@ -55,16 +56,6 @@ export function TrackPage() {
       })
       .catch(console.error);
   }, [user, sessions, todayEntries]);
-
-  useEffect(() => {
-    if (tags.length === 0) {
-      setSelectedTagId(null);
-      return;
-    }
-    if (!selectedTagId || !tags.some((tag) => tag.id === selectedTagId)) {
-      setSelectedTagId(tags[0].id);
-    }
-  }, [tags, selectedTagId]);
 
   if (!ready) {
     return <p style={{ color: colors.textMuted }}>Loading…</p>;
@@ -126,7 +117,7 @@ export function TrackPage() {
                 aria-label="Add past session"
                 className="rounded-full p-1 transition hover:opacity-70"
               >
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <circle cx="12" cy="12" r="9" stroke={colors.primary} strokeWidth="1.5" />
                   <path
                     d="M12 8v8M8 12h8"

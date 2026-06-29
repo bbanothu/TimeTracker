@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ActionButton } from '@/components/ui/ActionButton';
+import { AddressSearchModal } from '@/components/ui/AddressSearchModal';
 import { EditGeofenceModal } from '@/components/ui/EditGeofenceModal';
 import { GeofenceMap, DEFAULT_CENTER } from '@/components/ui/GeofenceMap';
 import { GeofencesList } from '@/components/ui/GeofencesList';
@@ -13,6 +14,7 @@ import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { useTags } from '@/contexts/TagsContext';
+import { useSelectedTag } from '@/hooks/useSelectedTag';
 import { notifyDataRefresh, subscribeDataRefresh } from '@/lib/dataRefresh';
 import {
   createGeofence,
@@ -29,15 +31,47 @@ function StepLabel({
   step,
   label,
   colors,
+  className = 'mb-2',
 }: {
   step: number;
   label: string;
   colors: ReturnType<typeof useAppColors>;
+  className?: string;
 }) {
   return (
-    <p className="mb-2 text-sm font-semibold" style={{ color: colors.textSecondary }}>
+    <p className={`text-sm font-semibold ${className}`} style={{ color: colors.textSecondary }}>
       {step}. {label}
     </p>
+  );
+}
+
+function DropPinHeader({
+  colors,
+  onOpenAddressSearch,
+}: {
+  colors: ReturnType<typeof useAppColors>;
+  onOpenAddressSearch: () => void;
+}) {
+  return (
+    <div className="mb-2 flex items-center justify-between gap-2">
+      <StepLabel step={2} label="Drop pin on map" colors={colors} className="mb-0" />
+      <button
+        type="button"
+        onClick={onOpenAddressSearch}
+        aria-label="Find address"
+        className="rounded-full p-1 transition hover:opacity-70"
+      >
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" stroke={colors.primary} strokeWidth="1.5" />
+          <path
+            d="M12 8v8M8 12h8"
+            stroke={colors.primary}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+        </svg>
+      </button>
+    </div>
   );
 }
 
@@ -45,6 +79,7 @@ export function MapPage() {
   const colors = useAppColors();
   const { user } = useAuth();
   const { tags } = useTags();
+  const { selectedTagId, setSelectedTagId } = useSelectedTag(tags);
   const [viewMode, setViewMode] = useState<MapViewMode>('places');
   const [geofences, setGeofences] = useState<Geofence[]>([]);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
@@ -54,7 +89,6 @@ export function MapPage() {
   const [draftLng, setDraftLng] = useState<number | null>(null);
   const [name, setName] = useState('');
   const [radius, setRadius] = useState('150');
-  const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
   const [mapCenter, setMapCenter] = useState<[number, number]>(DEFAULT_CENTER);
   const [heatmapPeriod, setHeatmapPeriod] = useState<PeriodType>('week');
   const [heatmapAnchorDate, setHeatmapAnchorDate] = useState(() => new Date());
@@ -62,6 +96,7 @@ export function MapPage() {
   const [error, setError] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [editingGeofence, setEditingGeofence] = useState<Geofence | null>(null);
+  const [addressModalOpen, setAddressModalOpen] = useState(false);
 
   const hasPin = draftLat != null && draftLng != null;
   const canSave = hasPin && !!selectedTagId && name.trim().length > 0 && !saving;
@@ -102,16 +137,6 @@ export function MapPage() {
   }, [user, viewMode, loadGeofences, loadEntries]);
 
   useEffect(() => {
-    if (tags.length === 0) {
-      setSelectedTagId(null);
-      return;
-    }
-    if (!selectedTagId || !tags.some((tag) => tag.id === selectedTagId)) {
-      setSelectedTagId(tags[0].id);
-    }
-  }, [tags, selectedTagId]);
-
-  useEffect(() => {
     if (!navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
@@ -133,6 +158,14 @@ export function MapPage() {
   const handleMapClick = (latitude: number, longitude: number) => {
     setDraftLat(latitude);
     setDraftLng(longitude);
+    setSaveMessage(null);
+    setError(null);
+  };
+
+  const handleAddressSelect = (latitude: number, longitude: number) => {
+    setDraftLat(latitude);
+    setDraftLng(longitude);
+    setMapCenter([latitude, longitude]);
     setSaveMessage(null);
     setError(null);
   };
@@ -212,7 +245,7 @@ export function MapPage() {
               </ThemedSurface>
 
               <ThemedSurface className="p-4 lg:hidden">
-                <StepLabel step={2} label="Drop pin on map" colors={colors} />
+                <DropPinHeader colors={colors} onOpenAddressSearch={() => setAddressModalOpen(true)} />
                 <p className="mb-3 text-sm" style={{ color: colors.textMuted }}>
                   Tap the map where you want tracking to start.
                 </p>
@@ -306,7 +339,7 @@ export function MapPage() {
             </div>
 
             <ThemedSurface className="sticky top-8 hidden p-4 lg:block">
-              <StepLabel step={2} label="Drop pin on map" colors={colors} />
+              <DropPinHeader colors={colors} onOpenAddressSearch={() => setAddressModalOpen(true)} />
               <p className="mb-3 text-sm" style={{ color: colors.textMuted }}>
                 Click the map where you want tracking to start.
               </p>
@@ -365,6 +398,12 @@ export function MapPage() {
           </ThemedSurface>
         </>
       )}
+
+      <AddressSearchModal
+        visible={addressModalOpen}
+        onClose={() => setAddressModalOpen(false)}
+        onSelect={handleAddressSelect}
+      />
 
       <EditGeofenceModal
         visible={editingGeofence != null}
