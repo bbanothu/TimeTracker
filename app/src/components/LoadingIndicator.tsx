@@ -1,7 +1,7 @@
 import LottieView from 'lottie-react-native';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 
-const loadingAnimation = require('../../assets/loading.json');
+const loadingAnimation = require('../../assets/loading_1.json');
 
 export type LoadingIndicatorSize = 'small' | 'medium' | 'large' | number;
 

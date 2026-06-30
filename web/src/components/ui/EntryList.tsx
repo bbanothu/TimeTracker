@@ -130,7 +130,7 @@ export function EntryList({
         const duration = entry.endedAt! - entry.startedAt;
         const tagLabel = entry.tags.map((tag) => formatTagName(tag.name)).join(', ') || 'Untagged';
         const geofenceName = entry.geofenceId ? geofenceNames?.get(entry.geofenceId) : null;
-        const timeRange = formatTimeRange(entry.startedAt, entry.endedAt, showDate);
+        const timeRange = formatTimeRange(entry.startedAt, entry.endedAt!, showDate);
         const subtitle =
           entry.source === 'geofence' && geofenceName
             ? `${timeRange} · @ ${geofenceName}`

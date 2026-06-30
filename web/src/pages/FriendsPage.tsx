@@ -2,6 +2,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { ActionButton } from '@/components/ui/ActionButton';
+import { LoadingIndicator } from '@/components/ui/LoadingIndicator';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAppColors } from '@/contexts/ThemeContext';
 import {
@@ -170,14 +171,14 @@ export function FriendsPage() {
         <p className="mb-4 text-sm" style={{ color: colors.textMuted }}>
           Enter the email address of someone who already has an account.
         </p>
-        <form onSubmit={handleSend} className="flex gap-2">
+        <form onSubmit={handleSend}>
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="friend@example.com"
             type="email"
             autoCapitalize="none"
-            className="min-w-0 flex-1 rounded-xl border px-4 py-3"
+            className="mb-3 w-full rounded-xl border px-4 py-3"
             style={inputStyle}
           />
           <ActionButton
@@ -185,24 +186,32 @@ export function FriendsPage() {
             type="submit"
             loading={sending}
             disabled={sending || !email.trim()}
+            className="w-full"
           />
         </form>
       </ThemedSurface>
 
       {loading ? (
-        <p style={{ color: colors.textMuted }}>Loading…</p>
+        <div className="flex justify-center py-8">
+          <LoadingIndicator size="medium" />
+        </div>
       ) : (
         <>
           {incomingRequests.length > 0 ? (
-            <ThemedSurface className="mb-4 p-4">
-              <h2 className="mb-3 font-semibold" style={{ color: colors.text }}>
+            <ThemedSurface className="mb-4 overflow-hidden">
+              <h2
+                className="mb-3 px-3 pt-4 text-base font-semibold"
+                style={{ color: colors.text }}
+              >
                 Requests
               </h2>
-              <ul className="space-y-3">
-                {incomingRequests.map((friendship) => (
+              <ul>
+                {incomingRequests.map((friendship, index) => (
                   <li
                     key={friendship.id}
-                    className="flex items-center gap-3 rounded-xl border px-3 py-3"
+                    className={`flex items-center gap-3 border-t px-3 py-3${
+                      index === incomingRequests.length - 1 ? ' rounded-b-xl' : ''
+                    }`}
                     style={{ borderColor: colors.glassBorder }}
                   >
                     <p className="min-w-0 flex-1 truncate text-sm" style={{ color: colors.text }}>
@@ -237,15 +246,20 @@ export function FriendsPage() {
           ) : null}
 
           {outgoingRequests.length > 0 ? (
-            <ThemedSurface className="mb-4 p-4">
-              <h2 className="mb-3 font-semibold" style={{ color: colors.text }}>
+            <ThemedSurface className="mb-4 overflow-hidden">
+              <h2
+                className="mb-3 px-3 pt-4 text-base font-semibold"
+                style={{ color: colors.text }}
+              >
                 Sent requests
               </h2>
-              <ul className="space-y-3">
-                {outgoingRequests.map((friendship) => (
+              <ul>
+                {outgoingRequests.map((friendship, index) => (
                   <li
                     key={friendship.id}
-                    className="flex items-center gap-3 rounded-xl border px-3 py-3"
+                    className={`flex items-center gap-3 border-t px-3 py-3${
+                      index === outgoingRequests.length - 1 ? ' rounded-b-xl' : ''
+                    }`}
                     style={{ borderColor: colors.glassBorder }}
                   >
                     <p className="min-w-0 flex-1 truncate text-sm" style={{ color: colors.text }}>
@@ -267,20 +281,25 @@ export function FriendsPage() {
             </ThemedSurface>
           ) : null}
 
-          <ThemedSurface className="mb-4 p-4">
-            <h2 className="mb-3 font-semibold" style={{ color: colors.text }}>
+          <ThemedSurface className="mb-4 overflow-hidden">
+            <h2
+              className="mb-3 px-3 pt-4 text-base font-semibold"
+              style={{ color: colors.text }}
+            >
               Friends
             </h2>
             {accepted.length === 0 ? (
-              <p className="text-sm" style={{ color: colors.textMuted }}>
+              <p className="px-3 pb-4 text-sm" style={{ color: colors.textMuted }}>
                 No friends yet. Send a request by email to get started.
               </p>
             ) : (
-              <ul className="space-y-3">
-                {accepted.map((friendship) => (
+              <ul>
+                {accepted.map((friendship, index) => (
                   <li
                     key={friendship.id}
-                    className="flex items-center gap-3 rounded-xl border px-3 py-3"
+                    className={`flex items-center gap-3 border-t px-3 py-3${
+                      index === accepted.length - 1 ? ' rounded-b-xl' : ''
+                    }`}
                     style={{ borderColor: colors.glassBorder }}
                   >
                     <p className="min-w-0 flex-1 truncate text-sm" style={{ color: colors.text }}>

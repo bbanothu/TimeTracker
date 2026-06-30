@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 
+import { LoadingIndicator } from '@/components/ui/LoadingIndicator';
 import { useProfilePhoto } from '@/contexts/ProfilePhotoContext';
 import { useAppColors } from '@/contexts/ThemeContext';
 
@@ -46,9 +47,7 @@ export function ProfileAvatar({
         style={{ width: size, height: size, backgroundColor: colors.selectedBg }}
       >
         {uploading ? (
-          <span className="text-xs font-semibold" style={{ color: colors.primary }}>
-            …
-          </span>
+          <LoadingIndicator size={Math.round(size * 0.45)} />
         ) : photoUrl ? (
           <img src={photoUrl} alt="" className="h-full w-full object-cover" />
         ) : (

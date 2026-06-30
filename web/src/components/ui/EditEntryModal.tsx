@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { BottomSheetModal, BottomSheetScroll } from '@/components/ui/BottomSheetModal';
+import { LoadingIndicator } from '@/components/ui/LoadingIndicator';
 import { TagDropdown } from '@/components/ui/TagDropdown';
 import { useAppColors } from '@/contexts/ThemeContext';
 import type { Tag, TimeEntry } from '@/types';
@@ -120,14 +121,7 @@ export function EditEntryModal({ visible, entry, tags, onClose, onSave }: EditEn
       title="Save"
       className="rounded-full p-1 transition hover:opacity-80 disabled:opacity-50"
     >
-      {saving ? (
-        <span
-          className="inline-block h-[22px] w-[22px] animate-spin rounded-full border-2 border-t-transparent"
-          style={{ borderColor: colors.primary, borderTopColor: 'transparent' }}
-        />
-      ) : (
-        <SaveIcon color={colors.primary} />
-      )}
+      {saving ? <LoadingIndicator size={22} /> : <SaveIcon color={colors.primary} />}
     </button>
   );
 

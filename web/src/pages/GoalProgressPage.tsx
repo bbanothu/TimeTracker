@@ -2,6 +2,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { DailyGoalScoreList } from '@/components/ui/DailyGoalScoreList';
+import { PageLoading } from '@/components/ui/PageLoading';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGoals } from '@/contexts/GoalsContext';
 import { useAppColors } from '@/contexts/ThemeContext';
@@ -87,7 +88,7 @@ export function GoalProgressPage() {
   const subtitle = formatPeriodLabel(anchorDate, period);
 
   if (!goalsReady || loading || !ready) {
-    return <p style={{ color: colors.textMuted }}>Loading…</p>;
+    return <PageLoading />;
   }
 
   return (

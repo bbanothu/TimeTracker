@@ -171,14 +171,16 @@ export default function FriendsScreen() {
           ) : (
             <>
               {incomingRequests.length > 0 ? (
-                <ThemedSurface className="mb-4 p-4">
-                  <Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>
+                <ThemedSurface className="mb-4 overflow-hidden">
+                  <Text className="mb-3 px-3 pt-4 text-base font-semibold" style={{ color: colors.text }}>
                     Requests
                   </Text>
-                  {incomingRequests.map((friendship) => (
+                  {incomingRequests.map((friendship, index) => (
                     <View
                       key={friendship.id}
-                      className="mb-3 flex-row items-center gap-3 rounded-xl border px-3 py-3"
+                      className={`flex-row items-center gap-3 border-t px-3 py-3${
+                        index === incomingRequests.length - 1 ? ' rounded-b-xl' : ''
+                      }`}
                       style={{ borderColor: colors.glassBorder }}
                     >
                       <Text
@@ -220,14 +222,16 @@ export default function FriendsScreen() {
               ) : null}
 
               {outgoingRequests.length > 0 ? (
-                <ThemedSurface className="mb-4 p-4">
-                  <Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>
+                <ThemedSurface className="mb-4 overflow-hidden">
+                  <Text className="mb-3 px-3 pt-4 text-base font-semibold" style={{ color: colors.text }}>
                     Sent requests
                   </Text>
-                  {outgoingRequests.map((friendship) => (
+                  {outgoingRequests.map((friendship, index) => (
                     <View
                       key={friendship.id}
-                      className="mb-3 flex-row items-center gap-3 rounded-xl border px-3 py-3"
+                      className={`flex-row items-center gap-3 border-t px-3 py-3${
+                        index === outgoingRequests.length - 1 ? ' rounded-b-xl' : ''
+                      }`}
                       style={{ borderColor: colors.glassBorder }}
                     >
                       <Text
@@ -254,19 +258,21 @@ export default function FriendsScreen() {
                 </ThemedSurface>
               ) : null}
 
-              <ThemedSurface className="mb-4 p-4">
-                <Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>
+              <ThemedSurface className="mb-4 overflow-hidden">
+                <Text className="mb-3 px-3 pt-4 text-base font-semibold" style={{ color: colors.text }}>
                   Friends
                 </Text>
                 {accepted.length === 0 ? (
-                  <Text className="text-sm" style={{ color: colors.textMuted }}>
+                  <Text className="px-3 pb-4 text-sm" style={{ color: colors.textMuted }}>
                     No friends yet. Send a request by email to get started.
                   </Text>
                 ) : (
-                  accepted.map((friendship) => (
+                  accepted.map((friendship, index) => (
                     <View
                       key={friendship.id}
-                      className="mb-3 flex-row items-center gap-3 rounded-xl border px-3 py-3"
+                      className={`flex-row items-center gap-3 border-t px-3 py-3${
+                        index === accepted.length - 1 ? ' rounded-b-xl' : ''
+                      }`}
                       style={{ borderColor: colors.glassBorder }}
                     >
                       <Text

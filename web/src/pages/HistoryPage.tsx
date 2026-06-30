@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 
 import { EditEntryModal } from '@/components/ui/EditEntryModal';
 import { EntryList } from '@/components/ui/EntryList';
+import { PageLoading } from '@/components/ui/PageLoading';
 import { HistoryFilters } from '@/components/ui/HistoryFilters';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppColors } from '@/contexts/ThemeContext';
@@ -123,7 +124,7 @@ export function HistoryPage() {
   };
 
   if (!ready || loading) {
-    return <p style={{ color: colors.textMuted }}>Loading…</p>;
+    return <PageLoading />;
   }
 
   const emptyMessage = hasActiveHistoryFilters(filters)

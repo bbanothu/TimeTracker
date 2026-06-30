@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, CSSProperties } from 'react';
 
+import { LoadingIndicator } from '@/components/ui/LoadingIndicator';
 import { useAppColors } from '@/contexts/ThemeContext';
 
 type Variant = 'primary' | 'secondary' | 'destructive' | 'destructiveOutline';
@@ -38,7 +39,13 @@ export function ActionButton({
       className={`rounded-2xl px-4 py-3 text-sm font-semibold transition hover:opacity-90 disabled:opacity-50 ${className}`}
       style={styles[variant]}
     >
-      {loading ? 'Please wait…' : label}
+      {loading ? (
+        <span className="inline-flex items-center justify-center">
+          <LoadingIndicator size="small" />
+        </span>
+      ) : (
+        label
+      )}
     </button>
   );
 }

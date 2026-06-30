@@ -6,6 +6,7 @@ import { TagFormContent } from '@/components/ui/TagFormContent';
 import { TagsList } from '@/components/ui/TagsList';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageLoading } from '@/components/ui/PageLoading';
 import { TAG_COLOR_OPTIONS } from '@/theme/colors';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { useTags } from '@/contexts/TagsContext';
@@ -123,7 +124,7 @@ export function TagsPage() {
   );
 
   if (loading) {
-    return <p style={{ color: colors.textMuted }}>Loading…</p>;
+    return <PageLoading />;
   }
 
   return (

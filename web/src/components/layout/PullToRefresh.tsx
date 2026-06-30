@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
+import { LoadingIndicator } from '@/components/ui/LoadingIndicator';
 import { useRefresh } from '@/contexts/RefreshContext';
 import { useAppColors } from '@/contexts/ThemeContext';
 
@@ -64,12 +65,16 @@ export function PullToRefresh({ children }: PullToRefreshProps) {
           className="pointer-events-none fixed inset-x-0 top-0 z-30 flex justify-center pt-2"
           style={{ transform: `translateY(${Math.min(pullDistance, PULL_THRESHOLD)}px)` }}
         >
-          <span
-            className="rounded-full px-3 py-1 text-xs font-semibold shadow-sm"
-            style={{ backgroundColor: colors.surfaceSolid, color: colors.textMuted }}
-          >
-            {refreshing ? 'Refreshing…' : 'Pull to refresh'}
-          </span>
+          {refreshing ? (
+            <LoadingIndicator size="small" />
+          ) : (
+            <span
+              className="rounded-full px-3 py-1 text-xs font-semibold shadow-sm"
+              style={{ backgroundColor: colors.surfaceSolid, color: colors.textMuted }}
+            >
+              Pull to refresh
+            </span>
+          )}
         </div>
       ) : null}
       {children}

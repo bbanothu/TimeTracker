@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Dimensions, Keyboard, Platform, Text, type ScrollView } from 'react-native';
 
+import { GoalsAccountedSummary } from '@/components/GoalsAccountedSummary';
 import { GoalsList } from '@/components/GoalsList';
 import { TabScrollView } from '@/components/TabScrollView';
 import { TabScreenContainer } from '@/components/TabScreenContainer';
@@ -87,6 +88,7 @@ export default function GoalsScreen() {
           Set daily targets for your top-level categories. Saved targets stay on your account and
           apply every day until you change them. Time tracked on sub-tags counts toward the parent.
         </Text>
+        <GoalsAccountedSummary progressByTagId={progressByTagId} />
         <GoalsList
           categories={categories}
           goals={goals}

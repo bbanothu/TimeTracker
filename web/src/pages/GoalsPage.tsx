@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
+import { GoalsAccountedSummary } from '@/components/ui/GoalsAccountedSummary';
 import { GoalsList } from '@/components/ui/GoalsList';
+import { PageLoading } from '@/components/ui/PageLoading';
 import { useGoals } from '@/contexts/GoalsContext';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { useTags } from '@/contexts/TagsContext';
@@ -35,7 +37,7 @@ export function GoalsPage() {
   };
 
   if (!ready || !goalsReady) {
-    return <p style={{ color: colors.textMuted }}>Loading…</p>;
+    return <PageLoading />;
   }
 
   return (
@@ -49,12 +51,15 @@ export function GoalsPage() {
           Set daily targets for your top-level categories. Saved targets stay on your account and
           apply every day until you change them. Time tracked on sub-tags counts toward the parent.
         </p>
-        <GoalsList
+        <div>
+          <GoalsAccountedSummary progressByTagId={progressByTagId} />
+          <GoalsList
           categories={categories}
           goals={goals}
           progressByTagId={progressByTagId}
           onSaveGoal={handleSaveGoal}
         />
+        </div>
       </div>
     </div>
   );

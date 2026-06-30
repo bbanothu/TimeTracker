@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
+import { LoadingIndicator } from '@/components/ui/LoadingIndicator';
+import { PageLoading } from '@/components/ui/PageLoading';
 import { ActionButton } from '@/components/ui/ActionButton';
 import { AddressSearchModal } from '@/components/ui/AddressSearchModal';
 import { EditGeofenceModal } from '@/components/ui/EditGeofenceModal';
@@ -214,7 +216,7 @@ export function MapPage() {
   };
 
   if (loading) {
-    return <p style={{ color: colors.textMuted }}>Loading…</p>;
+    return <PageLoading />;
   }
 
   return (
@@ -374,9 +376,12 @@ export function MapPage() {
           />
 
           {entriesLoading ? (
-            <p className="mb-3 text-sm" style={{ color: colors.textMuted }}>
-              Loading sessions…
-            </p>
+            <div className="mb-3 flex items-center gap-2">
+              <LoadingIndicator size="small" />
+              <p className="text-sm" style={{ color: colors.textMuted }}>
+                Loading sessions…
+              </p>
+            </div>
           ) : heatmapSummary.sessionCount > 0 ? (
             <p className="mb-3 text-sm font-medium" style={{ color: colors.textMuted }}>
               {heatmapSummary.sessionCount} session{heatmapSummary.sessionCount === 1 ? '' : 's'} ·{' '}

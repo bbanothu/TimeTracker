@@ -1,16 +1,15 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 import { AppBackground } from '@/components/layout/AppBackground';
+import { AppBootSplash } from '@/components/layout/AppBootSplash';
 import { AppShell } from '@/components/layout/AppShell';
 import { DesktopSidebar } from '@/components/layout/DesktopSidebar';
 import { DesktopTopBar, DESKTOP_TOP_BAR_PADDING_CLASS } from '@/components/layout/DesktopTopBar';
 import { TabNav } from '@/components/layout/TabNav';
-import { useAppColors } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppDataProviders } from '@/routes/AppDataProviders';
 
 export function ProtectedLayout() {
-  const colors = useAppColors();
   const { user, loading } = useAuth();
   const location = useLocation();
   const hideTabNav = location.pathname.startsWith('/profile');
@@ -24,9 +23,7 @@ export function ProtectedLayout() {
           <DesktopTopBar />
           <DesktopSidebar />
           <AppShell>
-            <p className="text-center" style={{ color: colors.textMuted }}>
-              Loading…
-            </p>
+            <AppBootSplash />
           </AppShell>
         </div>
       </AppBackground>

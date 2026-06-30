@@ -1,4 +1,5 @@
 import { useAppColors } from '@/contexts/ThemeContext';
+import { LoadingIndicator } from '@/components/ui/LoadingIndicator';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 
 export type ProfileLinkIcon =
@@ -182,9 +183,7 @@ export function ProfileLinkRows({ rows }: ProfileLinkRowsProps) {
                 </span>
               ) : null}
               {row.loading ? (
-                <span className="text-xs" style={{ color: colors.textMuted }}>
-                  …
-                </span>
+                <LoadingIndicator size="small" />
               ) : showChevron ? (
                 <span className="text-base" style={{ color: colors.textMuted }}>
                   ›

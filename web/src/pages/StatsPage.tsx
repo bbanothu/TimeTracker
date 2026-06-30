@@ -2,6 +2,7 @@ import { useLocation } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageLoading } from '@/components/ui/PageLoading';
 import { ChartTypeSelector } from '@/components/ui/stats/ChartTypeSelector';
 import { DayHistoryView } from '@/components/ui/stats/DayHistoryView';
 import {
@@ -14,7 +15,6 @@ import { StatsKpiRow } from '@/components/ui/stats/StatsKpiRow';
 import { StatsPeriodToolbar } from '@/components/ui/stats/StatsPeriodToolbar';
 import { StatsPersonSelector } from '@/components/ui/stats/StatsPersonSelector';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAppColors } from '@/contexts/ThemeContext';
 import { useTimer } from '@/contexts/TimerContext';
 import { useStatsVisualization } from '@/hooks/useStatsVisualization';
 import { subscribeDataRefresh } from '@/lib/dataRefresh';
@@ -71,7 +71,6 @@ function VisualizationContent({
 }
 
 export function StatsPage() {
-  const colors = useAppColors();
   const location = useLocation();
   const { user } = useAuth();
   const { entriesRevision } = useTimer();
@@ -159,7 +158,7 @@ export function StatsPage() {
   }, [entries, anchorDate]);
 
   if (loading || !vizReady || !user) {
-    return <p style={{ color: colors.textMuted }}>Loading…</p>;
+    return <PageLoading />;
   }
 
   return (

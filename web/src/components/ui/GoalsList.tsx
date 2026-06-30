@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
+import { LoadingIndicator } from '@/components/ui/LoadingIndicator';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAppColors } from '@/contexts/ThemeContext';
 import type { Tag, TagDailyGoal } from '@/types';
@@ -124,10 +125,7 @@ function GoalTargetInputs({
           }}
         >
           {buttonState === 'saving' ? (
-            <span
-              className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-r-transparent"
-              aria-hidden
-            />
+            <LoadingIndicator size={14} />
           ) : buttonState === 'saved' ? (
             'Saved'
           ) : (

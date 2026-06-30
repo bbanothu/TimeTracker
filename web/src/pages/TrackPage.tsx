@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageLoading } from '@/components/ui/PageLoading';
 import { AddManualSessionModal } from '@/components/ui/AddManualSessionModal';
 import { ActiveSessionsList } from '@/components/ui/ActiveSessionsList';
 import { EntryList } from '@/components/ui/EntryList';
@@ -59,7 +60,7 @@ export function TrackPage() {
   }, [user, sessions, todayEntries]);
 
   if (!ready) {
-    return <p style={{ color: colors.textMuted }}>Loading…</p>;
+    return <PageLoading />;
   }
 
   const handleStart = async () => {

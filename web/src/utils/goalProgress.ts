@@ -73,3 +73,13 @@ export function computeCategoryDurationsToday(
 
   return totals;
 }
+
+export const MAX_ACCOUNTED_DAY_MS = 24 * 60 * 60 * 1000;
+
+export function sumAccountedDurationMs(progressByTagId: Map<string, number>): number {
+  let total = 0;
+  for (const ms of progressByTagId.values()) {
+    total += ms;
+  }
+  return Math.min(total, MAX_ACCOUNTED_DAY_MS);
+}

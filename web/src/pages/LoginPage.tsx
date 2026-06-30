@@ -2,6 +2,7 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { FormEvent, useState } from 'react';
 
 import { AuthBackground } from '@/components/layout/AuthBackground';
+import { LoadingIndicator } from '@/components/ui/LoadingIndicator';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -93,13 +94,13 @@ export function LoginPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-2xl py-3.5 font-bold"
+            className="flex w-full items-center justify-center rounded-2xl py-3.5 font-bold"
             style={{
               color: colors.authText,
               backgroundImage: `linear-gradient(90deg, ${colors.authGradient.join(', ')})`,
             }}
           >
-            {submitting ? 'Signing in…' : 'Sign in'}
+            {submitting ? <LoadingIndicator size="small" /> : 'Sign in'}
           </button>
 
           <Link
