@@ -6,6 +6,7 @@ import {
   saveTagAnalyticsPref,
 } from '@/lib/tagAnalyticsPrefs';
 import type { ActiveSession, EntrySource, Geofence, Tag, TagDailyGoal, TimeEntry } from '@/types';
+import type { MergedEntryFields } from '@/utils/entryMerge';
 import { buildAggregatedExportCsv } from '@/utils/aggregatedExportCsv';
 
 const SESSION_KEY = 'timetracker-active-sessions';
@@ -663,6 +664,26 @@ export async function deleteTimeEntry(userId: string, entryId: string): Promise<
     .eq('id', entryId)
     .eq('user_id', userId);
   if (error) throw error;
+}
+
+export async function mergeTimeEntries(
+  userId: string,
+  keepEntryId: string,
+  deleteEntryId: string,
+  tagIds: string[],
+  fields: MergedEntryFields,
+): Promise<void> {
+  await updateTimeEntry(userId, keepEntryId, {
+    startedAt: fields.startedAt,
+    endedAt: fields.endedAt,
+    tagIds,
+    details: fields.details,
+  });
+  await updateTimeEntryStopDetails(userId, keepEntryId, {
+    stopLatitude: fields.stopLatitude,
+    stopLongitude: fields.stopLongitude,
+  });
+  await deleteTimeEntry(userId, deleteEntryId);
 }
 
 export async function updateTimeEntry(

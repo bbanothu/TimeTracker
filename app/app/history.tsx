@@ -12,6 +12,7 @@ import {
   getAllEntries,
   getAllGeofences,
   getGeofenceById,
+  mergeEntries,
   updateEntry,
 } from '@/db/client';
 import { useActiveSession } from '@/hooks/useActiveSession';
@@ -27,6 +28,7 @@ import {
   hasActiveHistoryFilters,
   type HistoryFilterState,
 } from '@/utils/historyFilters';
+import { buildMergedFields } from '@/utils/entryMerge';
 
 export default function HistoryScreen() {
   const colors = useAppColors();
@@ -79,6 +81,20 @@ export default function HistoryScreen() {
     pushChangesInBackground(user?.id);
   };
 
+  const handleMerge = (keepEntryId: string, deleteEntryId: string) => {
+    const older = entries.find((entry) => entry.id === keepEntryId);
+    const newer = entries.find((entry) => entry.id === deleteEntryId);
+    if (!older || !newer) return;
+
+    try {
+      mergeEntries(keepEntryId, deleteEntryId, buildMergedFields(older, newer));
+      notifyDataRefresh();
+      pushChangesInBackground(user?.id);
+    } catch (error) {
+      Alert.alert('Merge failed', error instanceof Error ? error.message : 'Unknown error');
+    }
+  };
+
   const emptyMessage = hasActiveHistoryFilters(filters)
     ? 'No records match these filters.'
     : 'Nothing recorded yet.';
@@ -104,6 +120,7 @@ export default function HistoryScreen() {
             showDate
             onEdit={setEditingEntry}
             onDelete={handleDelete}
+            onMerge={handleMerge}
           />
         </TabScrollView>
 

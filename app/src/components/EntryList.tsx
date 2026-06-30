@@ -1,9 +1,11 @@
+import { Fragment } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAppColors } from '@/hooks/useAppColors';
 import type { TimeEntry } from '@/types';
+import { formatMergePreview, getMergePair } from '@/utils/entryMerge';
 import { formatDurationLong, formatTagName } from '@/utils/formatDuration';
 
 interface EntryListProps {
@@ -13,6 +15,7 @@ interface EntryListProps {
   showDate?: boolean;
   onEdit?: (entry: TimeEntry) => void;
   onDelete?: (entryId: string) => void;
+  onMerge?: (keepEntryId: string, deleteEntryId: string) => void;
 }
 
 function formatTimeRange(startedAt: number, endedAt: number, showDate: boolean): string {
@@ -45,6 +48,7 @@ export function EntryList({
   showDate = false,
   onEdit,
   onDelete,
+  onMerge,
 }: EntryListProps) {
   const colors = useAppColors();
 
@@ -55,6 +59,23 @@ export function EntryList({
       </Text>
     );
   }
+
+  const handleMergePress = (index: number) => {
+    const pair = getMergePair(entries, index);
+    if (!pair || !onMerge) return;
+
+    Alert.alert(
+      'Merge sessions',
+      `Merge these into one session?\n${formatMergePreview(pair.older, pair.newer)}`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Merge',
+          onPress: () => onMerge(pair.older.id, pair.newer.id),
+        },
+      ],
+    );
+  };
 
   return (
     <ThemedSurface className="overflow-hidden">
@@ -69,81 +90,101 @@ export function EntryList({
           entry.source === 'geofence' && geofenceName
             ? `${timeRange} · @ ${geofenceName}`
             : timeRange;
+        const mergePair = onMerge ? getMergePair(entries, index) : null;
 
         return (
-          <View
-            key={entry.id}
-            className="flex-row items-center gap-2 px-3 py-2.5"
-            style={
-              index < entries.length - 1
-                ? { borderBottomWidth: 1, borderBottomColor: colors.surfaceBorder }
-                : undefined
-            }
-          >
-            <View className="min-w-0 flex-1">
-              <View className="flex-row items-center gap-1.5">
-                <View
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: entry.tags[0]?.color ?? colors.primary }}
-                />
+          <Fragment key={entry.id}>
+            <View
+              className="flex-row items-center gap-2 px-3 py-2.5"
+              style={
+                index < entries.length - 1 || mergePair
+                  ? { borderBottomWidth: 1, borderBottomColor: colors.surfaceBorder }
+                  : undefined
+              }
+            >
+              <View className="min-w-0 flex-1">
+                <View className="flex-row items-center gap-1.5">
+                  <View
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: entry.tags[0]?.color ?? colors.primary }}
+                  />
+                  <Text
+                    className="flex-1 text-sm font-semibold"
+                    style={{ color: colors.textOnBg }}
+                    numberOfLines={1}
+                  >
+                    {tagLabel}
+                  </Text>
+                </View>
                 <Text
-                  className="flex-1 text-sm font-semibold"
-                  style={{ color: colors.textOnBg }}
+                  className="ml-3.5 text-xs"
+                  style={{ color: colors.textMuted }}
                   numberOfLines={1}
                 >
-                  {tagLabel}
+                  {subtitle}
                 </Text>
               </View>
               <Text
-                className="ml-3.5 text-xs"
-                style={{ color: colors.textMuted }}
-                numberOfLines={1}
+                className="shrink-0 text-sm font-medium tabular-nums"
+                style={{ color: colors.textSecondary }}
               >
-                {subtitle}
+                {formatDurationLong(duration)}
               </Text>
+              {onEdit ? (
+                <Pressable
+                  onPress={() => onEdit(entry)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Edit ${tagLabel}`}
+                  hitSlop={8}
+                  className="shrink-0 p-1"
+                >
+                  <Ionicons name="create-outline" size={18} color={colors.textMuted} />
+                </Pressable>
+              ) : null}
+              {onDelete ? (
+                <Pressable
+                  onPress={() => {
+                    Alert.alert(
+                      'Delete entry',
+                      'Remove this tracked session permanently? This cannot be undone.',
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        {
+                          text: 'Delete',
+                          style: 'destructive',
+                          onPress: () => onDelete(entry.id),
+                        },
+                      ],
+                    );
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Delete ${tagLabel}`}
+                  hitSlop={8}
+                  className="shrink-0 p-1"
+                >
+                  <Ionicons name="trash-outline" size={18} color={colors.destructiveText} />
+                </Pressable>
+              ) : null}
             </View>
-            <Text
-              className="shrink-0 text-sm font-medium tabular-nums"
-              style={{ color: colors.textSecondary }}
-            >
-              {formatDurationLong(duration)}
-            </Text>
-            {onEdit ? (
+            {mergePair ? (
               <Pressable
-                onPress={() => onEdit(entry)}
+                onPress={() => handleMergePress(index)}
                 accessibilityRole="button"
-                accessibilityLabel={`Edit ${tagLabel}`}
-                hitSlop={8}
-                className="shrink-0 p-1"
-              >
-                <Ionicons name="create-outline" size={18} color={colors.textMuted} />
-              </Pressable>
-            ) : null}
-            {onDelete ? (
-              <Pressable
-                onPress={() => {
-                  Alert.alert(
-                    'Delete entry',
-                    'Remove this tracked session permanently? This cannot be undone.',
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: 'Delete',
-                        style: 'destructive',
-                        onPress: () => onDelete(entry.id),
-                      },
-                    ],
-                  );
+                accessibilityLabel="Merge with session below"
+                className="flex-row items-center justify-center gap-1.5 px-3 py-2"
+                style={{
+                  borderBottomWidth: index < entries.length - 1 ? 1 : 0,
+                  borderBottomColor: colors.surfaceBorder,
+                  backgroundColor: colors.secondaryBgSolid,
                 }}
-                accessibilityRole="button"
-                accessibilityLabel={`Delete ${tagLabel}`}
-                hitSlop={8}
-                className="shrink-0 p-1"
               >
-                <Ionicons name="trash-outline" size={18} color={colors.destructiveText} />
+                <Ionicons name="git-merge-outline" size={14} color={colors.primary} />
+                <Text className="text-xs font-semibold" style={{ color: colors.primary }}>
+                  Merge
+                </Text>
               </Pressable>
             ) : null}
-          </View>
+          </Fragment>
         );
       })}
     </ThemedSurface>

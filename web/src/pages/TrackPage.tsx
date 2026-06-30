@@ -14,12 +14,13 @@ import { useTags } from '@/contexts/TagsContext';
 import { useSelectedTag } from '@/hooks/useSelectedTag';
 import { StopSessionDetailsModal } from '@/components/ui/StopSessionDetailsModal';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
-import { fetchGeofences, updateTimeEntryStopDetails } from '@/services/data';
+import { buildMergedFields } from '@/utils/entryMerge';
+import { fetchGeofences, mergeTimeEntries, updateTimeEntryStopDetails } from '@/services/data';
 
 export function TrackPage() {
   const colors = useAppColors();
   const { user } = useAuth();
-  const { ready, sessions, todayEntries, tick, startManual, stop, addManualEntry } = useTimer();
+  const { ready, sessions, todayEntries, tick, startManual, stop, addManualEntry, refresh } = useTimer();
   const { tags } = useTags();
   const { selectedTagId, setSelectedTagId } = useSelectedTag(tags);
   const [manualModalOpen, setManualModalOpen] = useState(false);
@@ -100,6 +101,30 @@ export function TrackPage() {
     }
   };
 
+  const handleMerge = async (keepEntryId: string, deleteEntryId: string) => {
+    if (!user) return;
+
+    const older = todayEntries.find((entry) => entry.id === keepEntryId);
+    const newer = todayEntries.find((entry) => entry.id === deleteEntryId);
+    if (!older || !newer) return;
+
+    try {
+      setError(null);
+      const fields = buildMergedFields(older, newer);
+      await mergeTimeEntries(
+        user.id,
+        keepEntryId,
+        deleteEntryId,
+        older.tags.map((tag) => tag.id),
+        fields,
+      );
+      notifyDataRefresh();
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Merge failed');
+    }
+  };
+
   return (
     <div>
       <PageHeader title="Track" />
@@ -164,6 +189,7 @@ export function TrackPage() {
             entries={todayEntries}
             emptyMessage="No tracked time yet today."
             geofenceNames={geofenceNames}
+            onMerge={handleMerge}
           />
         </section>
       </div>

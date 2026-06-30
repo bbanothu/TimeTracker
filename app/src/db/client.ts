@@ -19,6 +19,7 @@ import type {
   TimeEntry,
 } from '@/types';
 import { wouldCreateCycle } from '@/utils/tagTree';
+import type { MergedEntryFields } from '@/utils/entryMerge';
 
 let db: SQLite.SQLiteDatabase | null = null;
 let currentUserId: string | null = null;
@@ -1330,6 +1331,28 @@ export function deleteEntry(id: string): void {
   database.runSync('DELETE FROM time_entry_tags WHERE entry_id = ? AND user_id = ?', [id, userId]);
   database.runSync('DELETE FROM time_entries WHERE id = ? AND user_id = ?', [id, userId]);
   enqueueSync('entry', id, 'delete', { id, user_id: userId });
+}
+
+export function mergeEntries(
+  keepEntryId: string,
+  deleteEntryId: string,
+  fields: MergedEntryFields,
+): TimeEntry {
+  const kept = getTimeEntryById(keepEntryId);
+  if (!kept) throw new Error('Entry not found');
+  if (kept.endedAt == null) throw new Error('Cannot merge into an active session');
+
+  const tagIds = kept.tags.map((tag) => tag.id);
+  updateEntry(keepEntryId, tagIds, fields.startedAt, fields.endedAt, fields.details);
+  updateEntryStopDetails(keepEntryId, {
+    stopLatitude: fields.stopLatitude,
+    stopLongitude: fields.stopLongitude,
+  });
+  deleteEntry(deleteEntryId);
+
+  const merged = getTimeEntryById(keepEntryId);
+  if (!merged) throw new Error('Failed to merge entries');
+  return merged;
 }
 
 export function clearAllTrackedData(): number {

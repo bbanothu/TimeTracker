@@ -1,7 +1,10 @@
+import { Fragment } from 'react';
+
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { confirmDelete } from '@/lib/confirm';
 import type { TimeEntry } from '@/types';
+import { formatMergePreview, getMergePair } from '@/utils/entryMerge';
 import { formatDurationLong, formatTagName } from '@/utils/formatDuration';
 
 interface EntryListProps {
@@ -11,6 +14,7 @@ interface EntryListProps {
   showDate?: boolean;
   onEdit?: (entry: TimeEntry) => void;
   onDelete?: (entryId: string) => void;
+  onMerge?: (keepEntryId: string, deleteEntryId: string) => void;
 }
 
 function formatTimeRange(startedAt: number, endedAt: number, showDate: boolean): string {
@@ -65,6 +69,17 @@ function DeleteIcon({ color }: { color: string }) {
   );
 }
 
+function MergeIcon({ color }: { color: string }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="6" cy="6" r="2.5" stroke={color} strokeWidth="1.75" />
+      <circle cx="6" cy="18" r="2.5" stroke={color} strokeWidth="1.75" />
+      <circle cx="18" cy="12" r="2.5" stroke={color} strokeWidth="1.75" />
+      <path d="M8 7.5v9M8 12h8" stroke={color} strokeWidth="1.75" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function EntryList({
   entries,
   emptyMessage = 'No entries yet',
@@ -72,6 +87,7 @@ export function EntryList({
   showDate = false,
   onEdit,
   onDelete,
+  onMerge,
 }: EntryListProps) {
   const colors = useAppColors();
 
@@ -82,6 +98,15 @@ export function EntryList({
       </p>
     );
   }
+
+  const handleMergePress = (index: number) => {
+    const pair = getMergePair(entries, index);
+    if (!pair || !onMerge) return;
+
+    const message = `Merge these into one session?\n${formatMergePreview(pair.older, pair.newer)}`;
+    if (!window.confirm(message)) return;
+    onMerge(pair.older.id, pair.newer.id);
+  };
 
   return (
     <ThemedSurface className="overflow-hidden p-0">
@@ -96,73 +121,91 @@ export function EntryList({
           entry.source === 'geofence' && geofenceName
             ? `${timeRange} · @ ${geofenceName}`
             : timeRange;
+        const mergePair = onMerge ? getMergePair(entries, index) : null;
 
         return (
-          <div
-            key={entry.id}
-            className="flex items-center gap-2 px-3 py-2.5"
-            style={
-              index < entries.length - 1
-                ? { borderBottom: `1px solid ${colors.surfaceBorder}` }
-                : undefined
-            }
-          >
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <span
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: entry.tags[0]?.color ?? colors.primary }}
-                />
-                <span
-                  className="truncate text-sm font-semibold"
-                  style={{ color: colors.textOnBg }}
-                  title={tagLabel}
-                >
-                  {tagLabel}
-                </span>
-              </div>
-              <p className="ml-3.5 text-xs" style={{ color: colors.textMuted }}>
-                {subtitle}
-              </p>
-            </div>
-            <span
-              className="shrink-0 text-sm font-medium tabular-nums"
-              style={{ color: colors.textSecondary }}
+          <Fragment key={entry.id}>
+            <div
+              className="flex items-center gap-2 px-3 py-2.5"
+              style={
+                index < entries.length - 1 || mergePair
+                  ? { borderBottom: `1px solid ${colors.surfaceBorder}` }
+                  : undefined
+              }
             >
-              {formatDurationLong(duration)}
-            </span>
-            {onEdit ? (
-              <button
-                type="button"
-                aria-label={`Edit ${tagLabel}`}
-                title="Edit"
-                onClick={() => onEdit(entry)}
-                className="shrink-0 rounded p-1 transition hover:opacity-80"
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: entry.tags[0]?.color ?? colors.primary }}
+                  />
+                  <span
+                    className="truncate text-sm font-semibold"
+                    style={{ color: colors.textOnBg }}
+                    title={tagLabel}
+                  >
+                    {tagLabel}
+                  </span>
+                </div>
+                <p className="ml-3.5 text-xs" style={{ color: colors.textMuted }}>
+                  {subtitle}
+                </p>
+              </div>
+              <span
+                className="shrink-0 text-sm font-medium tabular-nums"
+                style={{ color: colors.textSecondary }}
               >
-                <EditIcon color={colors.textMuted} />
-              </button>
-            ) : null}
-            {onDelete ? (
+                {formatDurationLong(duration)}
+              </span>
+              {onEdit ? (
+                <button
+                  type="button"
+                  aria-label={`Edit ${tagLabel}`}
+                  title="Edit"
+                  onClick={() => onEdit(entry)}
+                  className="shrink-0 rounded p-1 transition hover:opacity-80"
+                >
+                  <EditIcon color={colors.textMuted} />
+                </button>
+              ) : null}
+              {onDelete ? (
+                <button
+                  type="button"
+                  aria-label={`Delete ${tagLabel}`}
+                  title="Delete"
+                  onClick={() => {
+                    if (
+                      !confirmDelete(
+                        'Remove this tracked session permanently? This cannot be undone.',
+                      )
+                    ) {
+                      return;
+                    }
+                    onDelete(entry.id);
+                  }}
+                  className="shrink-0 rounded p-1 transition hover:opacity-80"
+                >
+                  <DeleteIcon color={colors.destructiveText} />
+                </button>
+              ) : null}
+            </div>
+            {mergePair ? (
               <button
                 type="button"
-                aria-label={`Delete ${tagLabel}`}
-                title="Delete"
-                onClick={() => {
-                  if (
-                    !confirmDelete(
-                      'Remove this tracked session permanently? This cannot be undone.',
-                    )
-                  ) {
-                    return;
-                  }
-                  onDelete(entry.id);
+                onClick={() => handleMergePress(index)}
+                aria-label="Merge with session below"
+                className="flex w-full items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold transition hover:opacity-80"
+                style={{
+                  borderBottom: index < entries.length - 1 ? `1px solid ${colors.surfaceBorder}` : undefined,
+                  backgroundColor: colors.secondaryBgSolid,
+                  color: colors.primary,
                 }}
-                className="shrink-0 rounded p-1 transition hover:opacity-80"
               >
-                <DeleteIcon color={colors.destructiveText} />
+                <MergeIcon color={colors.primary} />
+                Merge
               </button>
             ) : null}
-          </div>
+          </Fragment>
         );
       })}
     </ThemedSurface>

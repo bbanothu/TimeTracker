@@ -10,7 +10,7 @@ import { TabScreenContainer } from '@/components/TabScreenContainer';
 import { TagDropdown } from '@/components/TagDropdown';
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { StopSessionDetailsModal } from '@/components/StopSessionDetailsModal';
-import { getGeofenceById, updateEntryStopDetails } from '@/db/client';
+import { getGeofenceById, mergeEntries, updateEntryStopDetails } from '@/db/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useActiveSession } from '@/hooks/useActiveSession';
 import { useAppColors } from '@/hooks/useAppColors';
@@ -19,7 +19,9 @@ import { useTags } from '@/hooks/useTags';
 import { getStopCoordinates } from '@/lib/stopLocation';
 import { dismissGeofenceNotification } from '@/services/notificationService';
 import { pushChangesInBackground } from '@/services/syncScheduler';
+import { notifyDataRefresh } from '@/lib/dataRefresh';
 import { timerService } from '@/services/timerService';
+import { buildMergedFields } from '@/utils/entryMerge';
 
 export default function TrackScreen() {
   const { user } = useAuth();
@@ -102,6 +104,23 @@ export default function TrackScreen() {
     }
   };
 
+  const handleMerge = (keepEntryId: string, deleteEntryId: string) => {
+    const older = todayEntries.find((entry) => entry.id === keepEntryId);
+    const newer = todayEntries.find((entry) => entry.id === deleteEntryId);
+    if (!older || !newer) return;
+
+    try {
+      mergeEntries(keepEntryId, deleteEntryId, buildMergedFields(older, newer));
+      refresh();
+      notifyDataRefresh();
+      if (user) {
+        pushChangesInBackground(user.id);
+      }
+    } catch (error) {
+      Alert.alert('Merge failed', error instanceof Error ? error.message : 'Unknown error');
+    }
+  };
+
   return (
     <TabScreenContainer>
       <TabScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-2">
@@ -165,6 +184,7 @@ export default function TrackScreen() {
           entries={todayEntries}
           emptyMessage="No tracked time yet today."
           geofenceNames={geofenceNames}
+          onMerge={handleMerge}
         />
       </TabScrollView>
 

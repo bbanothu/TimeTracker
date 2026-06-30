@@ -9,7 +9,7 @@ import { useAppColors } from '@/contexts/ThemeContext';
 import { useTags } from '@/contexts/TagsContext';
 import { useTimer } from '@/contexts/TimerContext';
 import { notifyDataRefresh, subscribeDataRefresh } from '@/lib/dataRefresh';
-import { deleteTimeEntry, fetchAllEntries, fetchGeofences, updateTimeEntry } from '@/services/data';
+import { deleteTimeEntry, fetchAllEntries, fetchGeofences, mergeTimeEntries, updateTimeEntry } from '@/services/data';
 import type { Geofence, TimeEntry } from '@/types';
 import {
   defaultHistoryFilters,
@@ -17,6 +17,7 @@ import {
   hasActiveHistoryFilters,
   type HistoryFilterState,
 } from '@/utils/historyFilters';
+import { buildMergedFields } from '@/utils/entryMerge';
 
 export function HistoryPage() {
   const colors = useAppColors();
@@ -96,6 +97,31 @@ export function HistoryPage() {
     await refresh();
   };
 
+  const handleMerge = async (keepEntryId: string, deleteEntryId: string) => {
+    if (!user) return;
+
+    const older = entries.find((entry) => entry.id === keepEntryId);
+    const newer = entries.find((entry) => entry.id === deleteEntryId);
+    if (!older || !newer) return;
+
+    try {
+      setError(null);
+      const fields = buildMergedFields(older, newer);
+      await mergeTimeEntries(
+        user.id,
+        keepEntryId,
+        deleteEntryId,
+        older.tags.map((tag) => tag.id),
+        fields,
+      );
+      notifyDataRefresh();
+      await loadEntries();
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Merge failed');
+    }
+  };
+
   if (!ready || loading) {
     return <p style={{ color: colors.textMuted }}>Loading…</p>;
   }
@@ -130,6 +156,7 @@ export function HistoryPage() {
         showDate
         onEdit={setEditingEntry}
         onDelete={handleDelete}
+        onMerge={handleMerge}
       />
 
       <EditEntryModal
