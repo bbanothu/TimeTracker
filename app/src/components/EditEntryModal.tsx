@@ -2,7 +2,6 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Platform,
   Pressable,
   ScrollView,
@@ -14,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 import { BottomSheetModal, getBottomSheetScrollHeight } from '@/components/BottomSheetModal';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { TagDropdown } from '@/components/TagDropdown';
 import { useAppColors } from '@/hooks/useAppColors';
 import type { Tag, TimeEntry } from '@/types';
@@ -103,7 +103,7 @@ export function EditEntryModal({ visible, entry, tags, onClose, onSave }: EditEn
   const scrollMaxHeight = getBottomSheetScrollHeight(windowHeight, pickerField ? 0.45 : 0.55);
 
   const saveButton = saving ? (
-    <ActivityIndicator size="small" color={colors.primary} />
+    <LoadingIndicator size="small" />
   ) : (
     <Pressable
       onPress={handleSave}

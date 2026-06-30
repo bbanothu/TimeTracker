@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, Text, TextInput, View } from 'react-native';
+
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAppColors } from '@/hooks/useAppColors';
@@ -157,7 +159,7 @@ function GoalTargetInputs({
           style={{ backgroundColor: colors.primary }}
         >
           {buttonState === 'saving' ? (
-            <ActivityIndicator size="small" color={colors.textOnPrimary} />
+            <LoadingIndicator size={22} />
           ) : (
             <Text className="text-xs font-semibold" style={{ color: colors.textOnPrimary }}>
               {buttonState === 'saved' ? 'Saved' : 'Save'}

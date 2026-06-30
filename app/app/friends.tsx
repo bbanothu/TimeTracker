@@ -2,7 +2,6 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -15,6 +14,7 @@ import {
 
 import { ActionButton } from '@/components/ActionButton';
 import { AppBackground } from '@/components/AppBackground';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAppColors } from '@/hooks/useAppColors';
 import { useScreenTopPadding } from '@/hooks/useScreenTopPadding';
@@ -167,7 +167,7 @@ export default function FriendsScreen() {
           </ThemedSurface>
 
           {loading ? (
-            <ActivityIndicator color={colors.textMuted} />
+            <LoadingIndicator size="medium" className="self-center py-8" />
           ) : (
             <>
               {incomingRequests.length > 0 ? (

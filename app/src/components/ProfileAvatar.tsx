@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { UserAvatar } from '@/components/UserAvatar';
 import { useAppColors } from '@/hooks/useAppColors';
 import { useProfilePhoto } from '@/hooks/useProfilePhoto';
@@ -56,7 +57,7 @@ export function ProfileAvatar({ userId, fallbackLabel, compact = false }: Profil
         style={{ width: size, height: size, backgroundColor: colors.selectedBg }}
       >
         {loading ? (
-          <ActivityIndicator color={colors.primary} />
+          <LoadingIndicator size={Math.round(size * 0.55)} />
         ) : (
           <UserAvatar photoUri={photoUri} fallbackLabel={fallbackLabel} size={size} />
         )}

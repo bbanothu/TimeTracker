@@ -2,7 +2,6 @@ import { Link, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -16,6 +15,7 @@ import { AuthBackground } from '@/components/auth/AuthBackground';
 import { AuthCard } from '@/components/auth/AuthCard';
 import { authScreenStyles as styles } from '@/components/auth/authScreenStyles';
 import { GlassInput } from '@/components/auth/GlassInput';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppColors } from '@/hooks/useAppColors';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -115,7 +115,7 @@ export default function RegisterScreen() {
                 style={styles.button}
               >
                 {submitting ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <LoadingIndicator size="small" />
                 ) : (
                   <Text style={styles.buttonText}>Create account</Text>
                 )}

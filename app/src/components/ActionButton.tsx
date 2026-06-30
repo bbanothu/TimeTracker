@@ -1,5 +1,6 @@
-import { ActivityIndicator, Pressable, Text, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, Text, type StyleProp, type ViewStyle } from 'react-native';
 
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { useAppColors } from '@/hooks/useAppColors';
 
 type ActionButtonVariant = 'primary' | 'destructive' | 'destructiveOutline' | 'secondary';
@@ -74,7 +75,7 @@ export function ActionButton({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={variantStyles.spinnerColor} />
+        <LoadingIndicator size="small" />
       ) : (
         <Text
           className={`text-center font-semibold ${textSize} ${textClassName ?? ''}`}

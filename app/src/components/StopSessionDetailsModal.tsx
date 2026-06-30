@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, TextInput } from 'react-native';
+import { Pressable, Text, TextInput } from 'react-native';
 
 import { BottomSheetModal } from '@/components/BottomSheetModal';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { useAppColors } from '@/hooks/useAppColors';
 
 interface StopSessionDetailsModalProps {
@@ -32,7 +33,7 @@ export function StopSessionDetailsModal({
   };
 
   const saveButton = saving ? (
-    <ActivityIndicator size="small" color={colors.primary} />
+    <LoadingIndicator size="small" />
   ) : (
     <Pressable
       onPress={handleSave}

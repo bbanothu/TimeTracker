@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAppColors } from '@/hooks/useAppColors';
@@ -91,7 +93,7 @@ export function ProfileLinkRows({ rows }: ProfileLinkRowsProps) {
                 </View>
               ) : null}
               {row.loading ? (
-                <ActivityIndicator size="small" color={colors.textMuted} />
+                <LoadingIndicator size="small" />
               ) : showChevron ? (
                 <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
               ) : null}
