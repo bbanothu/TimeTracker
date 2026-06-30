@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { fetchFriendEntries, fetchFriendGeofences } from '@/services/friendsService';
 import { getStatsSummary } from '@/services/statsService';
 import type { Geofence, PeriodType, StatsSummary, TimeEntry } from '@/types';
+import { ROLLING_MONTH_DAYS, ROLLING_WEEK_DAYS, getPeriodBounds } from '@/utils/periodBounds';
 
 const EMPTY_SUMMARY: StatsSummary = {
   totalMs: 0,
@@ -74,13 +75,31 @@ export function useStats(initialPeriod: PeriodType = 'day', subjectUserId?: stri
     [ready, dataLoading, anchorDate, period, entries, geofences],
   );
 
+  const geofenceNames = useMemo(
+    () => new Map(geofences.map((geofence) => [geofence.id, geofence.name])),
+    [geofences],
+  );
+
+  const dayEntries = useMemo(() => {
+    const { start, end } = getPeriodBounds(anchorDate, 'day');
+    const rangeStart = start.getTime();
+    const rangeEnd = end.getTime();
+
+    return entries
+      .filter(
+        (entry) =>
+          entry.endedAt != null && entry.endedAt > rangeStart && entry.startedAt < rangeEnd,
+      )
+      .sort((a, b) => b.startedAt - a.startedAt);
+  }, [entries, anchorDate]);
+
   const shift = useCallback(
     (delta: number) => {
       setAnchorDate((current) => {
         const next = new Date(current);
         if (period === 'day') next.setDate(next.getDate() + delta);
-        else if (period === 'week') next.setDate(next.getDate() + delta * 7);
-        else next.setMonth(next.getMonth() + delta);
+        else if (period === 'week') next.setDate(next.getDate() + delta * ROLLING_WEEK_DAYS);
+        else next.setDate(next.getDate() + delta * ROLLING_MONTH_DAYS);
         return next;
       });
     },
@@ -95,6 +114,8 @@ export function useStats(initialPeriod: PeriodType = 'day', subjectUserId?: stri
     setAnchorDate,
     summary,
     shift,
+    geofenceNames,
+    dayEntries,
     isViewingFriend: !isSelf,
   };
 }

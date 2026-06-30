@@ -51,7 +51,8 @@ export function entriesSameLocation(
     );
   }
 
-  return !aHasCoords && !bHasCoords;
+  // No geofence on either side — missing coords on one entry should not block merge.
+  return true;
 }
 
 export function areConsecutiveInTime(
@@ -76,13 +77,13 @@ export function canMergeAdjacentEntries(older: TimeEntry, newer: TimeEntry): boo
   return areConsecutiveInTime(older, newer);
 }
 
-/** List is newest-first; pair row `index` with `index + 1`. */
+/** List is newest-first; pair row `index` with `index + 1`. Pass completed entries only. */
 export function getMergePair(entries: TimeEntry[], index: number): MergePair | null {
-  if (index < 0 || index >= entries.length - 1) return null;
+  const completed = entries.filter((entry) => entry.endedAt != null);
+  if (index < 0 || index >= completed.length - 1) return null;
 
-  const newer = entries[index];
-  const older = entries[index + 1];
-  if (newer.endedAt == null || older.endedAt == null) return null;
+  const newer = completed[index];
+  const older = completed[index + 1];
   if (!canMergeAdjacentEntries(older, newer)) return null;
 
   return { older, newer };

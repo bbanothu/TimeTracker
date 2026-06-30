@@ -70,7 +70,7 @@ export interface Friendship {
 
 export type PeriodType = 'day' | 'week' | 'month';
 
-export type StatsVisualization = 'overview' | 'bars' | 'list' | 'stacked' | 'trend';
+export type StatsVisualization = 'overview' | 'bars' | 'list' | 'stacked' | 'history' | 'trend';
 
 export interface TagDuration {
   tag: Tag;

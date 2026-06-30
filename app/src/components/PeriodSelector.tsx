@@ -2,7 +2,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { useAppColors } from '@/hooks/useAppColors';
 import type { PeriodType } from '@/types';
-import { formatPeriodLabel } from '@/utils/periodBounds';
+import { formatPeriodLabel, PERIOD_LABELS } from '@/utils/periodBounds';
 
 const PERIODS: PeriodType[] = ['day', 'week', 'month'];
 
@@ -41,10 +41,10 @@ export function PeriodSelector({
               style={{ backgroundColor: selected ? colors.selectedBg : 'transparent' }}
             >
               <Text
-                className="text-center text-sm font-semibold capitalize"
+                className="text-center text-sm font-semibold"
                 style={{ color: selected ? colors.selectedText : colors.textMuted }}
               >
-                {item}
+                {PERIOD_LABELS[item]}
               </Text>
             </Pressable>
           );

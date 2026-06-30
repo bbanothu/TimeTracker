@@ -38,10 +38,16 @@ export default function StatsScreen() {
     }, [loadFriends]),
   );
 
-  const { period, setPeriod, anchorDate, summary, shift, isViewingFriend } = useStats(
-    'day',
-    selectedUserId,
-  );
+  const {
+    period,
+    setPeriod,
+    anchorDate,
+    summary,
+    shift,
+    geofenceNames,
+    dayEntries,
+    isViewingFriend,
+  } = useStats('day', selectedUserId);
   const { visualization, setVisualization } = useStatsVisualization();
 
   if (!user) return null;
@@ -83,6 +89,8 @@ export default function StatsScreen() {
           summary={summary}
           visualization={visualization}
           period={period}
+          dayEntries={dayEntries}
+          geofenceNames={geofenceNames}
           scrollEnabled={false}
         />
       </TabScrollView>

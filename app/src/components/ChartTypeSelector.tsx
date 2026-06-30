@@ -14,13 +14,15 @@ const ALL_OPTIONS: { value: StatsVisualization; label: string }[] = [
   // { value: 'bars', label: 'Bars' },
   { value: 'list', label: 'List' },
   { value: 'stacked', label: 'Stacked' },
+  { value: 'history', label: 'History' },
   { value: 'trend', label: 'Trend' },
 ];
 
 export function ChartTypeSelector({ period, visualization, onChange }: ChartTypeSelectorProps) {
   const colors = useAppColors();
-  const options =
-    period === 'day' ? ALL_OPTIONS.filter((item) => item.value !== 'trend') : ALL_OPTIONS;
+  const options = ALL_OPTIONS.filter((item) =>
+    period === 'day' ? item.value !== 'trend' : item.value !== 'history',
+  );
 
   return (
     <View className="mb-4">

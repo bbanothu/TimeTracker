@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ChartTypeSelector } from '@/components/ui/stats/ChartTypeSelector';
+import { DayHistoryView } from '@/components/ui/stats/DayHistoryView';
 import {
   ListView,
   OverviewView,
@@ -24,6 +25,7 @@ import {
   fetchFriendGeofences,
 } from '@/services/friendsService';
 import { getStatsSummary } from '@/services/statsService';
+import { getPeriodBounds } from '@/utils/periodBounds';
 import type {
   FriendshipOtherUser,
   Geofence,
@@ -37,15 +39,25 @@ function VisualizationContent({
   summary,
   visualization,
   period,
+  dayEntries,
+  geofenceNames,
 }: {
   summary: StatsSummary;
   visualization: StatsVisualization;
   period: PeriodType;
+  dayEntries: TimeEntry[];
+  geofenceNames: Map<string, string>;
 }) {
   const effectiveVisualization =
-    period === 'day' && visualization === 'trend' ? 'overview' : visualization;
+    period === 'day' && visualization === 'trend'
+      ? 'overview'
+      : period !== 'day' && visualization === 'history'
+        ? 'overview'
+        : visualization;
 
   switch (effectiveVisualization) {
+    case 'history':
+      return <DayHistoryView entries={dayEntries} geofenceNames={geofenceNames} />;
     case 'list':
       return <ListView summary={summary} period={period} />;
     case 'stacked':
@@ -128,6 +140,24 @@ export function StatsPage() {
     [anchorDate, period, entries, geofences],
   );
 
+  const geofenceNames = useMemo(
+    () => new Map(geofences.map((geofence) => [geofence.id, geofence.name])),
+    [geofences],
+  );
+
+  const dayEntries = useMemo(() => {
+    const { start, end } = getPeriodBounds(anchorDate, 'day');
+    const rangeStart = start.getTime();
+    const rangeEnd = end.getTime();
+
+    return entries
+      .filter(
+        (entry) =>
+          entry.endedAt != null && entry.endedAt > rangeStart && entry.startedAt < rangeEnd,
+      )
+      .sort((a, b) => b.startedAt - a.startedAt);
+  }, [entries, anchorDate]);
+
   if (loading || !vizReady || !user) {
     return <p style={{ color: colors.textMuted }}>Loading…</p>;
   }
@@ -165,7 +195,13 @@ export function StatsPage() {
       />
 
       <div className="min-w-0">
-        <VisualizationContent summary={summary} visualization={visualization} period={period} />
+        <VisualizationContent
+          summary={summary}
+          visualization={visualization}
+          period={period}
+          dayEntries={dayEntries}
+          geofenceNames={geofenceNames}
+        />
       </div>
     </div>
   );

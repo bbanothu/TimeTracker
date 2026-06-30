@@ -1,17 +1,15 @@
-import {
-  addDays,
-  addMonths,
-  addWeeks,
-  endOfDay,
-  endOfMonth,
-  endOfWeek,
-  format,
-  startOfDay,
-  startOfMonth,
-  startOfWeek,
-} from 'date-fns';
+import { addDays, endOfDay, format, startOfDay } from 'date-fns';
 
 import type { PeriodType } from '@/types';
+
+export const ROLLING_WEEK_DAYS = 7;
+export const ROLLING_MONTH_DAYS = 30;
+
+export const PERIOD_LABELS: Record<PeriodType, string> = {
+  day: 'Day',
+  week: '7 days',
+  month: '30 days',
+};
 
 export function getPeriodBounds(date: Date, period: PeriodType): { start: Date; end: Date } {
   switch (period) {
@@ -19,11 +17,14 @@ export function getPeriodBounds(date: Date, period: PeriodType): { start: Date; 
       return { start: startOfDay(date), end: endOfDay(date) };
     case 'week':
       return {
-        start: startOfWeek(date, { weekStartsOn: 1 }),
-        end: endOfWeek(date, { weekStartsOn: 1 }),
+        start: startOfDay(addDays(date, -(ROLLING_WEEK_DAYS - 1))),
+        end: endOfDay(date),
       };
     case 'month':
-      return { start: startOfMonth(date), end: endOfMonth(date) };
+      return {
+        start: startOfDay(addDays(date, -(ROLLING_MONTH_DAYS - 1))),
+        end: endOfDay(date),
+      };
   }
 }
 
@@ -32,9 +33,9 @@ export function shiftPeriod(date: Date, period: PeriodType, delta: number): Date
     case 'day':
       return addDays(date, delta);
     case 'week':
-      return addWeeks(date, delta);
+      return addDays(date, delta * ROLLING_WEEK_DAYS);
     case 'month':
-      return addMonths(date, delta);
+      return addDays(date, delta * ROLLING_MONTH_DAYS);
   }
 }
 
@@ -42,11 +43,10 @@ export function formatPeriodLabel(date: Date, period: PeriodType): string {
   switch (period) {
     case 'day':
       return format(date, 'EEE, MMM d, yyyy');
-    case 'week': {
-      const { start, end } = getPeriodBounds(date, 'week');
+    case 'week':
+    case 'month': {
+      const { start, end } = getPeriodBounds(date, period);
       return `${format(start, 'MMM d')} – ${format(end, 'MMM d, yyyy')}`;
     }
-    case 'month':
-      return format(date, 'MMMM yyyy');
   }
 }

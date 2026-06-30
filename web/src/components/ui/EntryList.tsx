@@ -1,5 +1,6 @@
-import { Fragment } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 
+import { ExpandableDetails, ExpandChevron } from '@/components/ui/ExpandableDetails';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { confirmDelete } from '@/lib/confirm';
@@ -90,8 +91,23 @@ export function EntryList({
   onMerge,
 }: EntryListProps) {
   const colors = useAppColors();
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
 
-  if (entries.length === 0) {
+  const toggleExpanded = (entryId: string) => {
+    setExpandedIds((current) => {
+      const next = new Set(current);
+      if (next.has(entryId)) next.delete(entryId);
+      else next.add(entryId);
+      return next;
+    });
+  };
+
+  const completedEntries = useMemo(
+    () => entries.filter((entry) => entry.endedAt != null),
+    [entries],
+  );
+
+  if (completedEntries.length === 0) {
     return (
       <p className="py-2 text-center text-sm" style={{ color: colors.textMuted }}>
         {emptyMessage}
@@ -100,7 +116,7 @@ export function EntryList({
   }
 
   const handleMergePress = (index: number) => {
-    const pair = getMergePair(entries, index);
+    const pair = getMergePair(completedEntries, index);
     if (!pair || !onMerge) return;
 
     const message = `Merge these into one session?\n${formatMergePreview(pair.older, pair.newer)}`;
@@ -110,10 +126,8 @@ export function EntryList({
 
   return (
     <ThemedSurface className="overflow-hidden p-0">
-      {entries.map((entry, index) => {
-        if (entry.endedAt == null) return null;
-
-        const duration = entry.endedAt - entry.startedAt;
+      {completedEntries.map((entry, index) => {
+        const duration = entry.endedAt! - entry.startedAt;
         const tagLabel = entry.tags.map((tag) => formatTagName(tag.name)).join(', ') || 'Untagged';
         const geofenceName = entry.geofenceId ? geofenceNames?.get(entry.geofenceId) : null;
         const timeRange = formatTimeRange(entry.startedAt, entry.endedAt, showDate);
@@ -121,72 +135,98 @@ export function EntryList({
           entry.source === 'geofence' && geofenceName
             ? `${timeRange} · @ ${geofenceName}`
             : timeRange;
-        const mergePair = onMerge ? getMergePair(entries, index) : null;
+        const mergePair = onMerge ? getMergePair(completedEntries, index) : null;
+        const details = entry.details?.trim() ?? '';
+        const hasDetails = details.length > 0;
+        const expanded = expandedIds.has(entry.id);
+        const showBottomBorder = index < completedEntries.length - 1 || mergePair;
+
+        const mainContent = (
+          <>
+            <div className="flex items-center gap-1.5">
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: entry.tags[0]?.color ?? colors.primary }}
+              />
+              <span
+                className="truncate text-sm font-semibold"
+                style={{ color: colors.textOnBg }}
+                title={tagLabel}
+              >
+                {tagLabel}
+              </span>
+            </div>
+            <p className="ml-3.5 text-xs" style={{ color: colors.textMuted }}>
+              {subtitle}
+            </p>
+          </>
+        );
 
         return (
           <Fragment key={entry.id}>
             <div
-              className="flex items-center gap-2 px-3 py-2.5"
               style={
-                index < entries.length - 1 || mergePair
-                  ? { borderBottom: `1px solid ${colors.surfaceBorder}` }
-                  : undefined
+                showBottomBorder ? { borderBottom: `1px solid ${colors.surfaceBorder}` } : undefined
               }
             >
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <span
-                    className="h-2 w-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: entry.tags[0]?.color ?? colors.primary }}
-                  />
-                  <span
-                    className="truncate text-sm font-semibold"
-                    style={{ color: colors.textOnBg }}
-                    title={tagLabel}
+              <div className="flex items-center gap-2 px-3 py-2.5">
+                {hasDetails ? (
+                  <button
+                    type="button"
+                    onClick={() => toggleExpanded(entry.id)}
+                    aria-expanded={expanded}
+                    className="min-w-0 flex-1 text-left transition hover:opacity-90"
                   >
-                    {tagLabel}
-                  </span>
-                </div>
-                <p className="ml-3.5 text-xs" style={{ color: colors.textMuted }}>
-                  {subtitle}
-                </p>
+                    {mainContent}
+                  </button>
+                ) : (
+                  <div className="min-w-0 flex-1">{mainContent}</div>
+                )}
+                {hasDetails ? <ExpandChevron expanded={expanded} color={colors.textMuted} /> : null}
+                <span
+                  className="shrink-0 text-sm font-medium tabular-nums"
+                  style={{ color: colors.textSecondary }}
+                >
+                  {formatDurationLong(duration)}
+                </span>
+                {onEdit ? (
+                  <button
+                    type="button"
+                    aria-label={`Edit ${tagLabel}`}
+                    title="Edit"
+                    onClick={() => onEdit(entry)}
+                    className="shrink-0 rounded p-1 transition hover:opacity-80"
+                  >
+                    <EditIcon color={colors.textMuted} />
+                  </button>
+                ) : null}
+                {onDelete ? (
+                  <button
+                    type="button"
+                    aria-label={`Delete ${tagLabel}`}
+                    title="Delete"
+                    onClick={() => {
+                      if (
+                        !confirmDelete(
+                          'Remove this tracked session permanently? This cannot be undone.',
+                        )
+                      ) {
+                        return;
+                      }
+                      onDelete(entry.id);
+                    }}
+                    className="shrink-0 rounded p-1 transition hover:opacity-80"
+                  >
+                    <DeleteIcon color={colors.destructiveText} />
+                  </button>
+                ) : null}
               </div>
-              <span
-                className="shrink-0 text-sm font-medium tabular-nums"
-                style={{ color: colors.textSecondary }}
-              >
-                {formatDurationLong(duration)}
-              </span>
-              {onEdit ? (
-                <button
-                  type="button"
-                  aria-label={`Edit ${tagLabel}`}
-                  title="Edit"
-                  onClick={() => onEdit(entry)}
-                  className="shrink-0 rounded p-1 transition hover:opacity-80"
-                >
-                  <EditIcon color={colors.textMuted} />
-                </button>
-              ) : null}
-              {onDelete ? (
-                <button
-                  type="button"
-                  aria-label={`Delete ${tagLabel}`}
-                  title="Delete"
-                  onClick={() => {
-                    if (
-                      !confirmDelete(
-                        'Remove this tracked session permanently? This cannot be undone.',
-                      )
-                    ) {
-                      return;
-                    }
-                    onDelete(entry.id);
-                  }}
-                  className="shrink-0 rounded p-1 transition hover:opacity-80"
-                >
-                  <DeleteIcon color={colors.destructiveText} />
-                </button>
+              {hasDetails ? (
+                <ExpandableDetails expanded={expanded} className="px-3 pb-3 pl-8">
+                  <p className="text-sm leading-relaxed" style={{ color: colors.textSecondary }}>
+                    {details}
+                  </p>
+                </ExpandableDetails>
               ) : null}
             </div>
             {mergePair ? (
@@ -196,7 +236,7 @@ export function EntryList({
                 aria-label="Merge with session below"
                 className="flex w-full items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold transition hover:opacity-80"
                 style={{
-                  borderBottom: index < entries.length - 1 ? `1px solid ${colors.surfaceBorder}` : undefined,
+                  borderBottom: index < completedEntries.length - 1 ? `1px solid ${colors.surfaceBorder}` : undefined,
                   backgroundColor: colors.secondaryBgSolid,
                   color: colors.primary,
                 }}

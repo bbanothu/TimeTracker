@@ -1,6 +1,6 @@
-import { addDays, addWeeks, endOfDay, endOfWeek, format, startOfDay, startOfWeek } from 'date-fns';
+import { addDays, endOfDay, format, startOfDay } from 'date-fns';
 
-import { getPeriodBounds } from '@/utils/periodBounds';
+import { getPeriodBounds, ROLLING_MONTH_DAYS, ROLLING_WEEK_DAYS } from '@/utils/periodBounds';
 import { analyticsIncludedTags, analyticsVisibleDurationMs } from '@/utils/tagAnalytics';
 import type {
   Geofence,
@@ -72,12 +72,16 @@ function aggregateByGeofence(
   return Array.from(totals.values()).sort((a, b) => b.durationMs - a.durationMs);
 }
 
-function buildDayBuckets(anchor: Date, entries: TimeEntry[]) {
-  const weekStart = startOfWeek(anchor, { weekStartsOn: 1 });
+function buildRollingDayBuckets(
+  rangeStart: Date,
+  dayCount: number,
+  entries: TimeEntry[],
+  labelForDay: (day: Date) => string,
+) {
   const buckets = [];
 
-  for (let i = 0; i < 7; i++) {
-    const day = addDays(weekStart, i);
+  for (let i = 0; i < dayCount; i++) {
+    const day = addDays(startOfDay(rangeStart), i);
     const dayStart = startOfDay(day).getTime();
     const dayEnd = endOfDay(day).getTime();
     let durationMs = 0;
@@ -90,40 +94,7 @@ function buildDayBuckets(anchor: Date, entries: TimeEntry[]) {
       );
     }
 
-    buckets.push({ label: format(day, 'EEE'), startMs: dayStart, endMs: dayEnd, durationMs });
-  }
-
-  return buckets;
-}
-
-function buildWeekBuckets(anchor: Date, entries: TimeEntry[]) {
-  const monthStart = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
-  const buckets = [];
-  let weekStart = startOfWeek(monthStart, { weekStartsOn: 1 });
-
-  while (weekStart.getMonth() === anchor.getMonth() || weekStart <= anchor) {
-    const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
-    const bucketStart = weekStart.getTime();
-    const bucketEnd = weekEnd.getTime();
-    let durationMs = 0;
-
-    for (const entry of entries) {
-      if (entry.endedAt == null) continue;
-      durationMs += analyticsVisibleDurationMs(
-        clipDuration(entry.startedAt, entry.endedAt, bucketStart, bucketEnd),
-        entry.tags,
-      );
-    }
-
-    buckets.push({
-      label: `W${format(weekStart, 'd')}`,
-      startMs: bucketStart,
-      endMs: bucketEnd,
-      durationMs,
-    });
-
-    weekStart = addWeeks(weekStart, 1);
-    if (buckets.length >= 6) break;
+    buckets.push({ label: labelForDay(day), startMs: dayStart, endMs: dayEnd, durationMs });
   }
 
   return buckets;
@@ -187,9 +158,9 @@ export function getStatsSummary(
 
   const buckets =
     period === 'week'
-      ? buildDayBuckets(anchor, filtered)
+      ? buildRollingDayBuckets(start, ROLLING_WEEK_DAYS, filtered, (day) => format(day, 'EEE'))
       : period === 'month'
-        ? buildWeekBuckets(anchor, filtered)
+        ? buildRollingDayBuckets(start, ROLLING_MONTH_DAYS, filtered, (day) => format(day, 'M/d'))
         : [
             {
               label: format(anchor, 'EEE'),

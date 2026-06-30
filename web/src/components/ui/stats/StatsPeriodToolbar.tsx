@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useAppColors } from '@/contexts/ThemeContext';
 import type { PeriodType } from '@/types';
-import { formatPeriodLabel, shiftPeriod } from '@/utils/periodBounds';
+import { formatPeriodLabel, PERIOD_LABELS, shiftPeriod } from '@/utils/periodBounds';
 
 interface StatsPeriodToolbarProps {
   period: PeriodType;
@@ -33,13 +33,13 @@ export function StatsPeriodToolbar({
             key={item}
             type="button"
             onClick={() => onPeriodChange(item)}
-            className="rounded-lg px-3 py-2 text-sm font-semibold capitalize lg:px-4"
+            className="rounded-lg px-3 py-2 text-sm font-semibold lg:px-4"
             style={{
               backgroundColor: period === item ? colors.selectedBg : 'transparent',
               color: period === item ? colors.selectedText : colors.textMuted,
             }}
           >
-            {item}
+            {PERIOD_LABELS[item]}
           </button>
         ))}
         {isViewingFriend ? (
