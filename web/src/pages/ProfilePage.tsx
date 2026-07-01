@@ -6,7 +6,7 @@ import { ProfileIdentityCard } from '@/components/ui/ProfileIdentityCard';
 import { ProfileLinkRows } from '@/components/ui/ProfileLinkRows';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRefresh } from '@/contexts/RefreshContext';
-import { useAppColors } from '@/contexts/ThemeContext';
+// import { useAppColors } from '@/contexts/ThemeContext';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
 import {
   deleteAllEntries,
@@ -21,7 +21,7 @@ import { fetchIncomingPendingCount } from '@/services/friendsService';
 import { aggregatedExportDayCount } from '@/utils/aggregatedExportCsv';
 
 export function ProfilePage() {
-  const colors = useAppColors();
+  // const colors = useAppColors();
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut } = useAuth();
