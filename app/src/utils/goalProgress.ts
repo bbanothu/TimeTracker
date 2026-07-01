@@ -1,5 +1,19 @@
 import type { ActiveSession, Tag, TimeEntry } from '@/types';
-import { analyticsIncludedTags } from '@/utils/tagAnalytics';
+import { analyticsIncludedTags, isTagIncludedInAnalytics } from '@/utils/tagAnalytics';
+
+function resolveSessionTags(session: ActiveSession, tags: Tag[]): Tag[] {
+  const byId = new Map(tags.map((tag) => [tag.id, tag]));
+  return session.tags
+    .map((tag) => byId.get(tag.id) ?? tag)
+    .filter((tag): tag is Tag => tag !== undefined);
+}
+
+function resolveEntryTags(entry: TimeEntry, tags: Tag[]): Tag[] {
+  const byId = new Map(tags.map((tag) => [tag.id, tag]));
+  return entry.tags
+    .map((tag) => byId.get(tag.id) ?? tag)
+    .filter((tag): tag is Tag => tag !== undefined);
+}
 
 function clipDuration(
   startMs: number,
@@ -48,19 +62,23 @@ export function computeCategoryDurationsToday(
       stopLatitude: null,
       stopLongitude: null,
       details: null,
-      tags: activeSession.tags,
+      tags: resolveSessionTags(activeSession, tags),
     });
   }
+
+  const tagById = new Map(tags.map((tag) => [tag.id, tag]));
 
   for (const entry of allEntries) {
     if (entry.endedAt == null) continue;
     const duration = clipDuration(entry.startedAt, entry.endedAt, dayStart, dayEnd);
-    const includedTags = analyticsIncludedTags(entry.tags);
+    const includedTags = analyticsIncludedTags(resolveEntryTags(entry, tags));
     if (duration <= 0 || includedTags.length === 0) continue;
 
     const share = duration / includedTags.length;
     for (const tag of includedTags) {
       const rootId = getRootTagId(tag.id, tags);
+      const rootTag = tagById.get(rootId);
+      if (rootTag && !isTagIncludedInAnalytics(rootTag)) continue;
       totals.set(rootId, (totals.get(rootId) ?? 0) + share);
     }
   }
@@ -70,9 +88,12 @@ export function computeCategoryDurationsToday(
 
 export const MAX_ACCOUNTED_DAY_MS = 24 * 60 * 60 * 1000;
 
-export function sumAccountedDurationMs(progressByTagId: Map<string, number>): number {
+export function sumAccountedDurationMs(progressByTagId: Map<string, number>, tags: Tag[]): number {
+  const tagById = new Map(tags.map((tag) => [tag.id, tag]));
   let total = 0;
-  for (const ms of progressByTagId.values()) {
+  for (const [tagId, ms] of progressByTagId) {
+    const tag = tagById.get(tagId);
+    if (!tag || !isTagIncludedInAnalytics(tag)) continue;
     total += ms;
   }
   return Math.min(total, MAX_ACCOUNTED_DAY_MS);

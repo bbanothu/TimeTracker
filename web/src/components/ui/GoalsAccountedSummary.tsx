@@ -3,16 +3,21 @@ import { useMemo } from 'react';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { useCountUpMs } from '@/hooks/useCountUpMs';
+import type { Tag } from '@/types';
 import { formatDurationLong } from '@/utils/formatDuration';
 import { MAX_ACCOUNTED_DAY_MS, sumAccountedDurationMs } from '@/utils/goalProgress';
 
 interface GoalsAccountedSummaryProps {
   progressByTagId: Map<string, number>;
+  tags: Tag[];
 }
 
-export function GoalsAccountedSummary({ progressByTagId }: GoalsAccountedSummaryProps) {
+export function GoalsAccountedSummary({ progressByTagId, tags }: GoalsAccountedSummaryProps) {
   const colors = useAppColors();
-  const accountedMs = useMemo(() => sumAccountedDurationMs(progressByTagId), [progressByTagId]);
+  const accountedMs = useMemo(
+    () => sumAccountedDurationMs(progressByTagId, tags),
+    [progressByTagId, tags],
+  );
   const displayMs = useCountUpMs(accountedMs);
   const fillRatio = accountedMs / MAX_ACCOUNTED_DAY_MS;
 

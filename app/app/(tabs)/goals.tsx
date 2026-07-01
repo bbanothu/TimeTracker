@@ -88,7 +88,7 @@ export default function GoalsScreen() {
           Set daily targets for your top-level categories. Saved targets stay on your account and
           apply every day until you change them. Time tracked on sub-tags counts toward the parent.
         </Text>
-        <GoalsAccountedSummary progressByTagId={progressByTagId} />
+        <GoalsAccountedSummary progressByTagId={progressByTagId} tags={tags} />
         <GoalsList
           categories={categories}
           goals={goals}

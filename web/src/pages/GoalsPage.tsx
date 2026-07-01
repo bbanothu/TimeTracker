@@ -53,7 +53,7 @@ export function GoalsPage() {
         }
       />
 
-      <GoalsAccountedSummary progressByTagId={progressByTagId} />
+      <GoalsAccountedSummary progressByTagId={progressByTagId} tags={tags} />
 
       <GoalsList
         categories={categories}
