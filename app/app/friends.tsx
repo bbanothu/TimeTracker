@@ -172,7 +172,10 @@ export default function FriendsScreen() {
             <>
               {incomingRequests.length > 0 ? (
                 <ThemedSurface className="mb-4 overflow-hidden">
-                  <Text className="mb-3 px-3 pt-4 text-base font-semibold" style={{ color: colors.text }}>
+                  <Text
+                    className="mb-3 px-3 pt-4 text-base font-semibold"
+                    style={{ color: colors.text }}
+                  >
                     Requests
                   </Text>
                   {incomingRequests.map((friendship, index) => (
@@ -223,7 +226,10 @@ export default function FriendsScreen() {
 
               {outgoingRequests.length > 0 ? (
                 <ThemedSurface className="mb-4 overflow-hidden">
-                  <Text className="mb-3 px-3 pt-4 text-base font-semibold" style={{ color: colors.text }}>
+                  <Text
+                    className="mb-3 px-3 pt-4 text-base font-semibold"
+                    style={{ color: colors.text }}
+                  >
                     Sent requests
                   </Text>
                   {outgoingRequests.map((friendship, index) => (
@@ -259,7 +265,10 @@ export default function FriendsScreen() {
               ) : null}
 
               <ThemedSurface className="mb-4 overflow-hidden">
-                <Text className="mb-3 px-3 pt-4 text-base font-semibold" style={{ color: colors.text }}>
+                <Text
+                  className="mb-3 px-3 pt-4 text-base font-semibold"
+                  style={{ color: colors.text }}
+                >
                   Friends
                 </Text>
                 {accepted.length === 0 ? (

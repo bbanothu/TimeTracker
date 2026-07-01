@@ -21,7 +21,8 @@ import { fetchGeofences, mergeTimeEntries, updateTimeEntryStopDetails } from '@/
 export function TrackPage() {
   const colors = useAppColors();
   const { user } = useAuth();
-  const { ready, sessions, todayEntries, tick, startManual, stop, addManualEntry, refresh } = useTimer();
+  const { ready, sessions, todayEntries, tick, startManual, stop, addManualEntry, refresh } =
+    useTimer();
   const { tags } = useTags();
   const { selectedTagId, setSelectedTagId } = useSelectedTag(tags);
   const [manualModalOpen, setManualModalOpen] = useState(false);

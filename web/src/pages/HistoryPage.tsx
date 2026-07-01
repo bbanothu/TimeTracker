@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
+import { PageHeader } from '@/components/layout/PageHeader';
 import { EditEntryModal } from '@/components/ui/EditEntryModal';
 import { EntryList } from '@/components/ui/EntryList';
 import { PageLoading } from '@/components/ui/PageLoading';
@@ -10,7 +11,13 @@ import { useAppColors } from '@/contexts/ThemeContext';
 import { useTags } from '@/contexts/TagsContext';
 import { useTimer } from '@/contexts/TimerContext';
 import { notifyDataRefresh, subscribeDataRefresh } from '@/lib/dataRefresh';
-import { deleteTimeEntry, fetchAllEntries, fetchGeofences, mergeTimeEntries, updateTimeEntry } from '@/services/data';
+import {
+  deleteTimeEntry,
+  fetchAllEntries,
+  fetchGeofences,
+  mergeTimeEntries,
+  updateTimeEntry,
+} from '@/services/data';
 import type { Geofence, TimeEntry } from '@/types';
 import {
   defaultHistoryFilters,
@@ -133,15 +140,7 @@ export function HistoryPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <Link to="/profile" className="text-sm font-semibold" style={{ color: colors.textMuted }}>
-          ← Back
-        </Link>
-        <h1 className="text-2xl font-bold" style={{ color: colors.headerText }}>
-          History
-        </h1>
-        <span className="w-10" />
-      </div>
+      <PageHeader title="History" backLink={{ to: '/profile', label: '← Back' }} />
 
       {error ? <p className="mb-3 text-sm text-rose-500">{error}</p> : null}
 

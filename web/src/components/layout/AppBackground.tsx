@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
 
-import { useAppColors } from '@/contexts/ThemeContext';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export function AppBackground({ children }: { children: ReactNode }) {
-  const colors = useAppColors();
+  const { colors, isDark } = useTheme();
 
   return (
     <div className="relative min-h-dvh overflow-hidden">
@@ -13,7 +13,7 @@ export function AppBackground({ children }: { children: ReactNode }) {
         className="pointer-events-none absolute inset-0 h-full w-full object-cover"
       />
       <div
-        className="pointer-events-none absolute inset-0 backdrop-blur-[2px]"
+        className={`pointer-events-none absolute inset-0 ${isDark ? 'backdrop-blur-[2px]' : 'backdrop-blur-[1px]'}`}
         style={{
           backgroundImage: `linear-gradient(180deg, ${colors.backgroundGradient[0]}, ${colors.backgroundGradient[1]}, ${colors.backgroundGradient[2]})`,
         }}

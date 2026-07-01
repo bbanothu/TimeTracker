@@ -164,7 +164,7 @@ export function StatsPage() {
   return (
     <div className="lg:pb-2">
       <div className="mb-4 flex flex-col gap-4 lg:mb-5 lg:flex-row lg:items-end lg:justify-between">
-        <PageHeader title="Stats" />
+        <PageHeader title="Stats" className="mb-0 lg:mb-0" />
         <div className="flex flex-col gap-3 lg:items-end">
           {friends.length > 0 ? (
             <StatsPersonSelector

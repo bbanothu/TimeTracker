@@ -1,12 +1,13 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Alert, KeyboardAvoidingView, Linking, Platform, ScrollView, Text } from 'react-native';
 
 import { AppBackground } from '@/components/AppBackground';
 import { ProfileIdentityCard } from '@/components/ProfileIdentityCard';
 import { ProfileLinkRows } from '@/components/ProfileLinkRows';
 import { useAuth } from '@/hooks/useAuth';
+import { useGeofenceMonitoring } from '@/hooks/useGeofenceMonitoring';
 import { useScreenTopPadding } from '@/hooks/useScreenTopPadding';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
 import { clearTrackedData, exportTrackedDataCsv } from '@/services/dataService';
@@ -33,6 +34,43 @@ export default function ProfileScreen() {
     error: profileError,
     reload: reloadProfile,
   } = useProfileName();
+  const {
+    status,
+    enabledCount,
+    enabling,
+    enableBackgroundTracking,
+    disableBackgroundTracking,
+    refreshStatus,
+  } = useGeofenceMonitoring();
+
+  const autoTrackingOn = status === 'background_active';
+  const autoTrackingSubtitle =
+    enabledCount === 0
+      ? 'Save a place on the Map tab first'
+      : autoTrackingOn
+        ? 'Tracks arrivals when the app is closed'
+        : 'Only tracks while the app is open';
+
+  const handleAutoTrackingToggle = async (next: boolean) => {
+    if (enabledCount === 0) return;
+
+    if (next) {
+      const granted = await enableBackgroundTracking();
+      if (!granted) {
+        Alert.alert(
+          'Always Allow location required',
+          'Open Settings, choose Location, then Always Allow so TimeTracker can auto-start when you arrive at saved places.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Open Settings', onPress: () => Linking.openSettings() },
+          ],
+        );
+      }
+      return;
+    }
+
+    await disableBackgroundTracking();
+  };
 
   const loadPendingCount = useCallback(() => {
     fetchIncomingPendingCount()
@@ -47,7 +85,8 @@ export default function ProfileScreen() {
       getLastAutoSyncAt()
         .then(setLastSyncedAt)
         .catch(() => undefined);
-    }, [loadPendingCount, reloadProfile]),
+      refreshStatus().catch(console.warn);
+    }, [loadPendingCount, reloadProfile, refreshStatus]),
   );
 
   const handleSync = async () => {
@@ -210,6 +249,20 @@ export default function ProfileScreen() {
                 label: 'Password',
                 icon: 'password',
                 onPress: () => router.push('/change-password'),
+              },
+              {
+                id: 'autotracking',
+                label: 'Auto tracking',
+                icon: 'autotracking',
+                subtitle: autoTrackingSubtitle,
+                disabled: enabledCount === 0 || enabling,
+                loading: enabling,
+                toggle: {
+                  value: autoTrackingOn,
+                  onValueChange: (value) => {
+                    handleAutoTrackingToggle(value).catch(console.warn);
+                  },
+                },
               },
             ]}
           />

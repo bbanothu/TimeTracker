@@ -87,65 +87,65 @@ export default function LoginScreen() {
 
           {ready ? (
             <Animated.View entering={CARD_ENTER}>
-            <AuthCard>
-              <Animated.Text
-                entering={CARD_FADE.delay(CARD_CONTENT_DELAY)}
-                style={styles.cardTitle}
-              >
-                Sign in
-              </Animated.Text>
-              <Animated.Text
-                entering={CARD_FADE.delay(CARD_CONTENT_DELAY + CARD_STAGGER)}
-                style={styles.cardHint}
-              >
-                Your stats, tags, and sessions are waiting.
-              </Animated.Text>
+              <AuthCard>
+                <Animated.Text
+                  entering={CARD_FADE.delay(CARD_CONTENT_DELAY)}
+                  style={styles.cardTitle}
+                >
+                  Sign in
+                </Animated.Text>
+                <Animated.Text
+                  entering={CARD_FADE.delay(CARD_CONTENT_DELAY + CARD_STAGGER)}
+                  style={styles.cardHint}
+                >
+                  Your stats, tags, and sessions are waiting.
+                </Animated.Text>
 
-              <Animated.View entering={CARD_FADE.delay(CARD_CONTENT_DELAY + CARD_STAGGER * 2)}>
-                <GlassInput
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="Email"
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  autoComplete="email"
-                />
-              </Animated.View>
-              <Animated.View entering={CARD_FADE.delay(CARD_CONTENT_DELAY + CARD_STAGGER * 3)}>
-                <GlassInput
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="Password"
-                  secureTextEntry
-                  autoComplete="password"
-                />
-              </Animated.View>
+                <Animated.View entering={CARD_FADE.delay(CARD_CONTENT_DELAY + CARD_STAGGER * 2)}>
+                  <GlassInput
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="Email"
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    autoComplete="email"
+                  />
+                </Animated.View>
+                <Animated.View entering={CARD_FADE.delay(CARD_CONTENT_DELAY + CARD_STAGGER * 3)}>
+                  <GlassInput
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholder="Password"
+                    secureTextEntry
+                    autoComplete="password"
+                  />
+                </Animated.View>
 
-              <Animated.View entering={CARD_FADE.delay(CARD_CONTENT_DELAY + CARD_STAGGER * 4)}>
-                <Pressable onPress={handleLogin} disabled={submitting} style={styles.buttonWrap}>
-                  <LinearGradient
-                    colors={colors.authGradient}
-                    start={{ x: 0, y: 0.5 }}
-                    end={{ x: 1, y: 0.5 }}
-                    style={styles.button}
-                  >
-                    {submitting ? (
-                      <LoadingIndicator size="small" />
-                    ) : (
-                      <Text style={styles.buttonText}>Sign in</Text>
-                    )}
-                  </LinearGradient>
-                </Pressable>
-              </Animated.View>
-
-              <Animated.View entering={CARD_FADE.delay(CARD_CONTENT_DELAY + CARD_STAGGER * 5)}>
-                <Link href="/(auth)/register" asChild>
-                  <Pressable style={styles.linkWrap}>
-                    <Text style={styles.linkText}>New here? Create an account</Text>
+                <Animated.View entering={CARD_FADE.delay(CARD_CONTENT_DELAY + CARD_STAGGER * 4)}>
+                  <Pressable onPress={handleLogin} disabled={submitting} style={styles.buttonWrap}>
+                    <LinearGradient
+                      colors={colors.authGradient}
+                      start={{ x: 0, y: 0.5 }}
+                      end={{ x: 1, y: 0.5 }}
+                      style={styles.button}
+                    >
+                      {submitting ? (
+                        <LoadingIndicator size="small" />
+                      ) : (
+                        <Text style={styles.buttonText}>Sign in</Text>
+                      )}
+                    </LinearGradient>
                   </Pressable>
-                </Link>
-              </Animated.View>
-            </AuthCard>
+                </Animated.View>
+
+                <Animated.View entering={CARD_FADE.delay(CARD_CONTENT_DELAY + CARD_STAGGER * 5)}>
+                  <Link href="/(auth)/register" asChild>
+                    <Pressable style={styles.linkWrap}>
+                      <Text style={styles.linkText}>New here? Create an account</Text>
+                    </Pressable>
+                  </Link>
+                </Animated.View>
+              </AuthCard>
             </Animated.View>
           ) : null}
         </ScrollView>

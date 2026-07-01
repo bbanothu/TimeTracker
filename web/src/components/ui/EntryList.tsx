@@ -236,7 +236,10 @@ export function EntryList({
                 aria-label="Merge with session below"
                 className="flex w-full items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold transition hover:opacity-80"
                 style={{
-                  borderBottom: index < completedEntries.length - 1 ? `1px solid ${colors.surfaceBorder}` : undefined,
+                  borderBottom:
+                    index < completedEntries.length - 1
+                      ? `1px solid ${colors.surfaceBorder}`
+                      : undefined,
                   backgroundColor: colors.secondaryBgSolid,
                   color: colors.primary,
                 }}

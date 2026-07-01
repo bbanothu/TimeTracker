@@ -41,26 +41,26 @@ export function GoalsPage() {
   }
 
   return (
-    <div className="lg:max-w-4xl">
-      <PageHeader title="Goals" />
-      <div className="lg:grid lg:grid-cols-[minmax(240px,280px)_minmax(0,1fr)] lg:items-start lg:gap-8">
-        <p
-          className="mb-4 text-sm leading-6 lg:mb-0 lg:sticky lg:top-8"
-          style={{ color: colors.textOnBg }}
-        >
-          Set daily targets for your top-level categories. Saved targets stay on your account and
-          apply every day until you change them. Time tracked on sub-tags counts toward the parent.
-        </p>
-        <div>
-          <GoalsAccountedSummary progressByTagId={progressByTagId} />
-          <GoalsList
-          categories={categories}
-          goals={goals}
-          progressByTagId={progressByTagId}
-          onSaveGoal={handleSaveGoal}
-        />
-        </div>
-      </div>
+    <div className="mx-auto w-full max-w-[88rem]">
+      <PageHeader
+        title="Goals"
+        description={
+          <p className="max-w-2xl text-sm leading-6" style={{ color: colors.textOnBg }}>
+            Set daily targets for your top-level categories. Saved targets stay on your account and
+            apply every day until you change them. Time tracked on sub-tags counts toward the
+            parent.
+          </p>
+        }
+      />
+
+      <GoalsAccountedSummary progressByTagId={progressByTagId} />
+
+      <GoalsList
+        categories={categories}
+        goals={goals}
+        progressByTagId={progressByTagId}
+        onSaveGoal={handleSaveGoal}
+      />
     </div>
   );
 }

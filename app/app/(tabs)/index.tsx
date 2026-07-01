@@ -4,6 +4,7 @@ import { Alert, Pressable, Text, View } from 'react-native';
 
 import { ActiveSessionsList } from '@/components/ActiveSessionsList';
 import { AddManualSessionModal } from '@/components/AddManualSessionModal';
+import { AutoTrackingBanner } from '@/components/AutoTrackingBanner';
 import { EntryList } from '@/components/EntryList';
 import { TabScrollView } from '@/components/TabScrollView';
 import { TabScreenContainer } from '@/components/TabScreenContainer';
@@ -123,6 +124,7 @@ export default function TrackScreen() {
 
   return (
     <TabScreenContainer>
+      <AutoTrackingBanner />
       <TabScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-2">
         <ThemedSurface className="mb-6 p-4">
           <View className="mb-3 flex-row items-center justify-between">

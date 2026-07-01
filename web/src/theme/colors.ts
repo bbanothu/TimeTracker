@@ -78,9 +78,9 @@ export const lightColors: AppColors = {
   chartPrimary: '#059669',
   authGradient: ['#6EE7B7', '#059669', '#047857'],
   backgroundGradient: [
-    'rgba(254, 243, 199, 0.25)',
-    'rgba(255, 252, 245, 0.5)',
-    'rgba(231, 229, 228, 0.78)',
+    'rgba(254, 243, 199, 0.14)',
+    'rgba(255, 252, 245, 0.22)',
+    'rgba(231, 229, 228, 0.38)',
   ],
   stop: '#DC2626',
   overlay: 'rgba(0, 0, 0, 0.65)',

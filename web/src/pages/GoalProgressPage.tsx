@@ -1,6 +1,7 @@
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { PageHeader } from '@/components/layout/PageHeader';
 import { DailyGoalScoreList } from '@/components/ui/DailyGoalScoreList';
 import { PageLoading } from '@/components/ui/PageLoading';
 import { useAuth } from '@/contexts/AuthContext';
@@ -93,15 +94,7 @@ export function GoalProgressPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <Link to="/stats" className="text-sm font-semibold" style={{ color: colors.textMuted }}>
-          ← Back
-        </Link>
-        <h1 className="text-2xl font-bold" style={{ color: colors.headerText }}>
-          Progress
-        </h1>
-        <span className="w-10" />
-      </div>
+      <PageHeader title="Progress" backLink={{ to: '/stats', label: '← Back' }} />
 
       <p className="mb-1 text-sm font-medium" style={{ color: colors.textMuted }}>
         {subtitle}

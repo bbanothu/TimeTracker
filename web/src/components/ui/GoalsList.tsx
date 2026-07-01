@@ -76,9 +76,9 @@ function GoalTargetInputs({
   };
 
   return (
-    <div className="mt-2">
-      <div className="flex items-center justify-between gap-3">
-        <div className="inline-flex items-center gap-2">
+    <div className="mt-2 min-w-0">
+      <div className="flex flex-col gap-2">
+        <div className="flex min-w-0 items-center gap-1.5">
           <input
             value={hours}
             onChange={(event) => {
@@ -89,10 +89,10 @@ function GoalTargetInputs({
             disabled={buttonState === 'saving'}
             inputMode="numeric"
             maxLength={2}
-            className="w-12 rounded-lg border px-2 py-1.5 text-center text-sm"
+            className="w-10 min-w-0 flex-1 rounded-lg border px-1.5 py-1.5 text-center text-sm"
             style={inputStyle}
           />
-          <span className="text-xs" style={{ color: colors.textMuted }}>
+          <span className="shrink-0 text-xs" style={{ color: colors.textMuted }}>
             h
           </span>
           <input
@@ -105,10 +105,10 @@ function GoalTargetInputs({
             disabled={buttonState === 'saving'}
             inputMode="numeric"
             maxLength={2}
-            className="w-12 rounded-lg border px-2 py-1.5 text-center text-sm"
+            className="w-10 min-w-0 flex-1 rounded-lg border px-1.5 py-1.5 text-center text-sm"
             style={inputStyle}
           />
-          <span className="text-xs" style={{ color: colors.textMuted }}>
+          <span className="shrink-0 text-xs" style={{ color: colors.textMuted }}>
             m
           </span>
         </div>
@@ -118,7 +118,7 @@ function GoalTargetInputs({
             commit().catch(console.error);
           }}
           disabled={buttonState === 'saving'}
-          className="inline-flex min-w-[4.5rem] shrink-0 items-center justify-center rounded-lg px-3 py-1.5 text-xs font-semibold disabled:opacity-100"
+          className="inline-flex w-full items-center justify-center rounded-lg px-3 py-1.5 text-xs font-semibold disabled:opacity-100"
           style={{
             backgroundColor: colors.primary,
             color: colors.textOnPrimary,
@@ -148,15 +148,17 @@ export function GoalsList({ categories, goals, progressByTagId, onSaveGoal }: Go
 
   if (categories.length === 0) {
     return (
-      <p className="py-2 text-center text-sm" style={{ color: colors.textMuted }}>
-        Create top-level tags to set daily goals.
-      </p>
+      <ThemedSurface className="p-6">
+        <p className="text-center text-sm" style={{ color: colors.textMuted }}>
+          Create top-level tags to set daily goals.
+        </p>
+      </ThemedSurface>
     );
   }
 
   return (
-    <ThemedSurface className="overflow-hidden">
-      {categories.map((tag, index) => {
+    <div className="grid auto-rows-auto grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {categories.map((tag) => {
         const goal = goalsByTagId.get(tag.id);
         const targetMinutes = goal?.targetMinutes ?? null;
         const todayMs = progressByTagId.get(tag.id) ?? 0;
@@ -166,21 +168,20 @@ export function GoalsList({ categories, goals, progressByTagId, onSaveGoal }: Go
         const overGoal = hasTarget && (targetMs === 0 ? todayMs > 0 : todayMs > targetMs);
 
         return (
-          <div
-            key={tag.id}
-            className="px-3 py-3"
-            style={{
-              borderBottomWidth: index < categories.length - 1 ? 1 : 0,
-              borderBottomColor: colors.surfaceBorder,
-            }}
-          >
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: tag.color }} />
-              <span className="flex-1 text-sm font-semibold" style={{ color: colors.textOnBg }}>
+          <ThemedSurface key={tag.id} className="flex min-w-0 w-full flex-col overflow-hidden p-4">
+            <div className="flex min-w-0 items-center gap-2">
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: tag.color }}
+              />
+              <span
+                className="min-w-0 flex-1 truncate text-sm font-semibold"
+                style={{ color: colors.textOnBg }}
+              >
                 {formatTagName(tag.name)}
               </span>
               <span
-                className="text-sm font-semibold tabular-nums"
+                className="shrink-0 text-sm font-semibold tabular-nums"
                 style={{ color: colors.textOnBg }}
               >
                 {formatDurationLong(todayMs)}
@@ -194,7 +195,7 @@ export function GoalsList({ categories, goals, progressByTagId, onSaveGoal }: Go
             />
 
             {hasTarget ? (
-              <div className="mt-3">
+              <div className="mt-auto pt-3">
                 <div
                   className="h-2 overflow-hidden rounded-full"
                   style={{ backgroundColor: colors.surfaceBorder }}
@@ -213,9 +214,9 @@ export function GoalsList({ categories, goals, progressByTagId, onSaveGoal }: Go
                 </p>
               </div>
             ) : null}
-          </div>
+          </ThemedSurface>
         );
       })}
-    </ThemedSurface>
+    </div>
   );
 }

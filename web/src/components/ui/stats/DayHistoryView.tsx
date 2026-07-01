@@ -97,7 +97,9 @@ export function DayHistoryView({
           <div
             key={entry.id}
             style={
-              index < entries.length - 1 ? { borderBottom: `1px solid ${colors.surfaceBorder}` } : undefined
+              index < entries.length - 1
+                ? { borderBottom: `1px solid ${colors.surfaceBorder}` }
+                : undefined
             }
           >
             {hasDetails ? (

@@ -22,10 +22,7 @@ export function GoalsAccountedSummary({ progressByTagId }: GoalsAccountedSummary
         <span className="text-sm font-medium" style={{ color: colors.textMuted }}>
           Accounted today
         </span>
-        <span
-          className="text-2xl font-bold tabular-nums"
-          style={{ color: colors.textOnBg }}
-        >
+        <span className="text-2xl font-bold tabular-nums" style={{ color: colors.textOnBg }}>
           {formatDurationLong(displayMs)}
         </span>
       </div>

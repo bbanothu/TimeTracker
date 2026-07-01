@@ -119,6 +119,17 @@ export async function syncGeofencingTask(): Promise<void> {
   }
 }
 
+export async function disableBackgroundGeofencing(): Promise<void> {
+  try {
+    const hasStarted = await Location.hasStartedGeofencingAsync(GEOFENCE_TASK);
+    if (hasStarted) {
+      await Location.stopGeofencingAsync(GEOFENCE_TASK);
+    }
+  } catch (error) {
+    console.warn('Geofence stop unavailable:', error);
+  }
+}
+
 export async function requestLocationPermissions(): Promise<boolean> {
   const { status: foreground } = await Location.requestForegroundPermissionsAsync();
   return foreground === Location.PermissionStatus.GRANTED;

@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, Keyboard, Pressable, Text, TextInput, View } from 'react-native';
 import MapView, { Circle, Marker, type MapPressEvent } from 'react-native-maps';
 import * as Location from 'expo-location';
 
 import { ActionButton } from '@/components/ActionButton';
 import { AddressSearchModal } from '@/components/AddressSearchModal';
+import { AutoTrackingBanner } from '@/components/AutoTrackingBanner';
 import { EditGeofenceModal } from '@/components/EditGeofenceModal';
 import { GeofencesList } from '@/components/GeofencesList';
 import { TabScrollView } from '@/components/TabScrollView';
@@ -16,10 +17,10 @@ import { createGeofence, deleteGeofence, getAllGeofences, updateGeofence } from 
 import { useActiveSession } from '@/hooks/useActiveSession';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppColors } from '@/hooks/useAppColors';
+import { useGeofenceMonitoring } from '@/hooks/useGeofenceMonitoring';
 import { useSelectedTag } from '@/hooks/useSelectedTag';
 import { useTags } from '@/hooks/useTags';
 import {
-  geofenceService,
   requestBackgroundPermissions,
   requestLocationPermissions,
   syncGeofencingTask,
@@ -80,17 +81,16 @@ export default function MapScreen() {
   const colors = useAppColors();
   const { user } = useAuth();
   const { ready, refresh } = useActiveSession();
+  const { refreshStatus } = useGeofenceMonitoring();
   const [geofences, setGeofences] = useState<Geofence[]>([]);
   const [draftLat, setDraftLat] = useState<number | null>(null);
   const [draftLng, setDraftLng] = useState<number | null>(null);
   const [name, setName] = useState('');
   const [radius, setRadius] = useState('150');
   const [region, setRegion] = useState(DEFAULT_REGION);
-  const [showBanner, setShowBanner] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingGeofence, setEditingGeofence] = useState<Geofence | null>(null);
   const [addressModalOpen, setAddressModalOpen] = useState(false);
-  const insideIdsRef = useRef<Set<string>>(new Set());
 
   const hasPin = draftLat != null && draftLng != null;
   const canSave = hasPin && !!selectedTagId && name.trim().length > 0 && !saving;
@@ -131,27 +131,6 @@ export default function MapScreen() {
       cancelled = true;
     };
   }, []);
-
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const granted = await requestLocationPermissions();
-        if (!granted) return;
-
-        const location = await Location.getCurrentPositionAsync({});
-        insideIdsRef.current = await geofenceService.checkForegroundGeofences(
-          location.coords.latitude,
-          location.coords.longitude,
-          insideIdsRef.current,
-        );
-        refresh();
-      } catch (error) {
-        console.warn('Foreground geofence check failed:', error);
-      }
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [refresh]);
 
   const handleMapPress = (event: MapPressEvent) => {
     setDraftLat(event.nativeEvent.coordinate.latitude);
@@ -207,9 +186,10 @@ export default function MapScreen() {
       } else {
         Alert.alert(
           'Place saved',
-          'Enable Always Allow location in Settings for automatic tracking when the app is closed.',
+          'Enable Always Allow location for automatic tracking when the app is closed.',
         );
       }
+      await refreshStatus();
     } catch (error) {
       Alert.alert('Save failed', error instanceof Error ? error.message : 'Unknown error');
     } finally {
@@ -221,6 +201,7 @@ export default function MapScreen() {
     updateGeofence(geofence.id, { enabled });
     loadGeofences();
     await syncGeofencingTask();
+    await refreshStatus();
     pushChangesInBackground(user?.id);
   };
 
@@ -228,6 +209,7 @@ export default function MapScreen() {
     deleteGeofence(geofence.id);
     loadGeofences();
     await syncGeofencingTask();
+    await refreshStatus();
     pushChangesInBackground(user?.id);
   };
 
@@ -248,24 +230,13 @@ export default function MapScreen() {
     updateGeofence(geofenceId, input);
     loadGeofences();
     await syncGeofencingTask();
+    await refreshStatus();
     pushChangesInBackground(user?.id);
   };
 
   const setupHeader = (
     <>
-      {showBanner ? (
-        <View className="border-b border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-900 dark:bg-amber-950">
-          <Text className="text-sm text-amber-900 dark:text-amber-200">
-            Expo Go has limited background location and notifications. Use a development build for
-            reliable arrival alerts and auto-tracking.
-          </Text>
-          <Pressable onPress={() => setShowBanner(false)} className="mt-2">
-            <Text className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-              Dismiss
-            </Text>
-          </Pressable>
-        </View>
-      ) : null}
+      <AutoTrackingBanner className="mx-0" />
 
       <ThemedSurface className="mx-4 mt-3 p-4">
         <Text className="mb-3 text-sm" style={{ color: colors.textMuted }}>

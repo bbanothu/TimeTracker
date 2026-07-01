@@ -8,6 +8,7 @@ import { pushChangesInBackground } from '@/services/syncScheduler';
 import { startDailyGoalScoreScheduler } from '@/services/dailyGoalScoreService';
 import { timerService } from '@/services/timerService';
 import type { ActiveSession, TimeEntry } from '@/types';
+import { GeofenceMonitoringProvider } from '@/hooks/useGeofenceMonitoring';
 
 interface TimerContextValue {
   ready: boolean;
@@ -147,7 +148,13 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     ],
   );
 
-  return <TimerContext.Provider value={value}>{children}</TimerContext.Provider>;
+  return (
+    <TimerContext.Provider value={value}>
+      <GeofenceMonitoringProvider ready={ready} onRegionChange={refresh}>
+        {children}
+      </GeofenceMonitoringProvider>
+    </TimerContext.Provider>
+  );
 }
 
 export function useActiveSession() {

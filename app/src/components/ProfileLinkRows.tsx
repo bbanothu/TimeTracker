@@ -10,12 +10,12 @@ import { useAppColors } from '@/hooks/useAppColors';
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
 export type ProfileLinkIcon =
-  'friends' | 'history' | 'password' | 'sync' | 'export' | 'clear' | 'signout';
+  'friends' | 'history' | 'password' | 'autotracking' | 'sync' | 'export' | 'clear' | 'signout';
 
 export interface ProfileLinkRow {
   id: string;
   label: string;
-  onPress: () => void;
+  onPress?: () => void;
   badge?: number;
   icon?: ProfileLinkIcon;
   subtitle?: string;
@@ -23,12 +23,17 @@ export interface ProfileLinkRow {
   loading?: boolean;
   disabled?: boolean;
   showChevron?: boolean;
+  toggle?: {
+    value: boolean;
+    onValueChange: (value: boolean) => void;
+  };
 }
 
 const ICONS: Record<ProfileLinkIcon, IoniconName> = {
   friends: 'people-outline',
   history: 'time-outline',
   password: 'lock-closed-outline',
+  autotracking: 'navigate-outline',
   sync: 'cloud-upload-outline',
   export: 'download-outline',
   clear: 'trash-outline',
@@ -57,12 +62,21 @@ export function ProfileLinkRows({ rows }: ProfileLinkRowsProps) {
           : isInactive
             ? colors.textDisabled
             : colors.textMuted;
-        const showChevron = row.showChevron ?? true;
+        const showChevron = row.showChevron ?? !row.toggle;
+
+        const handlePress = () => {
+          if (row.disabled || row.loading) return;
+          if (row.toggle) {
+            row.toggle.onValueChange(!row.toggle.value);
+            return;
+          }
+          row.onPress?.();
+        };
 
         return (
           <Pressable
             key={row.id}
-            onPress={row.onPress}
+            onPress={handlePress}
             disabled={row.disabled || row.loading}
             className="flex-row items-center justify-between px-4 py-3.5"
             style={{
@@ -94,6 +108,23 @@ export function ProfileLinkRows({ rows }: ProfileLinkRowsProps) {
               ) : null}
               {row.loading ? (
                 <LoadingIndicator size="small" />
+              ) : row.toggle ? (
+                <Pressable
+                  onPress={() => row.toggle!.onValueChange(!row.toggle!.value)}
+                  disabled={row.disabled || row.loading}
+                  accessibilityRole="switch"
+                  accessibilityState={{ checked: row.toggle.value }}
+                  accessibilityLabel={row.label}
+                  hitSlop={8}
+                  className="h-7 w-12 shrink-0 flex-row items-center overflow-hidden rounded-full border p-0.5"
+                  style={{
+                    backgroundColor: row.toggle.value ? colors.primary : colors.secondaryBg,
+                    borderColor: row.toggle.value ? colors.primary : colors.surfaceBorder,
+                    justifyContent: row.toggle.value ? 'flex-end' : 'flex-start',
+                  }}
+                >
+                  <View className="h-5 w-5 rounded-full bg-white" />
+                </Pressable>
               ) : showChevron ? (
                 <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
               ) : null}

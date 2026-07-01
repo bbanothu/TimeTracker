@@ -65,7 +65,10 @@ export function areConsecutiveInTime(
   return newer.startedAt - older.endedAt <= maxGapMs;
 }
 
-export function getOlderNewer(a: TimeEntry, b: TimeEntry): { older: TimeEntry; newer: TimeEntry } | null {
+export function getOlderNewer(
+  a: TimeEntry,
+  b: TimeEntry,
+): { older: TimeEntry; newer: TimeEntry } | null {
   if (a.endedAt == null || b.endedAt == null) return null;
   return a.startedAt <= b.startedAt ? { older: a, newer: b } : { older: b, newer: a };
 }

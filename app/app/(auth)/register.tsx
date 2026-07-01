@@ -108,78 +108,82 @@ export default function RegisterScreen() {
 
           {ready ? (
             <Animated.View entering={CARD_ENTER}>
-            <AuthCard>
-              <Animated.Text
-                entering={CARD_FADE.delay(CARD_CONTENT_DELAY)}
-                style={styles.cardTitle}
-              >
-                Create account
-              </Animated.Text>
-              <Animated.Text
-                entering={CARD_FADE.delay(CARD_CONTENT_DELAY + CARD_STAGGER)}
-                style={styles.cardHint}
-              >
-                Track tags, stats, and geofences across devices.
-              </Animated.Text>
-
-              <Animated.View entering={CARD_FADE.delay(CARD_CONTENT_DELAY + CARD_STAGGER * 2)}>
-                <GlassInput
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="Email"
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  autoComplete="email"
-                />
-              </Animated.View>
-              <Animated.View entering={CARD_FADE.delay(CARD_CONTENT_DELAY + CARD_STAGGER * 3)}>
-                <GlassInput
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="Password"
-                  secureTextEntry
-                  autoComplete="new-password"
-                />
-              </Animated.View>
-              <Animated.View entering={CARD_FADE.delay(CARD_CONTENT_DELAY + CARD_STAGGER * 4)}>
-                <GlassInput
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  placeholder="Confirm password"
-                  secureTextEntry
-                  autoComplete="new-password"
-                />
-              </Animated.View>
-
-              <Animated.View entering={CARD_FADE.delay(CARD_CONTENT_DELAY + CARD_STAGGER * 5)}>
-                <Pressable onPress={handleRegister} disabled={submitting} style={styles.buttonWrap}>
-                  <LinearGradient
-                    colors={colors.authGradient}
-                    start={{ x: 0, y: 0.5 }}
-                    end={{ x: 1, y: 0.5 }}
-                    style={styles.button}
-                  >
-                    {submitting ? (
-                      <LoadingIndicator size="small" />
-                    ) : (
-                      <Text style={styles.buttonText}>Create account</Text>
-                    )}
-                  </LinearGradient>
-                </Pressable>
-              </Animated.View>
-
-              <Animated.View entering={CARD_FADE.delay(CARD_CONTENT_DELAY + CARD_STAGGER * 6)}>
-                <Pressable
-                  style={styles.linkWrap}
-                  onPress={() => {
-                    if (router.canGoBack()) router.back();
-                    else router.replace('/(auth)/login');
-                  }}
+              <AuthCard>
+                <Animated.Text
+                  entering={CARD_FADE.delay(CARD_CONTENT_DELAY)}
+                  style={styles.cardTitle}
                 >
-                  <Text style={styles.linkText}>Already have an account? Sign in</Text>
-                </Pressable>
-              </Animated.View>
-            </AuthCard>
+                  Create account
+                </Animated.Text>
+                <Animated.Text
+                  entering={CARD_FADE.delay(CARD_CONTENT_DELAY + CARD_STAGGER)}
+                  style={styles.cardHint}
+                >
+                  Track tags, stats, and geofences across devices.
+                </Animated.Text>
+
+                <Animated.View entering={CARD_FADE.delay(CARD_CONTENT_DELAY + CARD_STAGGER * 2)}>
+                  <GlassInput
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="Email"
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    autoComplete="email"
+                  />
+                </Animated.View>
+                <Animated.View entering={CARD_FADE.delay(CARD_CONTENT_DELAY + CARD_STAGGER * 3)}>
+                  <GlassInput
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholder="Password"
+                    secureTextEntry
+                    autoComplete="new-password"
+                  />
+                </Animated.View>
+                <Animated.View entering={CARD_FADE.delay(CARD_CONTENT_DELAY + CARD_STAGGER * 4)}>
+                  <GlassInput
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    placeholder="Confirm password"
+                    secureTextEntry
+                    autoComplete="new-password"
+                  />
+                </Animated.View>
+
+                <Animated.View entering={CARD_FADE.delay(CARD_CONTENT_DELAY + CARD_STAGGER * 5)}>
+                  <Pressable
+                    onPress={handleRegister}
+                    disabled={submitting}
+                    style={styles.buttonWrap}
+                  >
+                    <LinearGradient
+                      colors={colors.authGradient}
+                      start={{ x: 0, y: 0.5 }}
+                      end={{ x: 1, y: 0.5 }}
+                      style={styles.button}
+                    >
+                      {submitting ? (
+                        <LoadingIndicator size="small" />
+                      ) : (
+                        <Text style={styles.buttonText}>Create account</Text>
+                      )}
+                    </LinearGradient>
+                  </Pressable>
+                </Animated.View>
+
+                <Animated.View entering={CARD_FADE.delay(CARD_CONTENT_DELAY + CARD_STAGGER * 6)}>
+                  <Pressable
+                    style={styles.linkWrap}
+                    onPress={() => {
+                      if (router.canGoBack()) router.back();
+                      else router.replace('/(auth)/login');
+                    }}
+                  >
+                    <Text style={styles.linkText}>Already have an account? Sign in</Text>
+                  </Pressable>
+                </Animated.View>
+              </AuthCard>
             </Animated.View>
           ) : null}
         </ScrollView>

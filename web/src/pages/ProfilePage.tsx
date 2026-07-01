@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
+import { PageHeader } from '@/components/layout/PageHeader';
 import { ProfileIdentityCard } from '@/components/ui/ProfileIdentityCard';
 import { ProfileLinkRows } from '@/components/ui/ProfileLinkRows';
 import { useAuth } from '@/contexts/AuthContext';
@@ -134,15 +135,7 @@ export function ProfilePage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <Link to="/" className="text-sm font-semibold" style={{ color: colors.textMuted }}>
-          ← Back
-        </Link>
-        <h1 className="text-2xl font-bold" style={{ color: colors.headerText }}>
-          Account
-        </h1>
-        <span className="w-12" />
-      </div>
+      <PageHeader title="Account" backLink={{ to: '/', label: '← Back' }} />
 
       <ProfileIdentityCard
         email={user.email ?? ''}

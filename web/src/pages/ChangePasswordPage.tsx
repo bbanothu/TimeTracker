@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 
+import { PageHeader } from '@/components/layout/PageHeader';
 import { ActionButton } from '@/components/ui/ActionButton';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAuth } from '@/contexts/AuthContext';
@@ -63,15 +64,7 @@ export function ChangePasswordPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <Link to="/profile" className="text-sm font-semibold" style={{ color: colors.textMuted }}>
-          ← Account
-        </Link>
-        <h1 className="text-2xl font-bold" style={{ color: colors.headerText }}>
-          Password
-        </h1>
-        <span className="w-16" />
-      </div>
+      <PageHeader title="Password" backLink={{ to: '/profile', label: '← Account' }} />
 
       <ThemedSurface className="mb-4 p-4">
         <p className="mb-4 text-sm" style={{ color: colors.textMuted }}>

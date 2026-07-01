@@ -247,7 +247,10 @@ export function MapPage() {
               </ThemedSurface>
 
               <ThemedSurface className="p-4 lg:hidden">
-                <DropPinHeader colors={colors} onOpenAddressSearch={() => setAddressModalOpen(true)} />
+                <DropPinHeader
+                  colors={colors}
+                  onOpenAddressSearch={() => setAddressModalOpen(true)}
+                />
                 <p className="mb-3 text-sm" style={{ color: colors.textMuted }}>
                   Tap the map where you want tracking to start.
                 </p>
@@ -341,7 +344,10 @@ export function MapPage() {
             </div>
 
             <ThemedSurface className="sticky top-8 hidden p-4 lg:block">
-              <DropPinHeader colors={colors} onOpenAddressSearch={() => setAddressModalOpen(true)} />
+              <DropPinHeader
+                colors={colors}
+                onOpenAddressSearch={() => setAddressModalOpen(true)}
+              />
               <p className="mb-3 text-sm" style={{ color: colors.textMuted }}>
                 Click the map where you want tracking to start.
               </p>

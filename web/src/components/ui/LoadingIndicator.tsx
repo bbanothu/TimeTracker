@@ -30,7 +30,12 @@ export function LoadingIndicator({
       role="progressbar"
       aria-label={label}
     >
-      <Lottie animationData={loadingAnimation} loop autoplay style={{ width: dimension, height: dimension }} />
+      <Lottie
+        animationData={loadingAnimation}
+        loop
+        autoplay
+        style={{ width: dimension, height: dimension }}
+      />
     </div>
   );
 }

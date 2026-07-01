@@ -1,6 +1,6 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 
+import { PageHeader } from '@/components/layout/PageHeader';
 import { ActionButton } from '@/components/ui/ActionButton';
 import { LoadingIndicator } from '@/components/ui/LoadingIndicator';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
@@ -151,15 +151,7 @@ export function FriendsPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <Link to="/profile" className="text-sm font-semibold" style={{ color: colors.textMuted }}>
-          ← Account
-        </Link>
-        <h1 className="text-2xl font-bold" style={{ color: colors.headerText }}>
-          Friends
-        </h1>
-        <span className="w-16" />
-      </div>
+      <PageHeader title="Friends" backLink={{ to: '/profile', label: '← Account' }} />
 
       {message ? <p className="mb-3 text-sm text-emerald-600">{message}</p> : null}
       {error ? <p className="mb-3 text-sm text-rose-500">{error}</p> : null}
@@ -199,10 +191,7 @@ export function FriendsPage() {
         <>
           {incomingRequests.length > 0 ? (
             <ThemedSurface className="mb-4 overflow-hidden">
-              <h2
-                className="mb-3 px-3 pt-4 text-base font-semibold"
-                style={{ color: colors.text }}
-              >
+              <h2 className="mb-3 px-3 pt-4 text-base font-semibold" style={{ color: colors.text }}>
                 Requests
               </h2>
               <ul>
@@ -247,10 +236,7 @@ export function FriendsPage() {
 
           {outgoingRequests.length > 0 ? (
             <ThemedSurface className="mb-4 overflow-hidden">
-              <h2
-                className="mb-3 px-3 pt-4 text-base font-semibold"
-                style={{ color: colors.text }}
-              >
+              <h2 className="mb-3 px-3 pt-4 text-base font-semibold" style={{ color: colors.text }}>
                 Sent requests
               </h2>
               <ul>
@@ -282,10 +268,7 @@ export function FriendsPage() {
           ) : null}
 
           <ThemedSurface className="mb-4 overflow-hidden">
-            <h2
-              className="mb-3 px-3 pt-4 text-base font-semibold"
-              style={{ color: colors.text }}
-            >
+            <h2 className="mb-3 px-3 pt-4 text-base font-semibold" style={{ color: colors.text }}>
               Friends
             </h2>
             {accepted.length === 0 ? (
