@@ -5,8 +5,8 @@ import { Alert, Linking, Pressable, Text, View } from 'react-native';
 import { useGeofenceMonitoring } from '@/hooks/useGeofenceMonitoring';
 import { useAppColors } from '@/hooks/useAppColors';
 
-const DISMISSED_ACTIVE_KEY = 'irlday-dismissed-autotracking-active';
-const DISMISSED_FOREGROUND_KEY = 'irlday-dismissed-autotracking-foreground';
+const DISMISSED_ACTIVE_KEY = 'timetracker-dismissed-autotracking-active';
+const DISMISSED_FOREGROUND_KEY = 'timetracker-dismissed-autotracking-foreground';
 
 interface AutoTrackingBannerProps {
   className?: string;
@@ -102,7 +102,7 @@ export function AutoTrackingBanner({ className = '' }: AutoTrackingBannerProps) 
 
         Alert.alert(
           'Always Allow location required',
-          'Open Settings, choose Location, then Always Allow so IrlDay can auto-start when you arrive at saved places.',
+          'Open Settings, choose Location, then Always Allow so TimeTracker can auto-start when you arrive at saved places.',
           [
             { text: 'Cancel', style: 'cancel' },
             { text: 'Open Settings', onPress: () => Linking.openSettings() },

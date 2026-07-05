@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { syncService, type SyncResult } from '@/services/syncService';
 
-const LAST_SYNC_KEY = 'irlday_last_sync';
+const LAST_SYNC_KEY = 'timetracker_last_sync';
 
 export async function getLastSyncAt(): Promise<number | null> {
   const value = await AsyncStorage.getItem(LAST_SYNC_KEY);

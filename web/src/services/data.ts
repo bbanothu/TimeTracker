@@ -9,8 +9,8 @@ import type { ActiveSession, EntrySource, Geofence, Tag, TagDailyGoal, TimeEntry
 import type { MergedEntryFields } from '@/utils/entryMerge';
 import { buildAggregatedExportCsv } from '@/utils/aggregatedExportCsv';
 
-const SESSION_KEY = 'irlday-active-sessions';
-const LEGACY_SESSION_KEY = 'irlday-active-session';
+const SESSION_KEY = 'timetracker-active-sessions';
+const LEGACY_SESSION_KEY = 'timetracker-active-session';
 
 type TagRow = {
   id: string;

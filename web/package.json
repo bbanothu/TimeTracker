@@ -1,12 +1,12 @@
 {
-  "name": "irlday-web",
+  "name": "timetracker-web",
   "private": true,
   "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "build:docker": "npm run build && docker buildx build --platform linux/arm64 -t bbanothu1997/irlday:latest --push .",
+    "build:docker": "npm run build && docker buildx build --platform linux/arm64 -t bbanothu1997/time-tracker:latest --push .",
     "docker": "npm run build:docker",
     "preview": "vite preview",
     "format": "prettier --write ."

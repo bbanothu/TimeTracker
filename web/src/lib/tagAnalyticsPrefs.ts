@@ -1,7 +1,7 @@
 import type { Tag } from '@/types';
 
 function storageKey(userId: string): string {
-  return `irlday-tag-analytics-${userId}`;
+  return `timetracker-tag-analytics-${userId}`;
 }
 
 export function loadTagAnalyticsPrefs(userId: string): Record<string, boolean> {

@@ -10,7 +10,7 @@ export async function exportEntriesToCsv(
   personName: string,
 ): Promise<void> {
   const csv = buildAggregatedExportCsv(entries, tags, personName);
-  const filename = `irlday-export-${new Date().toISOString().slice(0, 10)}.csv`;
+  const filename = `timetracker-export-${new Date().toISOString().slice(0, 10)}.csv`;
   const path = `${FileSystem.cacheDirectory}${filename}`;
 
   await FileSystem.writeAsStringAsync(path, csv, {

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import type { StatsVisualization } from '@/types';
 
-const STORAGE_KEY = 'irlday-stats-viz';
+const STORAGE_KEY = 'timetracker-stats-viz';
 
 const VALID: StatsVisualization[] = ['overview', 'bars', 'list', 'stacked', 'history', 'trend'];
 

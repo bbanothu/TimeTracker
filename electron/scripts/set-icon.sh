@@ -9,7 +9,7 @@ fi
 SOURCE="$1"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DEST="$ROOT/build/icon.png"
-TMP="$(mktemp /tmp/irlday-icon.XXXXXX.png)"
+TMP="$(mktemp /tmp/timetracker-icon.XXXXXX.png)"
 
 if [[ ! -f "$SOURCE" ]]; then
   echo "File not found: $SOURCE"

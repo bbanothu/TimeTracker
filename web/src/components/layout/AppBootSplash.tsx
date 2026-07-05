@@ -8,7 +8,7 @@ export function AppBootSplash() {
     <div className="flex min-h-[40vh] flex-col py-16">
       <div className="flex flex-1 items-end justify-center pb-3">
         <h1 className="text-3xl font-semibold tracking-wide" style={{ color: colors.text }}>
-          IrlDay
+          TimeTracker
         </h1>
       </div>
       <div className="flex items-center justify-center">

@@ -15,7 +15,7 @@ import {
 import { pushChangesInBackground } from '@/services/syncScheduler';
 import { timerService } from '@/services/timerService';
 
-export const GEOFENCE_TASK = 'IRLDAY_GEOFENCE';
+export const GEOFENCE_TASK = 'TIMETRACKER_GEOFENCE';
 
 function distanceMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const toRad = (deg: number) => (deg * Math.PI) / 180;

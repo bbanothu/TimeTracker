@@ -1,4 +1,4 @@
--- IrlDay Supabase migration
+-- TimeTracker Supabase migration
 -- Run this in the Supabase SQL Editor after creating your project.
 
 -- Tags

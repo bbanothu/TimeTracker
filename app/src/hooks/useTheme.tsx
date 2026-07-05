@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColorScheme } from 'nativewind';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
-const THEME_STORAGE_KEY = 'irlday-theme';
+const THEME_STORAGE_KEY = 'timetracker-theme';
 
 type ThemeMode = 'light' | 'dark';
 

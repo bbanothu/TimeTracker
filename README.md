@@ -1,6 +1,6 @@
-# IrlDay
+# TimeTracker
 
-Screen Time for your actual life — track how you spend your time with tags, stats, goals, and optional location-based auto-tracking. The repo contains two clients that share the same Supabase backend:
+Track how you spend your time with tags, stats, and optional location-based auto-tracking. The repo contains two clients that share the same Supabase backend:
 
 | Folder | Platform | Stack |
 |--------|----------|-------|
@@ -158,10 +158,10 @@ npm run dist
 
 On macOS this produces:
 
-- `release/IrlDay-1.0.0.dmg` — drag **IrlDay** into **Applications**
-- `release/mac-arm64/IrlDay.app` — the app bundle (open directly or copy to Applications)
+- `release/TimeTracker-1.0.0.dmg` — drag **TimeTracker** into **Applications**
+- `release/mac-arm64/TimeTracker.app` — the app bundle (open directly or copy to Applications)
 
-After installing, launch **IrlDay** from Applications or Spotlight like any other app.
+After installing, launch **TimeTracker** from Applications or Spotlight like any other app.
 
 **First launch on macOS:** if macOS blocks the app (“unidentified developer”), right-click the app → **Open** → **Open** once. To avoid that long-term you’d need an Apple Developer certificate and notarization.
 
@@ -178,6 +178,6 @@ Geofence auto-tracking is not available on desktop (same as web); you can still 
 
 Both clients use Supabase Auth (email/password). Create an account from the Register screen on either client; the same login works across mobile and web.
 
-docker buildx build --platform linux/arm64 -t bbanothu1997/irlday:latest --push .
+docker buildx build --platform linux/arm64 -t bbanothu1997/time-tracker:latest --push .
 
 nohup /data/cloudflared tunnel run brainrotslop > /tmp/cloudflared.log 2>&1 &

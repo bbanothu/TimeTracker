@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const STORAGE_KEY = 'irlday-last-selected-tag';
+const STORAGE_KEY = 'timetracker-last-selected-tag';
 
 export async function getLastSelectedTagId(): Promise<string | null> {
   try {

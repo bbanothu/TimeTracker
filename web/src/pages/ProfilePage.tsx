@@ -78,7 +78,7 @@ export function ProfilePage() {
       }
       const personName = buildProfileDisplayName({ firstName, lastName }) ?? user.email ?? 'Me';
       const csv = exportEntriesCsv(entries, tags, personName);
-      downloadCsv(`irlday-export-${new Date().toISOString().slice(0, 10)}.csv`, csv);
+      downloadCsv(`timetracker-export-${new Date().toISOString().slice(0, 10)}.csv`, csv);
       const dayCount = aggregatedExportDayCount(entries);
       setMessage(`Downloaded ${dayCount} ${dayCount === 1 ? 'day' : 'days'} of aggregated data.`);
     } catch (err) {
