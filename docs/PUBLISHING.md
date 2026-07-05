@@ -80,3 +80,62 @@ Google will ask why you need background location. Use something like:
 > Tempo uses background location only when the user enables auto-tracking for saved places. When the user enters a configured place (geofence), the app automatically starts a time-tracking session and may send a notification. Location is not used for advertising or sold to third parties.
 
 Provide a short screen recording showing: save a place → enable auto-tracking → enter the geofence → session starts.
+
+---
+
+## 6. Automate Play Store uploads (EAS Submit)
+
+After your first manual upload, set this up once so future releases are one command.
+
+### One-time: Google Play service account
+
+1. **Google Cloud Console** → your project → **IAM & Admin** → **Service Accounts** → **Create**
+   - Name: `eas-submit` (or similar)
+   - Role: none required at the GCP level
+2. Open the service account → **Keys** → **Add key** → **JSON** → download the file
+3. Save it as `app/google-play-service-account.json` (gitignored)
+4. **Play Console** → **Users and permissions** → **Invite new users**
+   - Paste the service account email (`...@...iam.gserviceaccount.com`)
+   - Permissions: **Release to testing tracks** (and **Release to production** when ready)
+   - App access: this app only (`com.time_tracker.app`)
+5. Accept the invite (can take a few minutes to propagate)
+
+`eas.json` already points at `./google-play-service-account.json` and submits to the **internal** track.
+
+### Day-to-day commands (from `app/`)
+
+| Command | What it does |
+|---------|----------------|
+| `npm run build:android` | Build `.aab` on EAS only |
+| `npm run publish:android` | Upload **latest** EAS build to Play internal testing |
+| `npm run release:android` | **Build + upload** in one step (`--auto-submit`) |
+
+Examples:
+
+```bash
+cd app
+
+# Build on EAS, then push to Play internal testing automatically
+npm run release:android
+
+# Or: build first, submit later
+npm run build:android
+npm run publish:android
+```
+
+`publish:android` uses `--latest` so it submits the most recent successful Android production build — no manual `.aab` download.
+
+### Promote tracks later
+
+Edit `app/eas.json` → `submit.production.android.track`:
+
+| Track | When |
+|-------|------|
+| `internal` | Internal testers (current) |
+| `alpha` | Closed testing |
+| `beta` | Open testing |
+| `production` | Public Play Store |
+
+### Optional: CI on every push to `main`
+
+Add `.github/workflows/release-android.yml` in the repo root to run `eas build --auto-submit` on merge. Requires an `EXPO_TOKEN` GitHub secret (`eas token:create`).
