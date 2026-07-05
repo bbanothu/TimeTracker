@@ -9,7 +9,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "com.timetracker.app",
+      "bundleIdentifier": "com.time_tracker.app",
       "supportsTablet": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "TimeTracker uses your location to auto-track time when you enter places like work.",
