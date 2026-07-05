@@ -1,19 +1,19 @@
 {
   "expo": {
-    "name": "TimeTracker",
-    "slug": "TimeTracker",
+    "name": "IrlDay",
+    "slug": "irlday",
     "version": "1.0.0",
-    "scheme": "timetracker",
+    "scheme": "irlday",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "TimeTracker uses your location to auto-track time when you enter places like work.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "TimeTracker uses background location to automatically track time at saved places.",
-        "NSPhotoLibraryUsageDescription": "TimeTracker needs photo library access so you can set a profile picture.",
-        "NSUserNotificationsUsageDescription": "TimeTracker sends alerts when you arrive at saved places so you can stop tracking if needed.",
+        "NSLocationWhenInUseUsageDescription": "IrlDay uses your location to auto-track time when you enter places like work.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "IrlDay uses background location to automatically track time at saved places.",
+        "NSPhotoLibraryUsageDescription": "IrlDay needs photo library access so you can set a profile picture.",
+        "NSUserNotificationsUsageDescription": "IrlDay sends alerts when you arrive at saved places so you can stop tracking if needed.",
         "UIBackgroundModes": ["location"]
       }
     },
@@ -42,8 +42,8 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow TimeTracker to use your location to auto-track time at saved places.",
-          "locationWhenInUsePermission": "Allow TimeTracker to use your location on the map and for geofencing.",
+          "locationAlwaysAndWhenInUsePermission": "Allow IrlDay to use your location to auto-track time at saved places.",
+          "locationWhenInUsePermission": "Allow IrlDay to use your location on the map and for geofencing.",
           "isAndroidBackgroundLocationEnabled": true,
           "isAndroidForegroundServiceEnabled": true
         }
@@ -51,7 +51,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow TimeTracker to access your photos to set a profile picture."
+          "photosPermission": "Allow IrlDay to access your photos to set a profile picture."
         }
       ],
       [

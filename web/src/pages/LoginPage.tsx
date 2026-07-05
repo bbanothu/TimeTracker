@@ -54,7 +54,7 @@ export function LoginPage() {
             Welcome back
           </p>
           <h1 className="text-4xl font-extrabold tracking-tight" style={{ color: colors.authText }}>
-            TimeTracker
+            IrlDay
           </h1>
           <p className="mt-2" style={{ color: colors.authTextSecondary }}>
             Sign in and pick up where you left off

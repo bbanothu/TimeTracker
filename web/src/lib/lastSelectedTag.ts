@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'timetracker-last-selected-tag';
+const STORAGE_KEY = 'irlday-last-selected-tag';
 
 export async function getLastSelectedTagId(): Promise<string | null> {
   try {

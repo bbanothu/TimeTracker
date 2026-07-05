@@ -472,7 +472,7 @@ export function initDatabase(userId: string): void {
       db = null;
     }
 
-    db = SQLite.openDatabaseSync(`timetracker-${userId}.db`);
+    db = SQLite.openDatabaseSync(`irlday-${userId}.db`);
     currentUserId = userId;
     initialized = false;
 

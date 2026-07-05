@@ -19,7 +19,7 @@ export function AppBootSplash() {
       <SafeAreaView className="flex-1">
         <View className="flex-1 items-center justify-end ">
           <Text className="text-3xl font-semibold tracking-wide" style={{ color: colors.text }}>
-            TimeTracker
+            IrlDay
           </Text>
         </View>
         <View className="items-center">

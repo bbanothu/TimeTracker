@@ -59,7 +59,7 @@ export default function ProfileScreen() {
       if (!granted) {
         Alert.alert(
           'Always Allow location required',
-          'Open Settings, choose Location, then Always Allow so TimeTracker can auto-start when you arrive at saved places.',
+          'Open Settings, choose Location, then Always Allow so IrlDay can auto-start when you arrive at saved places.',
           [
             { text: 'Cancel', style: 'cancel' },
             { text: 'Open Settings', onPress: () => Linking.openSettings() },

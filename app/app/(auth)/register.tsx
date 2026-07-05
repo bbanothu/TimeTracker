@@ -97,7 +97,7 @@ export default function RegisterScreen() {
                   Get started
                 </Animated.Text>
                 <Animated.Text entering={HERO_ENTER.delay(90)} style={styles.title}>
-                  TimeTracker
+                  IrlDay
                 </Animated.Text>
                 <Animated.Text entering={HERO_ENTER.delay(180)} style={styles.subtitle}>
                   Create an account and sync your time everywhere

@@ -63,7 +63,7 @@ export function RegisterPage() {
             Get started
           </p>
           <h1 className="text-4xl font-extrabold tracking-tight" style={{ color: colors.authText }}>
-            TimeTracker
+            IrlDay
           </h1>
           <p className="mt-2" style={{ color: colors.authTextSecondary }}>
             Create an account and sync your time everywhere

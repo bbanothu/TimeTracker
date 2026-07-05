@@ -76,7 +76,7 @@ export default function LoginScreen() {
                   Welcome back
                 </Animated.Text>
                 <Animated.Text entering={HERO_ENTER.delay(90)} style={styles.title}>
-                  TimeTracker
+                  IrlDay
                 </Animated.Text>
                 <Animated.Text entering={HERO_ENTER.delay(180)} style={styles.subtitle}>
                   Sign in and pick up where you left off

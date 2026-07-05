@@ -21,7 +21,7 @@ export function DesktopTopBar() {
           className="text-lg font-bold leading-tight tracking-tight"
           style={{ color: colors.headerText }}
         >
-          TimeTracker
+          IrlDay
         </p>
         <p className="mt-0.5 text-xs leading-tight" style={{ color: colors.textMuted }}>
           Track time your way

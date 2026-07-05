@@ -1,6 +1,6 @@
-# TimeTracker — Feature Overview
+# IrlDay — Feature Overview
 
-TimeTracker helps you log how you spend your time using **tags**, **saved places**, **stats**, and **goals**. The project ships two main clients that share one Supabase backend:
+IrlDay helps you log how you spend your time using **tags**, **saved places**, **stats**, and **goals**. The project ships two main clients that share one Supabase backend:
 
 | Client | Folder | Data storage |
 |--------|--------|--------------|

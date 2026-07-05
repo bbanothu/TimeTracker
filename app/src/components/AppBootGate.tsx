@@ -6,7 +6,7 @@ import { AppBootSplash } from '@/components/AppBootSplash';
 import { useActiveSession } from '@/hooks/useActiveSession';
 import { useAuth } from '@/hooks/useAuth';
 
-const STATS_VIZ_STORAGE_KEY = 'timetracker-stats-viz';
+const STATS_VIZ_STORAGE_KEY = 'irlday-stats-viz';
 
 export function AppBootGate({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();

@@ -15,7 +15,7 @@ export async function geocodeAddress(query: string): Promise<GeocodedLocation | 
   const response = await fetch(url.toString(), {
     headers: {
       Accept: 'application/json',
-      'User-Agent': 'TimeTracker/1.0 (contact: support@timetracker.local)',
+      'User-Agent': 'IrlDay/1.0 (contact: support@irlday.local)',
     },
   });
 
