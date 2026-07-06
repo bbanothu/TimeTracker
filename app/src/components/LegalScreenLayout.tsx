@@ -78,13 +78,7 @@ export function LegalBulletList({ items }: { items: string[] }) {
   );
 }
 
-export function LegalLink({
-  label,
-  onPress,
-}: {
-  label: string;
-  onPress: () => void;
-}) {
+export function LegalLink({ label, onPress }: { label: string; onPress: () => void }) {
   const colors = useAppColors();
 
   return (

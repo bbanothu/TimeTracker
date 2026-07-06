@@ -13,6 +13,7 @@ import { notifyDataRefresh, subscribeDataRefresh } from '@/lib/dataRefresh';
 import {
   createTag,
   deleteTag,
+  ensureDefaultUnknownPlace,
   fetchTags,
   seedDefaultTags,
   setTagIncludeInAnalytics,
@@ -58,6 +59,7 @@ export function TagsProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       await seedDefaultTags(user.id);
+      await ensureDefaultUnknownPlace(user.id);
       setTags(await fetchTags(user.id));
     } finally {
       setLoading(false);

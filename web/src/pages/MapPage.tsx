@@ -21,10 +21,12 @@ import { notifyDataRefresh, subscribeDataRefresh } from '@/lib/dataRefresh';
 import {
   createGeofence,
   deleteGeofence,
+  ensureDefaultUnknownPlace,
   fetchAllEntries,
   fetchGeofences,
   updateGeofence,
 } from '@/services/data';
+import { filterDisplayGeofences } from '@/constants/defaultPlace';
 import type { Geofence, PeriodType, TimeEntry } from '@/types';
 import { formatDurationLong } from '@/utils/formatDuration';
 import { buildHeatmapSummary } from '@/utils/heatmapPoints';
@@ -105,9 +107,12 @@ export function MapPage() {
 
   const loadGeofences = useCallback(async () => {
     if (!user) return;
+    await ensureDefaultUnknownPlace(user.id);
     setGeofences(await fetchGeofences(user.id));
     setLoading(false);
   }, [user]);
+
+  const displayGeofences = useMemo(() => filterDisplayGeofences(geofences), [geofences]);
 
   const loadEntries = useCallback(async () => {
     if (!user) return;
@@ -153,8 +158,8 @@ export function MapPage() {
   }, []);
 
   const heatmapSummary = useMemo(
-    () => buildHeatmapSummary(entries, geofences, heatmapAnchorDate, heatmapPeriod),
-    [entries, geofences, heatmapAnchorDate, heatmapPeriod],
+    () => buildHeatmapSummary(entries, displayGeofences, heatmapAnchorDate, heatmapPeriod),
+    [entries, displayGeofences, heatmapAnchorDate, heatmapPeriod],
   );
 
   const handleMapClick = (latitude: number, longitude: number) => {
@@ -255,7 +260,7 @@ export function MapPage() {
                   Tap the map where you want tracking to start.
                 </p>
                 <GeofenceMap
-                  geofences={geofences}
+                  geofences={displayGeofences}
                   draftLat={draftLat}
                   draftLng={draftLng}
                   radiusMeters={Number(radius) || 150}
@@ -322,10 +327,10 @@ export function MapPage() {
 
               <div>
                 <p className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
-                  Saved places ({geofences.length})
+                  Saved places ({displayGeofences.length})
                 </p>
                 <GeofencesList
-                  geofences={geofences}
+                  geofences={displayGeofences}
                   onEdit={setEditingGeofence}
                   onToggle={(geofence, enabled) =>
                     updateGeofence(user!.id, geofence.id, { enabled }).then(() => {
@@ -352,7 +357,7 @@ export function MapPage() {
                 Click the map where you want tracking to start.
               </p>
               <GeofenceMap
-                geofences={geofences}
+                geofences={displayGeofences}
                 draftLat={draftLat}
                 draftLng={draftLng}
                 radiusMeters={Number(radius) || 150}
@@ -419,7 +424,7 @@ export function MapPage() {
       <EditGeofenceModal
         visible={editingGeofence != null}
         geofence={editingGeofence}
-        geofences={geofences}
+        geofences={displayGeofences}
         tags={tags}
         onClose={() => setEditingGeofence(null)}
         onSave={handleSaveEdit}

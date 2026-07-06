@@ -2,10 +2,13 @@ import * as Location from 'expo-location';
 
 import {
   getActiveSessionByGeofenceId,
+  getActiveSessions,
   getCurrentUserId,
-  getEnabledGeofences,
   getGeofenceById,
+  getTrackableGeofences,
+  getUnknownGeofence,
 } from '@/db/client';
+import { isUnknownGeofence } from '@/constants/defaultPlace';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
 import { getStopCoordinates } from '@/lib/stopLocation';
 import {
@@ -39,14 +42,52 @@ export function isInsideGeofence(
   );
 }
 
+async function stopUnknownLocationSessionIfActive(): Promise<void> {
+  const unknown = getUnknownGeofence();
+  if (!unknown) return;
+
+  const active = getActiveSessionByGeofenceId(unknown.id);
+  if (!active) return;
+
+  const coords = await getStopCoordinates();
+  timerService.stop(active.id, {
+    stopLatitude: coords?.latitude ?? null,
+    stopLongitude: coords?.longitude ?? null,
+  });
+  await dismissGeofenceNotification(unknown.id);
+  notifyDataRefresh();
+  pushChangesInBackground(getCurrentUserId());
+}
+
+export async function ensureUnknownLocationSession(insideRealGeofence: boolean): Promise<void> {
+  if (insideRealGeofence) {
+    await stopUnknownLocationSessionIfActive();
+    return;
+  }
+
+  const unknown = getUnknownGeofence();
+  if (!unknown) return;
+
+  const hasLocationSession = getActiveSessions().some((session) => session.geofenceId != null);
+  if (hasLocationSession) return;
+
+  const active = getActiveSessionByGeofenceId(unknown.id);
+  if (active) return;
+
+  timerService.startGeofence(unknown.tagId, unknown.id);
+  notifyDataRefresh();
+  pushChangesInBackground(getCurrentUserId());
+}
+
 export async function handleGeofenceEnter(geofenceId: string): Promise<void> {
   try {
     const geofence = getGeofenceById(geofenceId);
-    if (!geofence || !geofence.enabled) return;
+    if (!geofence || !geofence.enabled || isUnknownGeofence(geofence)) return;
 
     const active = getActiveSessionByGeofenceId(geofenceId);
     if (active) return;
 
+    await stopUnknownLocationSessionIfActive();
     timerService.startGeofence(geofence.tagId, geofenceId);
 
     const tagName = geofence.tag?.name ?? 'activity';
@@ -60,8 +101,14 @@ export async function handleGeofenceEnter(geofenceId: string): Promise<void> {
 
 export async function handleGeofenceExit(geofenceId: string): Promise<void> {
   try {
+    const geofence = getGeofenceById(geofenceId);
+    if (geofence && isUnknownGeofence(geofence)) return;
+
     const active = getActiveSessionByGeofenceId(geofenceId);
-    if (!active) return;
+    if (!active) {
+      await ensureUnknownLocationSession(false);
+      return;
+    }
 
     const coords = await getStopCoordinates();
     timerService.stop(active.id, {
@@ -71,6 +118,7 @@ export async function handleGeofenceExit(geofenceId: string): Promise<void> {
     await dismissGeofenceNotification(geofenceId);
     notifyDataRefresh();
     pushChangesInBackground(getCurrentUserId());
+    await ensureUnknownLocationSession(false);
   } catch (error) {
     console.warn('Geofence exit failed:', error);
   }
@@ -83,7 +131,7 @@ export async function hasBackgroundLocationPermission(): Promise<boolean> {
 
 export async function syncGeofencingTask(): Promise<void> {
   try {
-    const geofences = getEnabledGeofences();
+    const geofences = getTrackableGeofences();
     const regions: Location.LocationRegion[] = geofences.map((g) => ({
       identifier: g.id,
       latitude: g.latitude,
@@ -148,7 +196,7 @@ export async function checkForegroundGeofences(
   longitude: number,
   insideIds: Set<string>,
 ): Promise<Set<string>> {
-  const geofences = getEnabledGeofences();
+  const geofences = getTrackableGeofences();
   const nextInside = new Set<string>();
 
   for (const geofence of geofences) {
@@ -163,6 +211,7 @@ export async function checkForegroundGeofences(
     }
   }
 
+  await ensureUnknownLocationSession(nextInside.size > 0);
   return nextInside;
 }
 
@@ -174,5 +223,6 @@ export const geofenceService = {
   checkForegroundGeofences,
   handleGeofenceEnter,
   handleGeofenceExit,
+  ensureUnknownLocationSession,
   isInsideGeofence,
 };

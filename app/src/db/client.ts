@@ -1,6 +1,7 @@
 import * as Crypto from 'expo-crypto';
 import * as SQLite from 'expo-sqlite';
 
+import { DEFAULT_UNKNOWN_PLACE, isUnknownPlaceName } from '@/constants/defaultPlace';
 import {
   DEFAULT_TAGS,
   MIGRATION_SQL,
@@ -577,6 +578,79 @@ export function seedLocalDefaultTagsIfEmpty(): void {
   }
 }
 
+export function ensureDefaultUnknownPlace(): Geofence | null {
+  const userId = requireUserId();
+  const ts = nowMs();
+
+  let tag = getAllTags().find((item) => isUnknownPlaceName(item.name));
+  if (!tag) {
+    const id = createId();
+    getDb().runSync(
+      'INSERT INTO tags (id, user_id, name, color, parent_id, include_in_analytics, description, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        id,
+        userId,
+        DEFAULT_UNKNOWN_PLACE.tagName,
+        DEFAULT_UNKNOWN_PLACE.tagColor,
+        null,
+        1,
+        null,
+        ts,
+      ],
+    );
+    enqueueSync('tag', id, 'upsert', {
+      id,
+      user_id: userId,
+      name: DEFAULT_UNKNOWN_PLACE.tagName,
+      color: DEFAULT_UNKNOWN_PLACE.tagColor,
+      parent_id: null,
+      include_in_analytics: true,
+      description: null,
+      updated_at: new Date(ts).toISOString(),
+    });
+    tag = {
+      id,
+      name: DEFAULT_UNKNOWN_PLACE.tagName,
+      color: DEFAULT_UNKNOWN_PLACE.tagColor,
+      parentId: null,
+      includeInAnalytics: true,
+      description: null,
+    };
+  }
+
+  const existing = getAllGeofences().find((geofence) => isUnknownPlaceName(geofence.name));
+  if (existing) return existing;
+
+  const id = createId();
+  getDb().runSync(
+    `INSERT INTO geofences (id, user_id, tag_id, name, latitude, longitude, radius_meters, enabled, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)`,
+    [
+      id,
+      userId,
+      tag.id,
+      DEFAULT_UNKNOWN_PLACE.geofenceName,
+      DEFAULT_UNKNOWN_PLACE.latitude,
+      DEFAULT_UNKNOWN_PLACE.longitude,
+      DEFAULT_UNKNOWN_PLACE.radiusMeters,
+      ts,
+    ],
+  );
+  enqueueSync('geofence', id, 'upsert', {
+    id,
+    user_id: userId,
+    tag_id: tag.id,
+    name: DEFAULT_UNKNOWN_PLACE.geofenceName,
+    latitude: DEFAULT_UNKNOWN_PLACE.latitude,
+    longitude: DEFAULT_UNKNOWN_PLACE.longitude,
+    radius_meters: DEFAULT_UNKNOWN_PLACE.radiusMeters,
+    enabled: true,
+    updated_at: new Date(ts).toISOString(),
+  });
+
+  return getGeofenceById(id);
+}
+
 export function upsertTagFromRemote(tag: {
   id: string;
   user_id: string;
@@ -920,6 +994,11 @@ export function setTagIncludeInAnalytics(id: string, includeInAnalytics: boolean
 
 export function deleteTag(id: string): void {
   const userId = requireUserId();
+  const tag = getAllTags().find((item) => item.id === id);
+  if (tag && isUnknownPlaceName(tag.name)) {
+    throw new Error('The unknown tag cannot be deleted');
+  }
+
   const linked = getDb().getFirstSync<{ count: number }>(
     'SELECT COUNT(*) as count FROM geofences WHERE tag_id = ? AND user_id = ?',
     [id, userId],
@@ -1505,6 +1584,9 @@ export function updateGeofence(
   const userId = requireUserId();
   const existing = getGeofenceById(id);
   if (!existing) throw new Error('Geofence not found');
+  if (isUnknownPlaceName(existing.name)) {
+    throw new Error('The unknown place cannot be modified');
+  }
 
   const ts = nowMs();
   const enabled = input.enabled !== undefined ? input.enabled : existing.enabled;
@@ -1545,12 +1627,24 @@ export function updateGeofence(
 
 export function deleteGeofence(id: string): void {
   const userId = requireUserId();
+  const existing = getGeofenceById(id);
+  if (existing && isUnknownPlaceName(existing.name)) {
+    throw new Error('The unknown place cannot be deleted');
+  }
   getDb().runSync('DELETE FROM geofences WHERE id = ? AND user_id = ?', [id, userId]);
   enqueueSync('geofence', id, 'delete', { id, user_id: userId });
 }
 
+export function getUnknownGeofence(): Geofence | null {
+  return getAllGeofences().find((geofence) => isUnknownPlaceName(geofence.name)) ?? null;
+}
+
 export function getEnabledGeofences(): Geofence[] {
   return getAllGeofences().filter((g) => g.enabled);
+}
+
+export function getTrackableGeofences(): Geofence[] {
+  return getEnabledGeofences().filter((geofence) => !isUnknownPlaceName(geofence.name));
 }
 
 function rowToGoal(row: { id: string; tag_id: string; target_minutes: number }): TagDailyGoal {

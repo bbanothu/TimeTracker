@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Keyboard, Pressable, Text, TextInput, View } from 'react-native';
 import MapView, { Circle, Marker, type MapPressEvent } from 'react-native-maps';
 import * as Location from 'expo-location';
@@ -14,6 +14,7 @@ import { TabScreenContainer } from '@/components/TabScreenContainer';
 import { TagDropdown } from '@/components/TagDropdown';
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { createGeofence, deleteGeofence, getAllGeofences, updateGeofence } from '@/db/client';
+import { filterDisplayGeofences } from '@/constants/defaultPlace';
 import { useActiveSession } from '@/hooks/useActiveSession';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppColors } from '@/hooks/useAppColors';
@@ -94,6 +95,7 @@ export default function MapScreen() {
 
   const hasPin = draftLat != null && draftLng != null;
   const canSave = hasPin && !!selectedTagId && name.trim().length > 0 && !saving;
+  const displayGeofences = useMemo(() => filterDisplayGeofences(geofences), [geofences]);
 
   const loadGeofences = useCallback(() => {
     setGeofences(getAllGeofences());
@@ -289,7 +291,7 @@ export default function MapScreen() {
               </>
             ) : null}
 
-            {geofences.map((geofence) => (
+            {displayGeofences.map((geofence) => (
               <Circle
                 key={geofence.id}
                 center={{ latitude: geofence.latitude, longitude: geofence.longitude }}
@@ -356,11 +358,11 @@ export default function MapScreen() {
       </ThemedSurface>
 
       <Text className="mx-4 mb-2 mt-1 text-sm font-medium" style={{ color: colors.textMuted }}>
-        Saved places ({geofences.length})
+        Saved places ({displayGeofences.length})
       </Text>
       <View className="mx-4 mb-6">
         <GeofencesList
-          geofences={geofences}
+          geofences={displayGeofences}
           onEdit={handleEdit}
           onToggle={handleToggle}
           onDelete={handleDelete}

@@ -1,5 +1,10 @@
-import { initDatabase, isDatabaseReady, seedLocalDefaultTagsIfEmpty } from '@/db/client';
-import { syncGeofencingTask } from '@/services/geofenceService';
+import {
+  ensureDefaultUnknownPlace,
+  initDatabase,
+  isDatabaseReady,
+  seedLocalDefaultTagsIfEmpty,
+} from '@/db/client';
+import { ensureUnknownLocationSession, syncGeofencingTask } from '@/services/geofenceService';
 import { runDailyGoalScoreSnapshot } from '@/services/dailyGoalScoreService';
 import { syncProfilePhotoFromCloud } from '@/services/profilePhotoService';
 import { setupNotifications } from '@/services/notificationService';
@@ -35,10 +40,12 @@ export async function initializeAppData(userId: string): Promise<void> {
     }
 
     seedLocalDefaultTagsIfEmpty();
+    ensureDefaultUnknownPlace();
     runDailyGoalScoreSnapshot(userId);
 
     try {
       await syncGeofencingTask();
+      await ensureUnknownLocationSession(false);
     } catch (error) {
       console.warn('Geofence setup failed:', error);
     }

@@ -12,7 +12,8 @@ export default function ContactScreen() {
   return (
     <LegalScreenLayout>
       <LegalParagraph>
-        Questions about TimeTracker, your account, or a bug you hit? Reach out — we read every message.
+        Questions about TimeTracker, your account, or a bug you hit? Reach out — we read every
+        message.
       </LegalParagraph>
 
       <LegalSection title="Email">
@@ -28,15 +29,15 @@ export default function ContactScreen() {
 
       <LegalSection title="Response time">
         <LegalParagraph>
-          We aim to reply within a few business days. For urgent account access issues, mention
-          that in your subject line.
+          We aim to reply within a few business days. For urgent account access issues, mention that
+          in your subject line.
         </LegalParagraph>
       </LegalSection>
 
       <LegalSection title="Feedback">
         <LegalParagraph>
-          Feature ideas and usability feedback are welcome. TimeTracker is actively developed, and user
-          input helps us prioritize what to build next.
+          Feature ideas and usability feedback are welcome. TimeTracker is actively developed, and
+          user input helps us prioritize what to build next.
         </LegalParagraph>
       </LegalSection>
     </LegalScreenLayout>

@@ -9,8 +9,8 @@ export default function AboutScreen() {
   return (
     <LegalScreenLayout>
       <LegalParagraph>
-        TimeTracker helps you understand how you spend your time. Tag activities, set daily goals, and
-        optionally let saved places auto-start tracking when you arrive. Stats, history, and
+        TimeTracker helps you understand how you spend your time. Tag activities, set daily goals,
+        and optionally let saved places auto-start tracking when you arrive. Stats, history, and
         progress sync across your devices.
       </LegalParagraph>
 
@@ -28,8 +28,8 @@ export default function AboutScreen() {
 
       <LegalSection title="Who we are">
         <LegalParagraph>
-          TimeTracker is built by QCSmallBusiness — a small team focused on practical tools that help
-          people spend time more intentionally, without adding friction to their day.
+          TimeTracker is built by QCSmallBusiness — a small team focused on practical tools that
+          help people spend time more intentionally, without adding friction to their day.
         </LegalParagraph>
       </LegalSection>
 

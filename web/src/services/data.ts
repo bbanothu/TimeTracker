@@ -1,3 +1,4 @@
+import { DEFAULT_UNKNOWN_PLACE, isUnknownGeofence, isUnknownPlaceName } from '@/constants/defaultPlace';
 import { DEFAULT_TAGS } from '@/theme/colors';
 import { supabase } from '@/lib/supabase';
 import {
@@ -190,6 +191,62 @@ export async function seedDefaultTags(userId: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function ensureDefaultUnknownPlace(userId: string): Promise<void> {
+  const tags = await fetchTags(userId);
+  let unknownTag = tags.find((tag) => isUnknownPlaceName(tag.name));
+
+  if (!unknownTag) {
+    const now = new Date().toISOString();
+    let { data, error } = await supabase
+      .from('tags')
+      .insert({
+        user_id: userId,
+        name: DEFAULT_UNKNOWN_PLACE.tagName,
+        color: DEFAULT_UNKNOWN_PLACE.tagColor,
+        parent_id: null,
+        include_in_analytics: true,
+        updated_at: now,
+      })
+      .select(TAG_COLUMNS)
+      .single();
+
+    if (isMissingAnalyticsColumn(error)) {
+      ({ data, error } = await supabase
+        .from('tags')
+        .insert({
+          user_id: userId,
+          name: DEFAULT_UNKNOWN_PLACE.tagName,
+          color: DEFAULT_UNKNOWN_PLACE.tagColor,
+          parent_id: null,
+          updated_at: now,
+        })
+        .select('id, name, color, parent_id')
+        .single());
+    }
+
+    if (error) throw error;
+    if (!data) throw new Error('Failed to create unknown tag');
+    unknownTag = mapTag(data as TagRow);
+  }
+
+  const geofences = await fetchGeofences(userId);
+  if (geofences.some((geofence) => isUnknownGeofence(geofence))) return;
+
+  const payload = {
+    user_id: userId,
+    tag_id: unknownTag.id,
+    name: DEFAULT_UNKNOWN_PLACE.geofenceName,
+    latitude: DEFAULT_UNKNOWN_PLACE.latitude,
+    longitude: DEFAULT_UNKNOWN_PLACE.longitude,
+    radius_meters: DEFAULT_UNKNOWN_PLACE.radiusMeters,
+    enabled: true,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error } = await supabase.from('geofences').insert(payload);
+  if (error) throw error;
+}
+
 export async function createTag(
   userId: string,
   name: string,
@@ -343,6 +400,12 @@ export async function updateTag(
 }
 
 export async function deleteTag(userId: string, id: string): Promise<void> {
+  const tags = await fetchTags(userId);
+  const tag = tags.find((item) => item.id === id);
+  if (tag && isUnknownPlaceName(tag.name)) {
+    throw new Error('The unknown tag cannot be deleted');
+  }
+
   const { error } = await supabase.from('tags').delete().eq('id', id).eq('user_id', userId);
   if (error) throw error;
 }
@@ -827,6 +890,12 @@ export async function updateGeofence(
     Pick<Geofence, 'enabled' | 'name' | 'radiusMeters' | 'tagId' | 'latitude' | 'longitude'>
   >,
 ): Promise<void> {
+  const geofences = await fetchGeofences(userId);
+  const existing = geofences.find((geofence) => geofence.id === id);
+  if (existing && isUnknownGeofence(existing)) {
+    throw new Error('The unknown place cannot be modified');
+  }
+
   const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (patch.enabled !== undefined) payload.enabled = patch.enabled;
   if (patch.name !== undefined) payload.name = patch.name.trim();
@@ -845,6 +914,12 @@ export async function updateGeofence(
 }
 
 export async function deleteGeofence(userId: string, id: string): Promise<void> {
+  const geofences = await fetchGeofences(userId);
+  const existing = geofences.find((geofence) => geofence.id === id);
+  if (existing && isUnknownGeofence(existing)) {
+    throw new Error('The unknown place cannot be deleted');
+  }
+
   const { error } = await supabase.from('geofences').delete().eq('id', id).eq('user_id', userId);
   if (error) throw error;
 }

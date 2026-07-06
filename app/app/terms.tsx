@@ -23,8 +23,8 @@ export default function TermsScreen() {
 
       <LegalSection title="The service">
         <LegalParagraph>
-          TimeTracker provides time-tracking tools including tags, goals, statistics, saved places, and
-          optional location-based auto-tracking. Features vary by platform. We may update or
+          TimeTracker provides time-tracking tools including tags, goals, statistics, saved places,
+          and optional location-based auto-tracking. Features vary by platform. We may update or
           discontinue features with reasonable notice when possible.
         </LegalParagraph>
       </LegalSection>
@@ -41,8 +41,8 @@ export default function TermsScreen() {
         <LegalParagraph>You agree not to:</LegalParagraph>
         <LegalBulletList
           items={[
-            'Use TimeTracker for unlawful purposes or to violate others\' rights',
-            'Attempt to access another user\'s data without authorization',
+            "Use TimeTracker for unlawful purposes or to violate others' rights",
+            "Attempt to access another user's data without authorization",
             'Interfere with or disrupt the service or its infrastructure',
             'Reverse engineer or scrape the service except where permitted by law',
           ]}
@@ -52,8 +52,8 @@ export default function TermsScreen() {
       <LegalSection title="Your content">
         <LegalParagraph>
           You retain ownership of the data you enter (time entries, tags, notes, etc.). You grant us
-          a limited license to store, process, and display that data solely to operate TimeTracker for
-          you, including sync and backup.
+          a limited license to store, process, and display that data solely to operate TimeTracker
+          for you, including sync and backup.
         </LegalParagraph>
       </LegalSection>
 
@@ -77,15 +77,16 @@ export default function TermsScreen() {
       <LegalSection title="Limitation of liability">
         <LegalParagraph>
           To the maximum extent permitted by law, QCSmallBusiness is not liable for indirect,
-          incidental, or consequential damages arising from your use of TimeTracker. Our total liability
-          is limited to the amount you paid us in the past twelve months (or zero for free use).
+          incidental, or consequential damages arising from your use of TimeTracker. Our total
+          liability is limited to the amount you paid us in the past twelve months (or zero for free
+          use).
         </LegalParagraph>
       </LegalSection>
 
       <LegalSection title="Termination">
         <LegalParagraph>
-          You may stop using TimeTracker and delete your account at any time. We may suspend or terminate
-          access for violations of these terms or to protect the service.
+          You may stop using TimeTracker and delete your account at any time. We may suspend or
+          terminate access for violations of these terms or to protect the service.
         </LegalParagraph>
       </LegalSection>
 
@@ -98,8 +99,7 @@ export default function TermsScreen() {
 
       <LegalSection title="Privacy">
         <Text className="text-sm leading-6" style={{ color: colors.textSecondary }}>
-          Our{' '}
-          <LegalLink label="Privacy Policy" onPress={() => router.push('/privacy')} /> describes
+          Our <LegalLink label="Privacy Policy" onPress={() => router.push('/privacy')} /> describes
           how we handle your data.
         </Text>
       </LegalSection>

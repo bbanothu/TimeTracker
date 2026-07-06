@@ -1,6 +1,6 @@
 import * as Location from 'expo-location';
 
-import { getEnabledGeofences } from '@/db/client';
+import { getTrackableGeofences } from '@/db/client';
 import {
   GEOFENCE_TASK,
   hasBackgroundLocationPermission,
@@ -19,7 +19,7 @@ export interface AutoTrackingState {
 }
 
 export async function getAutoTrackingState(): Promise<AutoTrackingState> {
-  const enabledCount = getEnabledGeofences().length;
+  const enabledCount = getTrackableGeofences().length;
   const foregroundGranted =
     (await Location.getForegroundPermissionsAsync()).status === Location.PermissionStatus.GRANTED;
   const backgroundGranted = await hasBackgroundLocationPermission();
