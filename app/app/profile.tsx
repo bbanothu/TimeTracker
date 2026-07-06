@@ -9,7 +9,7 @@ import { ProfileIdentityCard } from '@/components/ProfileIdentityCard';
 import { ProfileLinkRows } from '@/components/ProfileLinkRows';
 import { useAuth } from '@/hooks/useAuth';
 import { useGeofenceMonitoring } from '@/hooks/useGeofenceMonitoring';
-import { useScreenTopPadding } from '@/hooks/useScreenTopPadding';
+import { useScreenScrollPadding } from '@/hooks/useScreenTopPadding';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
 import { clearTrackedData, exportTrackedDataCsv } from '@/services/dataService';
 import { useProfileName } from '@/hooks/useProfileName';
@@ -18,7 +18,7 @@ import { getLastAutoSyncAt, performManualSync } from '@/services/syncScheduler';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const topPadding = useScreenTopPadding(8);
+  const { paddingTop, paddingBottom } = useScreenScrollPadding({ topExtra: 8, bottomExtra: 32 });
   const { user, signOut } = useAuth();
   const [exporting, setExporting] = useState(false);
   const [clearing, setClearing] = useState(false);
@@ -212,9 +212,11 @@ export default function ProfileScreen() {
         className="flex-1"
       >
         <ScrollView
-          className="flex-1 px-4 pb-8"
-          style={{ paddingTop: topPadding }}
+          className="flex-1 px-4"
+          style={{ paddingTop }}
+          contentContainerStyle={{ paddingBottom }}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
           <ProfileIdentityCard
             email={user?.email ?? ''}

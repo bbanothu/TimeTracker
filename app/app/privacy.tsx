@@ -15,7 +15,7 @@ export default function PrivacyScreen() {
   return (
     <LegalScreenLayout updated="July 5, 2026">
       <LegalParagraph>
-        Tempo ("we," "our," or "the app") helps you track how you spend your time. This policy
+        TimeTracker ("we," "our," or "the app") helps you track how you spend your time. This policy
         explains what we collect, how we use it, and your choices.
       </LegalParagraph>
 

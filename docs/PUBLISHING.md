@@ -1,4 +1,4 @@
-# Publishing Tempo to Google Play
+# Publishing TimeTracker to Google Play
 
 Package name: `com.time_tracker.app`  
 EAS project: https://expo.dev/accounts/bbanothu/projects/TimeTracker
@@ -71,13 +71,13 @@ After creating the app with package `com.time_tracker.app`:
 `Automatic time tracking by place. Find the rhythm of your days.`
 
 **Full:**  
-Tempo helps you understand how you spend your time. Tag activities, set daily goals, and let saved places auto-start tracking when you arrive. View stats, history, and progress — syncs across devices.
+TimeTracker helps you understand how you spend your time. Tag activities, set daily goals, and let saved places auto-start tracking when you arrive. View stats, history, and progress — syncs across devices.
 
 ## 5. Background location declaration (Google)
 
 Google will ask why you need background location. Use something like:
 
-> Tempo uses background location only when the user enables auto-tracking for saved places. When the user enters a configured place (geofence), the app automatically starts a time-tracking session and may send a notification. Location is not used for advertising or sold to third parties.
+> TimeTracker uses background location only when the user enables auto-tracking for saved places. When the user enters a configured place (geofence), the app automatically starts a time-tracking session and may send a notification. Location is not used for advertising or sold to third parties.
 
 Provide a short screen recording showing: save a place → enable auto-tracking → enter the geofence → session starts.
 

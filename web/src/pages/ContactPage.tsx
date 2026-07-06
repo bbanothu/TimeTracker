@@ -9,7 +9,7 @@ export function ContactPage() {
   return (
     <LegalPageLayout title="Contact">
       <p>
-        Questions about Tempo, your account, or a bug you hit? Reach out — we read every message.
+        Questions about TimeTracker, your account, or a bug you hit? Reach out — we read every message.
       </p>
 
       <LegalSection title="Email">
@@ -37,7 +37,7 @@ export function ContactPage() {
 
       <LegalSection title="Feedback">
         <p>
-          Feature ideas and usability feedback are welcome. Tempo is actively developed, and user
+          Feature ideas and usability feedback are welcome. TimeTracker is actively developed, and user
           input helps us prioritize what to build next.
         </p>
       </LegalSection>

@@ -9,7 +9,7 @@ export function PrivacyPage() {
   return (
     <LegalPageLayout title="Privacy Policy" updated="July 5, 2026">
       <p>
-        Tempo (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or &ldquo;the app&rdquo;) helps you track how
+        TimeTracker (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or &ldquo;the app&rdquo;) helps you track how
         you spend your time. This policy explains what we collect, how we use it, and your choices.
       </p>
 

@@ -4,6 +4,7 @@ import { ScrollView, Text, View } from 'react-native';
 import { AppBackground } from '@/components/AppBackground';
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAppColors } from '@/hooks/useAppColors';
+import { useScreenScrollPadding } from '@/hooks/useScreenTopPadding';
 
 interface LegalScreenLayoutProps {
   updated?: string;
@@ -12,10 +13,16 @@ interface LegalScreenLayoutProps {
 
 export function LegalScreenLayout({ updated, children }: LegalScreenLayoutProps) {
   const colors = useAppColors();
+  const { paddingTop, paddingBottom } = useScreenScrollPadding({ topExtra: 8, bottomExtra: 32 });
 
   return (
     <AppBackground>
-      <ScrollView className="flex-1 px-4 pb-8" contentContainerClassName="pt-2">
+      <ScrollView
+        className="flex-1 px-4"
+        style={{ paddingTop }}
+        contentContainerStyle={{ paddingBottom }}
+        showsVerticalScrollIndicator={false}
+      >
         <ThemedSurface className="p-4">
           {updated ? (
             <Text className="mb-4 text-sm" style={{ color: colors.textMuted }}>
