@@ -9,4 +9,6 @@ export interface GoogleCalendarSyncResult {
   created: number;
   skipped: number;
   failed: number;
+  removed?: number;
+  removeFailed?: number;
 }

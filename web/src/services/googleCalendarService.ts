@@ -58,6 +58,13 @@ export async function syncGoogleCalendar(): Promise<GoogleCalendarSyncResult> {
   return invokeFunction<GoogleCalendarSyncResult>('google-calendar-sync', { method: 'POST' });
 }
 
+export async function resetAndSyncGoogleCalendar(): Promise<GoogleCalendarSyncResult> {
+  return invokeFunction<GoogleCalendarSyncResult>('google-calendar-sync', {
+    method: 'POST',
+    body: { reset: true },
+  });
+}
+
 export async function disconnectGoogleCalendar(): Promise<void> {
   await invokeFunction<{ disconnected: boolean }>('google-calendar-disconnect', {
     method: 'POST',

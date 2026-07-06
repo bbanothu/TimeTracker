@@ -24,10 +24,26 @@ import {
   buildWebCalendarReturnUrl,
   disconnectGoogleCalendar,
   getGoogleCalendarStatus,
+  resetAndSyncGoogleCalendar,
   startGoogleCalendarConnect,
   syncGoogleCalendar,
 } from '@/services/googleCalendarService';
-import type { GoogleCalendarStatus } from '@/types/googleCalendar';
+import type { GoogleCalendarStatus, GoogleCalendarSyncResult } from '@/types/googleCalendar';
+
+function formatCalendarResetMessage(result: GoogleCalendarSyncResult): string {
+  const parts: string[] = [];
+  if (result.removed != null && result.removed > 0) {
+    parts.push(`Removed ${result.removed} old ${result.removed === 1 ? 'event' : 'events'}`);
+  }
+  if (result.created > 0) {
+    parts.push(`created ${result.created} new ${result.created === 1 ? 'event' : 'events'}`);
+  }
+  const failures = (result.failed ?? 0) + (result.removeFailed ?? 0);
+  if (failures > 0) {
+    parts.push(`${failures} failed`);
+  }
+  return parts.length > 0 ? `${parts.join(', ')}.` : 'Calendar re-synced with tag colors.';
+}
 
 export function ProfilePage() {
   // const colors = useAppColors();
@@ -46,6 +62,7 @@ export function ProfilePage() {
   const [calendarLoading, setCalendarLoading] = useState(true);
   const [calendarConnecting, setCalendarConnecting] = useState(false);
   const [calendarSyncing, setCalendarSyncing] = useState(false);
+  const [calendarResetting, setCalendarResetting] = useState(false);
   const [calendarDisconnecting, setCalendarDisconnecting] = useState(false);
   const {
     firstName,
@@ -184,6 +201,27 @@ export function ProfilePage() {
     }
   };
 
+  const handleResetCalendar = async () => {
+    if (
+      !window.confirm(
+        'This deletes all TimeTracker events from your Google Calendar and re-creates them with your current tag colors and details. Continue?',
+      )
+    ) {
+      return;
+    }
+    try {
+      setCalendarResetting(true);
+      setError(null);
+      const result = await resetAndSyncGoogleCalendar();
+      await loadCalendarStatus();
+      setMessage(formatCalendarResetMessage(result));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Calendar reset failed');
+    } finally {
+      setCalendarResetting(false);
+    }
+  };
+
   const handleDisconnectCalendar = async () => {
     if (!window.confirm('Disconnect Google Calendar from TimeTracker?')) return;
     try {
@@ -201,7 +239,11 @@ export function ProfilePage() {
 
   const calendarConnected = calendarStatus?.connected === true;
   const calendarBusy =
-    calendarLoading || calendarConnecting || calendarSyncing || calendarDisconnecting;
+    calendarLoading ||
+    calendarConnecting ||
+    calendarSyncing ||
+    calendarResetting ||
+    calendarDisconnecting;
   const calendarSubtitle = calendarLoading
     ? 'Checking connection…'
     : calendarConnected
@@ -298,6 +340,16 @@ export function ProfilePage() {
           },
           ...(calendarConnected
             ? [
+                {
+                  id: 'calendar-reset',
+                  label: 'Reset & re-sync calendar',
+                  icon: 'calendar' as const,
+                  subtitle: 'Delete TimeTracker events and re-create with tag colors',
+                  onClick: handleResetCalendar,
+                  loading: calendarResetting,
+                  disabled: calendarBusy || refreshing || exporting || clearing,
+                  showChevron: false,
+                },
                 {
                   id: 'calendar-disconnect',
                   label: 'Disconnect Google Calendar',

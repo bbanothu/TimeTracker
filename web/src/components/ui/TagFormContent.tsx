@@ -1,7 +1,7 @@
 import type { FormEvent } from 'react';
 
+import { GOOGLE_EVENT_COLORS } from '@/constants/googleCalendarColors';
 import { ActionButton } from '@/components/ui/ActionButton';
-import { TAG_COLOR_OPTIONS } from '@/theme/colors';
 import { useAppColors } from '@/contexts/ThemeContext';
 import type { Tag } from '@/types';
 import { formatTagName } from '@/utils/formatDuration';
@@ -139,14 +139,19 @@ export function TagFormContent({
         <p className="mb-2 text-base" style={{ color: colors.textMuted }}>
           Color
         </p>
+        <p className="mb-2 text-xs" style={{ color: colors.textMuted }}>
+          Matches Google Calendar event colors
+        </p>
         <div className="flex gap-2.5 overflow-x-auto pb-1">
-          {TAG_COLOR_OPTIONS.map((item) => (
+          {GOOGLE_EVENT_COLORS.map((item) => (
             <button
-              key={item}
+              key={item.id}
               type="button"
-              onClick={() => onColorChange(item)}
-              className={`h-12 w-12 shrink-0 rounded-full border-2 ${color === item ? 'border-stone-900 dark:border-white' : 'border-transparent'}`}
-              style={{ backgroundColor: item }}
+              onClick={() => onColorChange(item.hex)}
+              title={item.name}
+              aria-label={item.name}
+              className={`h-12 w-12 shrink-0 rounded-full border-2 ${color === item.hex ? 'border-stone-900 dark:border-white' : 'border-transparent'}`}
+              style={{ backgroundColor: item.hex }}
             />
           ))}
         </div>

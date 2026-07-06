@@ -1,3 +1,7 @@
+import { DEFAULT_TAG_COLORS } from '@/constants/googleCalendarColors';
+
+export { GOOGLE_EVENT_COLORS, TAG_COLOR_OPTIONS } from '@/constants/googleCalendarColors';
+
 export interface AppColors {
   primary: string;
   primaryBright: string;
@@ -138,25 +142,8 @@ export const darkColors: AppColors = {
   authPlaceholder: '#A8A29E',
 };
 
-export const TAG_COLOR_OPTIONS = [
-  '#059669',
-  '#65A30D',
-  '#0D9488',
-  '#0891B2',
-  '#D97706',
-  '#EA580C',
-  '#CA8A04',
-  '#DC2626',
-  '#E11D48',
-  '#DB2777',
-  '#C026D3',
-  '#9333EA',
-  '#7C3AED',
-  '#44403C',
-] as const;
-
 export const DEFAULT_TAGS = [
-  { name: 'work', color: '#059669' },
-  { name: 'personal', color: '#D97706' },
-  { name: 'sleep', color: '#9333EA' },
+  { name: 'work', color: DEFAULT_TAG_COLORS.work },
+  { name: 'personal', color: DEFAULT_TAG_COLORS.personal },
+  { name: 'sleep', color: DEFAULT_TAG_COLORS.sleep },
 ] as const;

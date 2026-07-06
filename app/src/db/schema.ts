@@ -104,9 +104,9 @@ CREATE TABLE IF NOT EXISTS daily_goal_scores (
 `;
 
 export const DEFAULT_TAGS = [
-  { name: 'work', color: '#059669' },
-  { name: 'personal', color: '#10B981' },
-  { name: 'sleep', color: '#8B5CF6' },
+  { name: 'work', color: '#51b749' },
+  { name: 'personal', color: '#ffb878' },
+  { name: 'sleep', color: '#dbadff' },
 ] as const;
 
 export type SyncEntityType = 'tag' | 'entry' | 'geofence' | 'goal' | 'daily_score';

@@ -20,7 +20,7 @@ import { TagsList } from '@/components/TagsList';
 import { useAppColors } from '@/hooks/useAppColors';
 import { useTags } from '@/hooks/useTags';
 import { useFlatTagsByUsage } from '@/hooks/useFlatTagsByUsage';
-import { TAG_COLOR_OPTIONS } from '@/theme/colors';
+import { GOOGLE_EVENT_COLORS } from '@/constants/googleCalendarColors';
 import type { Tag } from '@/types';
 import { getEligibleParents, wouldCreateCycle } from '@/utils/tagTree';
 import { formatTagName } from '@/utils/formatDuration';
@@ -29,7 +29,7 @@ export default function TagsScreen() {
   const { tags, addTag, editTag, removeTag, toggleTagAnalytics } = useTags();
   const colors = useAppColors();
   const [name, setName] = useState('');
-  const [color, setColor] = useState<string>(TAG_COLOR_OPTIONS[0]);
+  const [color, setColor] = useState<string>(GOOGLE_EVENT_COLORS[0].hex);
   const [parentId, setParentId] = useState<string | null>(null);
   const [parentPickerOpen, setParentPickerOpen] = useState(false);
   const [tagFormOpen, setTagFormOpen] = useState(false);
@@ -51,7 +51,7 @@ export default function TagsScreen() {
 
   const resetForm = () => {
     setName('');
-    setColor(TAG_COLOR_OPTIONS[0]);
+    setColor(GOOGLE_EVENT_COLORS[0].hex);
     setParentId(null);
     setDescription('');
     setShowDescription(false);
@@ -238,20 +238,24 @@ export default function TagsScreen() {
               <Text className="mb-2 text-base" style={{ color: colors.textMuted }}>
                 Color
               </Text>
+              <Text className="mb-1 text-xs" style={{ color: colors.textMuted }}>
+                Matches Google Calendar event colors
+              </Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 className="mb-4"
                 contentContainerStyle={{ gap: 10, paddingRight: 4 }}
               >
-                {TAG_COLOR_OPTIONS.map((item) => (
+                {GOOGLE_EVENT_COLORS.map((item) => (
                   <Pressable
-                    key={item}
-                    onPress={() => setColor(item)}
-                    className={`h-12 w-12 rounded-full ${color === item ? 'border-2' : ''}`}
+                    key={item.id}
+                    onPress={() => setColor(item.hex)}
+                    accessibilityLabel={item.name}
+                    className={`h-12 w-12 rounded-full ${color === item.hex ? 'border-2' : ''}`}
                     style={{
-                      backgroundColor: item,
-                      borderColor: color === item ? colors.text : 'transparent',
+                      backgroundColor: item.hex,
+                      borderColor: color === item.hex ? colors.text : 'transparent',
                     }}
                   />
                 ))}

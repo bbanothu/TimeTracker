@@ -2,6 +2,7 @@ import * as Crypto from 'expo-crypto';
 import * as SQLite from 'expo-sqlite';
 
 import { DEFAULT_UNKNOWN_PLACE, isUnknownPlaceName } from '@/constants/defaultPlace';
+import { nearestGoogleColorHex } from '@/constants/googleCalendarColors';
 import {
   DEFAULT_TAGS,
   MIGRATION_SQL,
@@ -869,10 +870,11 @@ export function createTag(
 
   const ts = nowMs();
   const normalizedDescription = normalizeDescription(description);
+  const normalizedColor = nearestGoogleColorHex(color);
   const tag: Tag = {
     id: createId(),
     name: normalized,
-    color,
+    color: normalizedColor,
     parentId,
     includeInAnalytics: true,
     description: normalizedDescription,
@@ -927,15 +929,16 @@ export function updateTag(
   validateSiblingName(userId, normalized, resolvedParentId, id);
 
   const ts = nowMs();
+  const normalizedColor = nearestGoogleColorHex(color);
   getDb().runSync(
     'UPDATE tags SET name = ?, color = ?, parent_id = ?, description = ?, updated_at = ? WHERE id = ? AND user_id = ?',
-    [normalized, color, resolvedParentId, resolvedDescription, ts, id, userId],
+    [normalized, normalizedColor, resolvedParentId, resolvedDescription, ts, id, userId],
   );
   enqueueSync('tag', id, 'upsert', {
     id,
     user_id: userId,
     name: normalized,
-    color,
+    color: normalizedColor,
     parent_id: resolvedParentId,
     include_in_analytics: existing.include_in_analytics !== 0,
     description: resolvedDescription,
@@ -944,7 +947,7 @@ export function updateTag(
   return {
     id,
     name: normalized,
-    color,
+    color: normalizedColor,
     parentId: resolvedParentId,
     includeInAnalytics: existing.include_in_analytics !== 0,
     description: resolvedDescription,

@@ -1,9 +1,11 @@
 export const UNKNOWN_PLACE_NAME = 'unknown';
 
+import { DEFAULT_TAG_COLORS } from '@/constants/googleCalendarColors';
+
 export const DEFAULT_UNKNOWN_PLACE = {
   tagName: UNKNOWN_PLACE_NAME,
   geofenceName: UNKNOWN_PLACE_NAME,
-  tagColor: '#64748B',
+  tagColor: DEFAULT_TAG_COLORS.unknown,
   latitude: 0,
   longitude: 0,
   radiusMeters: 0,

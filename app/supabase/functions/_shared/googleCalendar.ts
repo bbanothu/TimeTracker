@@ -1,5 +1,7 @@
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 
+import { googleColorIdForHex } from './googleCalendarColors.ts';
+
 export const GOOGLE_CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
 
 export const GOOGLE_OAUTH_SCOPES = [GOOGLE_CALENDAR_SCOPE, 'openid', 'email'].join(' ');
@@ -89,9 +91,18 @@ export type EntryRow = {
   details: string | null;
 };
 
-export type TagRow = { id: string; name: string };
+export type TagRow = { id: string; name: string; color: string; description?: string | null };
 
 export type GeofenceRow = { id: string; name: string };
+
+function formatDurationMs(durationMs: number): string {
+  const totalMinutes = Math.max(0, Math.round(durationMs / 60_000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours > 0 && minutes > 0) return `${hours}h ${minutes}m`;
+  if (hours > 0) return `${hours}h`;
+  return `${minutes}m`;
+}
 
 export function buildCalendarEvent(
   entry: EntryRow,
@@ -100,7 +111,24 @@ export function buildCalendarEvent(
 ): Record<string, unknown> {
   const title = tags.map((tag) => tag.name).join(', ') || 'Time tracked';
   const descriptionParts: string[] = [];
-  if (entry.details?.trim()) descriptionParts.push(entry.details.trim());
+
+  const sessionDetails = entry.details?.trim();
+  if (sessionDetails) {
+    descriptionParts.push(`Details: ${sessionDetails}`);
+  }
+
+  for (const tag of tags) {
+    const tagDescription = tag.description?.trim();
+    if (tagDescription) {
+      descriptionParts.push(`${tag.name}: ${tagDescription}`);
+    }
+  }
+
+  const durationMs = entry.ended_at - entry.started_at;
+  if (durationMs > 0) {
+    descriptionParts.push(`Duration: ${formatDurationMs(durationMs)}`);
+  }
+
   descriptionParts.push(`Source: ${entry.source}`);
   if (geofence) descriptionParts.push(`Place: ${geofence.name}`);
 
@@ -123,6 +151,11 @@ export function buildCalendarEvent(
       timeZone: 'UTC',
     },
   };
+
+  const primaryTagColor = tags[0]?.color;
+  if (primaryTagColor) {
+    event.colorId = googleColorIdForHex(primaryTagColor);
+  }
 
   if (location) event.location = location;
   return event;

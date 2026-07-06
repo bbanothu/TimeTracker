@@ -7,7 +7,7 @@ import { TagsList } from '@/components/ui/TagsList';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageLoading } from '@/components/ui/PageLoading';
-import { TAG_COLOR_OPTIONS } from '@/theme/colors';
+import { GOOGLE_EVENT_COLORS } from '@/constants/googleCalendarColors';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { useTags } from '@/contexts/TagsContext';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
@@ -20,7 +20,7 @@ export function TagsPage() {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const { tags, loading, addTag, editTag, removeTag, toggleTagAnalytics } = useTags();
   const [name, setName] = useState('');
-  const [color, setColor] = useState<string>(TAG_COLOR_OPTIONS[0]);
+  const [color, setColor] = useState<string>(GOOGLE_EVENT_COLORS[0].hex);
   const [parentId, setParentId] = useState<string | null>(null);
   const [parentPickerOpen, setParentPickerOpen] = useState(false);
   const [tagFormOpen, setTagFormOpen] = useState(false);
@@ -39,7 +39,7 @@ export function TagsPage() {
 
   const resetForm = () => {
     setName('');
-    setColor(TAG_COLOR_OPTIONS[0]);
+    setColor(GOOGLE_EVENT_COLORS[0].hex);
     setParentId(null);
     setDescription('');
     setShowDescription(false);

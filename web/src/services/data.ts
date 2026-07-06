@@ -1,4 +1,5 @@
 import { DEFAULT_UNKNOWN_PLACE, isUnknownGeofence, isUnknownPlaceName } from '@/constants/defaultPlace';
+import { nearestGoogleColorHex } from '@/constants/googleCalendarColors';
 import { DEFAULT_TAGS } from '@/theme/colors';
 import { supabase } from '@/lib/supabase';
 import {
@@ -257,13 +258,14 @@ export async function createTag(
   const normalized = name.replace(/^#/, '').trim().toLowerCase();
   if (!normalized) throw new Error('Tag name is required');
   const normalizedDescription = description?.trim() ? description.trim() : null;
+  const normalizedColor = nearestGoogleColorHex(color);
 
   let { data, error } = await supabase
     .from('tags')
     .insert({
       user_id: userId,
       name: normalized,
-      color,
+      color: normalizedColor,
       parent_id: parentId,
       include_in_analytics: true,
       description: normalizedDescription,
@@ -278,7 +280,7 @@ export async function createTag(
       .insert({
         user_id: userId,
         name: normalized,
-        color,
+        color: normalizedColor,
         parent_id: parentId,
         include_in_analytics: true,
         updated_at: new Date().toISOString(),
@@ -293,7 +295,7 @@ export async function createTag(
       .insert({
         user_id: userId,
         name: normalized,
-        color,
+        color: normalizedColor,
         parent_id: parentId,
         updated_at: new Date().toISOString(),
       })
@@ -353,10 +355,11 @@ export async function updateTag(
   if (!normalized) throw new Error('Tag name is required');
   const normalizedDescription =
     description === undefined ? undefined : description?.trim() ? description.trim() : null;
+  const normalizedColor = nearestGoogleColorHex(color);
 
   const updatePayload: Record<string, unknown> = {
     name: normalized,
-    color,
+    color: normalizedColor,
     parent_id: parentId,
     updated_at: new Date().toISOString(),
   };
