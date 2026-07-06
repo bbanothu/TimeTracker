@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Linking, Platform, ScrollView, Text } from 'react-native';
 
 import { AppBackground } from '@/components/AppBackground';
+import { ProfileFooter } from '@/components/ProfileFooter';
 import { ProfileIdentityCard } from '@/components/ProfileIdentityCard';
 import { ProfileLinkRows } from '@/components/ProfileLinkRows';
 import { useAuth } from '@/hooks/useAuth';
@@ -313,6 +314,8 @@ export default function ProfileScreen() {
               },
             ]}
           />
+
+          <ProfileFooter />
         </ScrollView>
       </KeyboardAvoidingView>
     </AppBackground>

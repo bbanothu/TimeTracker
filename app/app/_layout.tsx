@@ -112,6 +112,46 @@ function RootNavigator() {
                   ...getAppHeaderOptions(colors),
                 }}
               />
+              <Stack.Screen
+                name="about"
+                options={{
+                  headerShown: true,
+                  title: 'About',
+                  headerBackTitle: '',
+                  headerBackButtonDisplayMode: 'minimal',
+                  ...getAppHeaderOptions(colors),
+                }}
+              />
+              <Stack.Screen
+                name="contact"
+                options={{
+                  headerShown: true,
+                  title: 'Contact',
+                  headerBackTitle: '',
+                  headerBackButtonDisplayMode: 'minimal',
+                  ...getAppHeaderOptions(colors),
+                }}
+              />
+              <Stack.Screen
+                name="privacy"
+                options={{
+                  headerShown: true,
+                  title: 'Privacy',
+                  headerBackTitle: '',
+                  headerBackButtonDisplayMode: 'minimal',
+                  ...getAppHeaderOptions(colors),
+                }}
+              />
+              <Stack.Screen
+                name="terms"
+                options={{
+                  headerShown: true,
+                  title: 'Terms',
+                  headerBackTitle: '',
+                  headerBackButtonDisplayMode: 'minimal',
+                  ...getAppHeaderOptions(colors),
+                }}
+              />
             </Stack>
           </AppBootGate>
         </TagsProvider>

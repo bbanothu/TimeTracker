@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 import { PageHeader } from '@/components/layout/PageHeader';
+import { ProfileFooter } from '@/components/layout/ProfileFooter';
 import { ProfileIdentityCard } from '@/components/ui/ProfileIdentityCard';
 import { ProfileLinkRows } from '@/components/ui/ProfileLinkRows';
 import { useAuth } from '@/contexts/AuthContext';
@@ -222,6 +223,8 @@ export function ProfilePage() {
           },
         ]}
       />
+
+      <ProfileFooter />
     </div>
   );
 }
