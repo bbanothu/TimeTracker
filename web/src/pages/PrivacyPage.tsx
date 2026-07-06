@@ -7,7 +7,7 @@ export function PrivacyPage() {
   const colors = useAppColors();
 
   return (
-    <LegalPageLayout title="Privacy Policy" updated="July 5, 2026">
+    <LegalPageLayout title="Privacy Policy" updated="July 6, 2026">
       <p>
         TimeTracker (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or &ldquo;the app&rdquo;) helps you track how
         you spend your time. This policy explains what we collect, how we use it, and your choices.
@@ -37,6 +37,11 @@ export function PrivacyPage() {
             <strong>Device data</strong> — notification tokens (mobile) and app preferences such as
             theme
           </li>
+          <li>
+            <strong>Google Calendar</strong> — if you connect Google Calendar, we store OAuth tokens
+            securely on our servers and send completed session details (times, tags, notes, place
+            names) to Google to create calendar events you request
+          </li>
         </ul>
       </LegalSection>
 
@@ -63,6 +68,7 @@ export function PrivacyPage() {
           <li>Revoke location or notification permissions in device settings</li>
           <li>Disable saved places or background auto-tracking in the app</li>
           <li>Export entries as CSV from Account</li>
+          <li>Connect or disconnect Google Calendar from Account</li>
           <li>Delete individual entries from History</li>
           <li>
             Request account deletion by emailing{' '}

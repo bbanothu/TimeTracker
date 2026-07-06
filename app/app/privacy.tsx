@@ -13,7 +13,7 @@ export default function PrivacyScreen() {
   const colors = useAppColors();
 
   return (
-    <LegalScreenLayout updated="July 5, 2026">
+    <LegalScreenLayout updated="July 6, 2026">
       <LegalParagraph>
         TimeTracker ("we," "our," or "the app") helps you track how you spend your time. This policy
         explains what we collect, how we use it, and your choices.
@@ -28,6 +28,7 @@ export default function PrivacyScreen() {
             'Goals and stats — daily targets and progress derived from your entries',
             'Social features — friend requests and friendships when you use Friends',
             'Device data — notification tokens and app preferences such as theme',
+            'Google Calendar — if you connect, we store OAuth tokens securely and send session details to Google only when you sync',
           ]}
         />
       </LegalSection>
@@ -58,6 +59,7 @@ export default function PrivacyScreen() {
             'Revoke location or notification permissions in device settings',
             'Disable saved places or background auto-tracking in the app',
             'Export entries as CSV from Account',
+            'Connect or disconnect Google Calendar from Account',
             'Delete individual entries from History',
             `Request account deletion by emailing ${SUPPORT_EMAIL}`,
           ]}

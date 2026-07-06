@@ -16,6 +16,7 @@ Track how you spend your time with tags, stats, and optional location-based auto
 - **Geofencing** (mobile only) — Save places on a map; auto-start tracking when you enter, with optional notifications.
 - **Sync** — Mobile stores data locally in SQLite and syncs to Supabase when online.
 - **Export** — Download time entries as CSV from Profile.
+- **Google Calendar** (optional) — Connect Google Calendar from Profile and sync completed sessions as events.
 
 ## Prerequisites
 
@@ -177,6 +178,10 @@ Geofence auto-tracking is not available on desktop (same as web); you can still 
 ## Auth
 
 Both clients use Supabase Auth (email/password). Create an account from the Register screen on either client; the same login works across mobile and web.
+
+## Google Calendar (optional)
+
+You can export completed sessions to Google Calendar from **Account → Connect Google Calendar** (web and mobile). Setup requires Google Cloud OAuth credentials and Supabase Edge Functions — see [`docs/GOOGLE_CALENDAR.md`](docs/GOOGLE_CALENDAR.md).
 
 docker buildx build --platform linux/arm64 -t bbanothu1997/time-tracker:latest --push .
 

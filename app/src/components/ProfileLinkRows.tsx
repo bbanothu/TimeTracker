@@ -10,7 +10,15 @@ import { useAppColors } from '@/hooks/useAppColors';
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
 export type ProfileLinkIcon =
-  'friends' | 'history' | 'password' | 'autotracking' | 'sync' | 'export' | 'clear' | 'signout';
+  | 'friends'
+  | 'history'
+  | 'password'
+  | 'autotracking'
+  | 'calendar'
+  | 'sync'
+  | 'export'
+  | 'clear'
+  | 'signout';
 
 export interface ProfileLinkRow {
   id: string;
@@ -34,6 +42,7 @@ const ICONS: Record<ProfileLinkIcon, IoniconName> = {
   history: 'time-outline',
   password: 'lock-closed-outline',
   autotracking: 'navigate-outline',
+  calendar: 'calendar-outline',
   sync: 'cloud-upload-outline',
   export: 'download-outline',
   clear: 'trash-outline',

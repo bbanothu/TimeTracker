@@ -3,7 +3,7 @@ import { LoadingIndicator } from '@/components/ui/LoadingIndicator';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 
 export type ProfileLinkIcon =
-  'friends' | 'history' | 'password' | 'sync' | 'export' | 'clear' | 'signout';
+  'friends' | 'history' | 'password' | 'calendar' | 'sync' | 'export' | 'clear' | 'signout';
 
 export interface ProfileLinkRow {
   id: string;
@@ -52,6 +52,15 @@ function HistoryIcon({ color }: { color: string }) {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <circle cx="12" cy="12" r="8" stroke={color} strokeWidth="2" />
       <path d="M12 8v4l3 2" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function CalendarIcon({ color }: { color: string }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="3" y="5" width="18" height="16" rx="2" stroke={color} strokeWidth="2" />
+      <path d="M8 3v4M16 3v4M3 10h18" stroke={color} strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -109,6 +118,8 @@ function RowIcon({ icon, color }: { icon: ProfileLinkIcon; color: string }) {
       return <FriendsIcon color={color} />;
     case 'history':
       return <HistoryIcon color={color} />;
+    case 'calendar':
+      return <CalendarIcon color={color} />;
     case 'sync':
       return <SyncIcon color={color} />;
     case 'export':

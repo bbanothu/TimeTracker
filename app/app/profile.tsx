@@ -1,5 +1,4 @@
-import { useFocusEffect } from '@react-navigation/native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Linking, Platform, ScrollView, Text } from 'react-native';
 
@@ -15,9 +14,17 @@ import { clearTrackedData, exportTrackedDataCsv } from '@/services/dataService';
 import { useProfileName } from '@/hooks/useProfileName';
 import { fetchIncomingPendingCount } from '@/services/friendsService';
 import { getLastAutoSyncAt, performManualSync } from '@/services/syncScheduler';
+import {
+  connectGoogleCalendarInBrowser,
+  disconnectGoogleCalendar,
+  getGoogleCalendarStatus,
+  syncGoogleCalendar,
+} from '@/services/googleCalendarService';
+import type { GoogleCalendarStatus } from '@/types/googleCalendar';
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { calendar } = useLocalSearchParams<{ calendar?: string }>();
   const { paddingTop, paddingBottom } = useScreenScrollPadding({ topExtra: 8, bottomExtra: 32 });
   const { user, signOut } = useAuth();
   const [exporting, setExporting] = useState(false);
@@ -25,6 +32,11 @@ export default function ProfileScreen() {
   const [syncing, setSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
   const [pendingFriendCount, setPendingFriendCount] = useState(0);
+  const [calendarStatus, setCalendarStatus] = useState<GoogleCalendarStatus | null>(null);
+  const [calendarLoading, setCalendarLoading] = useState(true);
+  const [calendarConnecting, setCalendarConnecting] = useState(false);
+  const [calendarSyncing, setCalendarSyncing] = useState(false);
+  const [calendarDisconnecting, setCalendarDisconnecting] = useState(false);
   const {
     firstName,
     lastName,
@@ -79,6 +91,17 @@ export default function ProfileScreen() {
       .catch(() => undefined);
   }, []);
 
+  const loadCalendarStatus = useCallback(async () => {
+    try {
+      setCalendarLoading(true);
+      setCalendarStatus(await getGoogleCalendarStatus());
+    } catch {
+      setCalendarStatus(null);
+    } finally {
+      setCalendarLoading(false);
+    }
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       loadPendingCount();
@@ -87,7 +110,17 @@ export default function ProfileScreen() {
         .then(setLastSyncedAt)
         .catch(() => undefined);
       refreshStatus().catch(console.warn);
-    }, [loadPendingCount, reloadProfile, refreshStatus]),
+      loadCalendarStatus().catch(console.error);
+    }, [loadPendingCount, reloadProfile, refreshStatus, loadCalendarStatus]),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      if (calendar !== 'connected') return;
+      Alert.alert('Google Calendar', 'Your Google account is connected.');
+      loadCalendarStatus().catch(console.error);
+      router.setParams({ calendar: undefined });
+    }, [calendar, loadCalendarStatus, router]),
   );
 
   const handleSync = async () => {
@@ -166,6 +199,81 @@ export default function ProfileScreen() {
       ],
     );
   };
+
+  const handleConnectCalendar = async () => {
+    try {
+      setCalendarConnecting(true);
+      const connected = await connectGoogleCalendarInBrowser();
+      if (connected) {
+        await loadCalendarStatus();
+        Alert.alert('Google Calendar', 'Your Google account is connected.');
+      }
+    } catch (error) {
+      Alert.alert(
+        'Connect failed',
+        error instanceof Error ? error.message : 'Could not connect Google Calendar',
+      );
+    } finally {
+      setCalendarConnecting(false);
+    }
+  };
+
+  const handleSyncCalendar = async () => {
+    try {
+      setCalendarSyncing(true);
+      const result = await syncGoogleCalendar();
+      await loadCalendarStatus();
+      if (result.created === 0 && result.failed === 0) {
+        Alert.alert('Calendar sync', 'Your calendar is up to date.');
+      } else {
+        Alert.alert(
+          'Calendar sync',
+          `Added ${result.created} ${result.created === 1 ? 'event' : 'events'} to Google Calendar.`,
+        );
+      }
+    } catch (error) {
+      Alert.alert('Sync failed', error instanceof Error ? error.message : 'Calendar sync failed');
+    } finally {
+      setCalendarSyncing(false);
+    }
+  };
+
+  const handleDisconnectCalendar = () => {
+    Alert.alert('Disconnect Google Calendar', 'Stop exporting sessions to Google?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Disconnect',
+        style: 'destructive',
+        onPress: () => {
+          setCalendarDisconnecting(true);
+          disconnectGoogleCalendar()
+            .then(() => loadCalendarStatus())
+            .then(() => Alert.alert('Google Calendar', 'Disconnected.'))
+            .catch((error) => {
+              Alert.alert(
+                'Disconnect failed',
+                error instanceof Error ? error.message : 'Could not disconnect',
+              );
+            })
+            .finally(() => setCalendarDisconnecting(false));
+        },
+      },
+    ]);
+  };
+
+  const calendarConnected = calendarStatus?.connected === true;
+  const calendarBusy =
+    calendarLoading || calendarConnecting || calendarSyncing || calendarDisconnecting;
+  const calendarSubtitle = calendarLoading
+    ? 'Checking connection…'
+    : calendarConnected
+      ? [
+          calendarStatus.googleEmail,
+          calendarStatus.pendingCount > 0 ? `${calendarStatus.pendingCount} pending` : 'Up to date',
+        ]
+          .filter(Boolean)
+          .join(' · ')
+      : 'Export your sessions as calendar events';
 
   const handleLogout = () => {
     Alert.alert('Sign out', 'Your local cache will be cleared. Cloud data stays saved.', [
@@ -267,6 +375,35 @@ export default function ProfileScreen() {
                   },
                 },
               },
+            ]}
+          />
+
+          <ProfileLinkRows
+            rows={[
+              {
+                id: 'calendar',
+                label: calendarConnected ? 'Sync to Calendar' : 'Connect Google Calendar',
+                icon: 'calendar',
+                subtitle: calendarSubtitle,
+                onPress: calendarConnected ? handleSyncCalendar : handleConnectCalendar,
+                loading: calendarConnecting || calendarSyncing,
+                disabled: calendarBusy || syncing || exporting || clearing,
+                showChevron: false,
+              },
+              ...(calendarConnected
+                ? [
+                    {
+                      id: 'calendar-disconnect',
+                      label: 'Disconnect Google Calendar',
+                      icon: 'calendar' as const,
+                      subtitle: 'Stop exporting sessions to Google',
+                      onPress: handleDisconnectCalendar,
+                      loading: calendarDisconnecting,
+                      disabled: calendarBusy || syncing || exporting || clearing,
+                      showChevron: false,
+                    },
+                  ]
+                : []),
             ]}
           />
 
