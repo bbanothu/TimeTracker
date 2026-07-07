@@ -21,6 +21,36 @@ import { timerService } from '@/services/timerService';
 
 export const GEOFENCE_TASK = 'TIMETRACKER_GEOFENCE';
 
+let unknownAutoTrackSuppressed = false;
+
+export function suppressUnknownAutoTracking(): void {
+  unknownAutoTrackSuppressed = true;
+}
+
+function releaseUnknownAutoTracking(): void {
+  unknownAutoTrackSuppressed = false;
+}
+
+export function isActiveUnknownSession(session: ActiveSession): boolean {
+  const unknownId = getUnknownGeofence()?.id ?? null;
+  if (unknownId != null && session.geofenceId === unknownId) return true;
+
+  if (session.geofenceId) {
+    const geofence = getGeofenceById(session.geofenceId);
+    if (geofence && isUnknownGeofence(geofence)) return true;
+  }
+
+  return session.tags.some((tag) => isUnknownPlaceName(tag.name));
+}
+
+function findActiveUnknownSession(): ActiveSession | null {
+  return getActiveSessions().find((session) => isActiveUnknownSession(session)) ?? null;
+}
+
+function getNonUnknownSessions(): ActiveSession[] {
+  return getActiveSessions().filter((session) => !isActiveUnknownSession(session));
+}
+
 function distanceMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const toRad = (deg: number) => (deg * Math.PI) / 180;
   const earthRadius = 6371000;
@@ -41,26 +71,6 @@ export function isInsideGeofence(
     distanceMeters(latitude, longitude, geofence.latitude, geofence.longitude) <=
     geofence.radiusMeters
   );
-}
-
-function isUnknownSession(session: ActiveSession): boolean {
-  const unknownId = getUnknownGeofence()?.id ?? null;
-  if (unknownId != null && session.geofenceId === unknownId) return true;
-
-  if (session.geofenceId) {
-    const geofence = getGeofenceById(session.geofenceId);
-    if (geofence && isUnknownGeofence(geofence)) return true;
-  }
-
-  return session.tags.some((tag) => isUnknownPlaceName(tag.name));
-}
-
-function findActiveUnknownSession(): ActiveSession | null {
-  return getActiveSessions().find((session) => isUnknownSession(session)) ?? null;
-}
-
-function getNonUnknownSessions(): ActiveSession[] {
-  return getActiveSessions().filter((session) => !isUnknownSession(session));
 }
 
 async function stopUnknownLocationSessionIfActive(): Promise<void> {
@@ -98,6 +108,8 @@ export async function ensureUnknownLocationSession(insideRealGeofence: boolean):
 
   if (findActiveUnknownSession()) return;
 
+  if (unknownAutoTrackSuppressed) return;
+
   timerService.startGeofence(unknown.tagId, unknown.id);
   notifyDataRefresh();
   pushChangesInBackground(getCurrentUserId());
@@ -108,6 +120,7 @@ export async function handleGeofenceEnter(geofenceId: string): Promise<void> {
     const geofence = getGeofenceById(geofenceId);
     if (!geofence || !geofence.enabled || isUnknownGeofence(geofence)) return;
 
+    releaseUnknownAutoTracking();
     await stopUnknownLocationSessionIfActive();
 
     const active = getActiveSessionByGeofenceId(geofenceId);
@@ -251,4 +264,6 @@ export const geofenceService = {
   ensureUnknownLocationSession,
   isInsideGeofence,
   reconcileUnknownSession,
+  suppressUnknownAutoTracking,
+  isActiveUnknownSession,
 };

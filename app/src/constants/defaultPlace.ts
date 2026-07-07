@@ -22,3 +22,7 @@ export function isUnknownGeofence(geofence: { name: string }): boolean {
 export function filterDisplayGeofences<T extends { name: string }>(geofences: T[]): T[] {
   return geofences.filter((geofence) => !isUnknownGeofence(geofence));
 }
+
+export function filterDisplayTags<T extends { name: string }>(tags: T[]): T[] {
+  return tags.filter((tag) => !isUnknownPlaceName(tag.name));
+}

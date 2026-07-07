@@ -22,6 +22,7 @@ import { dismissGeofenceNotification } from '@/services/notificationService';
 import { pushChangesInBackground } from '@/services/syncScheduler';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
 import { timerService } from '@/services/timerService';
+import { isActiveUnknownSession, suppressUnknownAutoTracking } from '@/services/geofenceService';
 import { buildMergedFields } from '@/utils/entryMerge';
 
 export default function TrackScreen() {
@@ -72,6 +73,9 @@ export default function TrackScreen() {
 
   const handleStop = async (sessionId: string) => {
     const session = sessions.find((item) => item.id === sessionId);
+    if (session && isActiveUnknownSession(session)) {
+      suppressUnknownAutoTracking();
+    }
     const coords = await getStopCoordinates();
     const entry = timerService.stop(sessionId, {
       stopLatitude: coords?.latitude ?? null,

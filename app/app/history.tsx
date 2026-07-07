@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Text } from 'react-native';
 
 import { AppBackground } from '@/components/AppBackground';
@@ -19,7 +19,7 @@ import { useActiveSession } from '@/hooks/useActiveSession';
 import { useAppColors } from '@/hooks/useAppColors';
 import { useAuth } from '@/hooks/useAuth';
 import { useTags } from '@/hooks/useTags';
-import { notifyDataRefresh } from '@/lib/dataRefresh';
+import { notifyDataRefresh, subscribeDataRefresh } from '@/lib/dataRefresh';
 import { pushChangesInBackground } from '@/services/syncScheduler';
 import type { TimeEntry } from '@/types';
 import {
@@ -40,10 +40,19 @@ export default function HistoryScreen() {
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
   const geofences = useMemo(() => (ready ? getAllGeofences() : []), [ready, entriesRevision]);
 
-  useEffect(() => {
+  const reloadEntries = useCallback(() => {
     if (!ready) return;
     setEntries([...getAllEntries()].reverse());
-  }, [ready, entriesRevision]);
+  }, [ready]);
+
+  useEffect(() => {
+    reloadEntries();
+  }, [reloadEntries, entriesRevision]);
+
+  useEffect(() => {
+    if (!ready) return;
+    return subscribeDataRefresh(reloadEntries);
+  }, [ready, reloadEntries]);
 
   const filteredEntries = useMemo(() => filterHistoryEntries(entries, filters), [entries, filters]);
 
@@ -62,9 +71,11 @@ export default function HistoryScreen() {
   const handleDelete = (entryId: string) => {
     try {
       deleteEntry(entryId);
+      setEntries((current) => current.filter((entry) => entry.id !== entryId));
       notifyDataRefresh();
       pushChangesInBackground(user?.id);
     } catch (error) {
+      reloadEntries();
       Alert.alert('Delete failed', error instanceof Error ? error.message : 'Unknown error');
     }
   };
@@ -87,10 +98,16 @@ export default function HistoryScreen() {
     if (!older || !newer) return;
 
     try {
-      mergeEntries(keepEntryId, deleteEntryId, buildMergedFields(older, newer));
+      const merged = mergeEntries(keepEntryId, deleteEntryId, buildMergedFields(older, newer));
+      setEntries((current) =>
+        current
+          .filter((entry) => entry.id !== deleteEntryId)
+          .map((entry) => (entry.id === keepEntryId ? merged : entry)),
+      );
       notifyDataRefresh();
       pushChangesInBackground(user?.id);
     } catch (error) {
+      reloadEntries();
       Alert.alert('Merge failed', error instanceof Error ? error.message : 'Unknown error');
     }
   };

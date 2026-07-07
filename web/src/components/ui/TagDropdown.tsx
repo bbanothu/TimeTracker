@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { BottomSheetModal, BottomSheetScroll } from '@/components/ui/BottomSheetModal';
+import { filterDisplayTags } from '@/constants/defaultPlace';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { useFlatTagsByUsage } from '@/hooks/useFlatTagsByUsage';
 import type { Tag } from '@/types';
@@ -16,16 +17,17 @@ interface TagDropdownProps {
 export function TagDropdown({ tags, selectedId, onSelect }: TagDropdownProps) {
   const colors = useAppColors();
   const [open, setOpen] = useState(false);
-  const flatTags = useFlatTagsByUsage(tags);
-  const selectedTag = tags.find((tag) => tag.id === selectedId) ?? null;
-  const selectedLabel = selectedTag ? getTagPath(selectedTag.id, tags) : null;
+  const displayTags = filterDisplayTags(tags);
+  const flatTags = useFlatTagsByUsage(displayTags);
+  const selectedTag = displayTags.find((tag) => tag.id === selectedId) ?? null;
+  const selectedLabel = selectedTag ? getTagPath(selectedTag.id, displayTags) : null;
 
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        disabled={tags.length === 0}
+        disabled={displayTags.length === 0}
         className="flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left disabled:opacity-100"
         style={{
           backgroundColor: colors.inputBgSolid,
@@ -43,7 +45,7 @@ export function TagDropdown({ tags, selectedId, onSelect }: TagDropdownProps) {
               <span className="truncate">{formatTagName(selectedLabel ?? '')}</span>
             </>
           ) : (
-            <span>{tags.length === 0 ? 'Add tags first' : 'Select activity'}</span>
+            <span>{displayTags.length === 0 ? 'Add tags first' : 'Select activity'}</span>
           )}
         </span>
         <span className="shrink-0" style={{ color: colors.textMuted }}>

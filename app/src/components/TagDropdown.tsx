@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { BottomSheetModal, BottomSheetScrollView } from '@/components/BottomSheetModal';
+import { filterDisplayTags } from '@/constants/defaultPlace';
 import { useAppColors } from '@/hooks/useAppColors';
 import { useFlatTagsByUsage } from '@/hooks/useFlatTagsByUsage';
 import type { Tag } from '@/types';
@@ -19,8 +20,8 @@ interface TagDropdownProps {
 export function TagDropdown({ tags, selectedId, onSelect, disabled }: TagDropdownProps) {
   const colors = useAppColors();
   const [open, setOpen] = useState(false);
-  const flatTags = useFlatTagsByUsage(tags);
-  const selectedTag = tags.find((tag) => tag.id === selectedId) ?? null;
+  const flatTags = useFlatTagsByUsage(filterDisplayTags(tags));
+  const selectedTag = filterDisplayTags(tags).find((tag) => tag.id === selectedId) ?? null;
   const selectedLabel = selectedTag ? getTagPath(selectedTag.id, tags) : null;
 
   const handleSelect = (tagId: string) => {
@@ -31,7 +32,7 @@ export function TagDropdown({ tags, selectedId, onSelect, disabled }: TagDropdow
   return (
     <>
       <Pressable
-        disabled={disabled || tags.length === 0}
+        disabled={disabled || filterDisplayTags(tags).length === 0}
         onPress={() => setOpen(true)}
         className="flex-row items-center justify-between rounded-xl border px-4 py-3"
         style={{

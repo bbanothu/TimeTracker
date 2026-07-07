@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { filterDisplayTags } from '@/constants/defaultPlace';
 import { useFlatTagsByUsage } from '@/hooks/useFlatTagsByUsage';
 import { getLastSelectedTagId, setLastSelectedTagId } from '@/lib/lastSelectedTag';
 import type { Tag } from '@/types';
@@ -13,7 +14,8 @@ function pickDefaultTagId(tags: Tag[], flatTagIds: string[]): string | null {
 }
 
 export function useSelectedTag(tags: Tag[]) {
-  const flatTags = useFlatTagsByUsage(tags);
+  const displayTags = filterDisplayTags(tags);
+  const flatTags = useFlatTagsByUsage(displayTags);
   const flatTagIds = flatTags.map((item) => item.tag.id);
   const flatTagIdsKey = flatTagIds.join('\0');
   const [selectedTagId, setSelectedTagIdState] = useState<string | null>(null);
@@ -38,24 +40,24 @@ export function useSelectedTag(tags: Tag[]) {
   useEffect(() => {
     if (!storageReady) return;
 
-    if (tags.length === 0) {
+    if (displayTags.length === 0) {
       setSelectedTagIdState(null);
       return;
     }
 
     setSelectedTagIdState((current) => {
-      if (current && tags.some((tag) => tag.id === current)) {
+      if (current && displayTags.some((tag) => tag.id === current)) {
         return current;
       }
 
       const stored = storedId.current;
-      if (stored && tags.some((tag) => tag.id === stored)) {
+      if (stored && displayTags.some((tag) => tag.id === stored)) {
         return stored;
       }
 
-      return pickDefaultTagId(tags, flatTagIds);
+      return pickDefaultTagId(displayTags, flatTagIds);
     });
-  }, [storageReady, tags, flatTagIdsKey]);
+  }, [storageReady, displayTags, flatTagIdsKey]);
 
   const setSelectedTagId = useCallback((tagId: string) => {
     storedId.current = tagId;

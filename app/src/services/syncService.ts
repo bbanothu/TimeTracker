@@ -5,6 +5,8 @@ import {
   getAllTags,
   getLastPulledAt,
   getSyncQueue,
+  hasPendingSyncOperation,
+  remapLocalTagId,
   removeSyncQueueItem,
   setLastPulledAt,
   upsertDailyGoalScoreFromRemote,
@@ -15,6 +17,37 @@ import {
 } from '@/db/client';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import type { EntrySource } from '@/types';
+
+async function reconcileTagPushConflict(payload: Record<string, unknown>): Promise<void> {
+  const userId = payload.user_id as string;
+  const localId = payload.id as string;
+  const name = payload.name as string;
+  const parentId = (payload.parent_id as string | null | undefined) ?? null;
+
+  let query = supabase.from('tags').select('*').eq('user_id', userId).eq('name', name);
+  query = parentId ? query.eq('parent_id', parentId) : query.is('parent_id', null);
+
+  const { data: remoteTag, error: fetchError } = await query.maybeSingle();
+  if (fetchError) throw fetchError;
+  if (!remoteTag) {
+    throw new Error(`Tag "${name}" already exists remotely but could not be loaded`);
+  }
+
+  if (remoteTag.id !== localId) {
+    remapLocalTagId(localId, remoteTag.id as string);
+  }
+
+  upsertTagFromRemote({
+    id: remoteTag.id as string,
+    user_id: remoteTag.user_id as string,
+    name: remoteTag.name as string,
+    color: remoteTag.color as string,
+    parent_id: (remoteTag.parent_id as string | null | undefined) ?? null,
+    include_in_analytics: remoteTag.include_in_analytics as boolean | null | undefined,
+    description: (remoteTag.description as string | null | undefined) ?? null,
+    updated_at: remoteTag.updated_at as string,
+  });
+}
 
 async function upsertTagToRemote(payload: Record<string, unknown>): Promise<boolean> {
   const { error } = await supabase.from('tags').upsert(payload);
@@ -31,9 +64,17 @@ async function upsertTagToRemote(payload: Record<string, unknown>): Promise<bool
     } = payload;
     if (Object.keys(rest).length > 0) {
       const { error: retryError } = await supabase.from('tags').upsert(rest);
+      if (retryError?.code === '23505') {
+        await reconcileTagPushConflict(payload);
+        return true;
+      }
       if (retryError) throw retryError;
     }
     return false;
+  }
+  if (error?.code === '23505' || error?.message?.includes('idx_tags_user_parent_name')) {
+    await reconcileTagPushConflict(payload);
+    return true;
   }
   if (error) throw error;
   return true;
@@ -103,6 +144,7 @@ async function pushInternal(userId: string): Promise<boolean> {
   if (!(await isOnline())) return false;
 
   const queue = getSyncQueue();
+  let progressed = false;
 
   for (const item of queue) {
     try {
@@ -200,13 +242,13 @@ async function pushInternal(userId: string): Promise<boolean> {
       }
 
       removeSyncQueueItem(item.id);
+      progressed = true;
     } catch (error) {
       console.warn('Sync push failed for', item.entityType, item.entityId, error);
-      return false;
     }
   }
 
-  return true;
+  return progressed || getSyncQueue().length === 0;
 }
 
 export async function pushGoalForTag(userId: string, tagId: string): Promise<void> {
@@ -315,6 +357,10 @@ async function pullInternal(userId: string, options: SyncOptions = {}): Promise<
   }
 
   for (const entry of entriesResult.data ?? []) {
+    if (hasPendingSyncOperation('entry', entry.id as string, 'delete')) {
+      continue;
+    }
+
     bumpCursor(entry.updated_at);
     const { data: tagLinks } = await supabase
       .from('time_entry_tags')

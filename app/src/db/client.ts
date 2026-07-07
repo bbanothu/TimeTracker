@@ -380,11 +380,58 @@ export function enqueueSync(
   operation: SyncOperation,
   payload: Record<string, unknown>,
 ): void {
+  if (operation === 'upsert') {
+    getDb().runSync(
+      'DELETE FROM sync_queue WHERE entity_type = ? AND entity_id = ? AND operation = ?',
+      [entityType, entityId, 'upsert'],
+    );
+  } else if (operation === 'delete') {
+    getDb().runSync('DELETE FROM sync_queue WHERE entity_type = ? AND entity_id = ?', [
+      entityType,
+      entityId,
+    ]);
+  }
+
   getDb().runSync(
     `INSERT INTO sync_queue (id, entity_type, entity_id, operation, payload, created_at)
      VALUES (?, ?, ?, ?, ?, ?)`,
     [createId(), entityType, entityId, operation, JSON.stringify(payload), nowMs()],
   );
+}
+
+export function hasPendingSyncOperation(
+  entityType: SyncEntityType,
+  entityId: string,
+  operation?: SyncOperation,
+): boolean {
+  return getSyncQueue().some(
+    (item) =>
+      item.entityType === entityType &&
+      item.entityId === entityId &&
+      (operation == null || item.operation === operation),
+  );
+}
+
+export function clearSyncQueueForEntity(entityType: SyncEntityType, entityId: string): void {
+  getDb().runSync('DELETE FROM sync_queue WHERE entity_type = ? AND entity_id = ?', [
+    entityType,
+    entityId,
+  ]);
+}
+
+export function remapLocalTagId(fromId: string, toId: string): void {
+  if (fromId === toId) return;
+
+  const database = getDb();
+  database.execSync('PRAGMA foreign_keys = OFF');
+  database.runSync('UPDATE time_entry_tags SET tag_id = ? WHERE tag_id = ?', [toId, fromId]);
+  database.runSync('UPDATE active_session_tags SET tag_id = ? WHERE tag_id = ?', [toId, fromId]);
+  database.runSync('UPDATE geofences SET tag_id = ? WHERE tag_id = ?', [toId, fromId]);
+  database.runSync('UPDATE tag_daily_goals SET tag_id = ? WHERE tag_id = ?', [toId, fromId]);
+  database.runSync('UPDATE tags SET parent_id = ? WHERE parent_id = ?', [toId, fromId]);
+  database.runSync('DELETE FROM tags WHERE id = ?', [fromId]);
+  database.execSync('PRAGMA foreign_keys = ON');
+  clearSyncQueueForEntity('tag', fromId);
 }
 
 export function getSyncQueue(): Array<{
@@ -402,7 +449,16 @@ export function getSyncQueue(): Array<{
       operation: SyncOperation;
       payload: string;
     }>(
-      'SELECT id, entity_type, entity_id, operation, payload FROM sync_queue ORDER BY created_at ASC',
+      `SELECT id, entity_type, entity_id, operation, payload
+       FROM sync_queue
+       ORDER BY
+         CASE
+           WHEN operation = 'delete' AND entity_type = 'entry' THEN 0
+           WHEN operation = 'delete' THEN 1
+           WHEN entity_type = 'entry' THEN 2
+           ELSE 3
+         END,
+         created_at ASC`,
     )
     .map((row) => ({
       id: row.id,
@@ -674,23 +730,7 @@ export function upsertTagFromRemote(tag: {
   );
 
   if (duplicate) {
-    database.execSync('PRAGMA foreign_keys = OFF');
-    database.runSync('UPDATE time_entry_tags SET tag_id = ? WHERE tag_id = ?', [
-      tag.id,
-      duplicate.id,
-    ]);
-    database.runSync('UPDATE active_session_tags SET tag_id = ? WHERE tag_id = ?', [
-      tag.id,
-      duplicate.id,
-    ]);
-    database.runSync('UPDATE geofences SET tag_id = ? WHERE tag_id = ?', [tag.id, duplicate.id]);
-    database.runSync('UPDATE tag_daily_goals SET tag_id = ? WHERE tag_id = ?', [
-      tag.id,
-      duplicate.id,
-    ]);
-    database.runSync('UPDATE tags SET parent_id = ? WHERE parent_id = ?', [tag.id, duplicate.id]);
-    database.runSync('DELETE FROM tags WHERE id = ?', [duplicate.id]);
-    database.execSync('PRAGMA foreign_keys = ON');
+    remapLocalTagId(duplicate.id, tag.id);
   }
 
   const existingLocal = database.getFirstSync<{ include_in_analytics: number }>(
@@ -755,6 +795,10 @@ export function upsertEntryFromRemote(entry: {
   updated_at: string;
   tag_ids: string[];
 }): void {
+  if (hasPendingSyncOperation('entry', entry.id, 'delete')) {
+    return;
+  }
+
   const updatedAt = new Date(entry.updated_at).getTime();
   const userId = requireUserId();
   const database = getDb();

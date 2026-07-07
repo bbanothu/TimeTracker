@@ -21,6 +21,7 @@ import { useAppColors } from '@/hooks/useAppColors';
 import { useTags } from '@/hooks/useTags';
 import { useFlatTagsByUsage } from '@/hooks/useFlatTagsByUsage';
 import { GOOGLE_EVENT_COLORS } from '@/constants/googleCalendarColors';
+import { filterDisplayTags } from '@/constants/defaultPlace';
 import type { Tag } from '@/types';
 import { getEligibleParents, wouldCreateCycle } from '@/utils/tagTree';
 import { formatTagName } from '@/utils/formatDuration';
@@ -39,7 +40,7 @@ export default function TagsScreen() {
   const [error, setError] = useState<string | null>(null);
   const tagFormScrollRef = useRef<ScrollViewType>(null);
 
-  const flatTags = useFlatTagsByUsage(tags);
+  const flatTags = useFlatTagsByUsage(filterDisplayTags(tags));
   const parentOptions = useMemo(
     () => getEligibleParents(editingTag?.id ?? null, tags),
     [editingTag, tags],

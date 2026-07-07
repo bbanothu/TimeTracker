@@ -3,7 +3,12 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { useAuth } from '@/hooks/useAuth';
 import { notifyDataRefresh, subscribeDataRefresh } from '@/lib/dataRefresh';
 import { initializeAppData, isDatabaseReady } from '@/services/appInitService';
-import { ensureUnknownLocationSession, reconcileUnknownSession } from '@/services/geofenceService';
+import {
+  ensureUnknownLocationSession,
+  isActiveUnknownSession,
+  reconcileUnknownSession,
+  suppressUnknownAutoTracking,
+} from '@/services/geofenceService';
 import { dismissGeofenceNotification } from '@/services/notificationService';
 import { pushChangesInBackground } from '@/services/syncScheduler';
 import { startDailyGoalScoreScheduler } from '@/services/dailyGoalScoreService';
@@ -102,12 +107,18 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
   const stop = useCallback(
     (sessionId: string) => {
       const session = timerService.getActiveSessions().find((item) => item.id === sessionId);
+      const stoppingUnknown = session ? isActiveUnknownSession(session) : false;
+      if (stoppingUnknown) {
+        suppressUnknownAutoTracking();
+      }
       timerService.stop(sessionId);
       refresh();
       if (session?.geofenceId) {
         dismissGeofenceNotification(session.geofenceId).catch(console.warn);
       }
-      ensureUnknownLocationSession(false).catch(console.warn);
+      if (!stoppingUnknown) {
+        ensureUnknownLocationSession(false).catch(console.warn);
+      }
       if (user) {
         pushChangesInBackground(user.id);
       }
