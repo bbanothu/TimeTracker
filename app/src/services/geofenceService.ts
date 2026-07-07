@@ -1,5 +1,6 @@
 import * as Location from 'expo-location';
 
+import type { ActiveSession } from '@/types';
 import {
   getActiveSessionByGeofenceId,
   getActiveSessions,
@@ -8,7 +9,7 @@ import {
   getTrackableGeofences,
   getUnknownGeofence,
 } from '@/db/client';
-import { isUnknownGeofence } from '@/constants/defaultPlace';
+import { isUnknownGeofence, isUnknownPlaceName } from '@/constants/defaultPlace';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
 import { getStopCoordinates } from '@/lib/stopLocation';
 import {
@@ -42,11 +43,28 @@ export function isInsideGeofence(
   );
 }
 
-async function stopUnknownLocationSessionIfActive(): Promise<void> {
-  const unknown = getUnknownGeofence();
-  if (!unknown) return;
+function isUnknownSession(session: ActiveSession): boolean {
+  const unknownId = getUnknownGeofence()?.id ?? null;
+  if (unknownId != null && session.geofenceId === unknownId) return true;
 
-  const active = getActiveSessionByGeofenceId(unknown.id);
+  if (session.geofenceId) {
+    const geofence = getGeofenceById(session.geofenceId);
+    if (geofence && isUnknownGeofence(geofence)) return true;
+  }
+
+  return session.tags.some((tag) => isUnknownPlaceName(tag.name));
+}
+
+function findActiveUnknownSession(): ActiveSession | null {
+  return getActiveSessions().find((session) => isUnknownSession(session)) ?? null;
+}
+
+function getNonUnknownSessions(): ActiveSession[] {
+  return getActiveSessions().filter((session) => !isUnknownSession(session));
+}
+
+async function stopUnknownLocationSessionIfActive(): Promise<void> {
+  const active = findActiveUnknownSession();
   if (!active) return;
 
   const coords = await getStopCoordinates();
@@ -54,13 +72,23 @@ async function stopUnknownLocationSessionIfActive(): Promise<void> {
     stopLatitude: coords?.latitude ?? null,
     stopLongitude: coords?.longitude ?? null,
   });
-  await dismissGeofenceNotification(unknown.id);
+  if (active.geofenceId) {
+    await dismissGeofenceNotification(active.geofenceId);
+  }
   notifyDataRefresh();
   pushChangesInBackground(getCurrentUserId());
 }
 
+export async function reconcileUnknownSession(): Promise<void> {
+  if (getNonUnknownSessions().length > 0) {
+    await stopUnknownLocationSessionIfActive();
+  }
+}
+
 export async function ensureUnknownLocationSession(insideRealGeofence: boolean): Promise<void> {
-  if (insideRealGeofence) {
+  const otherSessions = getNonUnknownSessions();
+
+  if (insideRealGeofence || otherSessions.length > 0) {
     await stopUnknownLocationSessionIfActive();
     return;
   }
@@ -68,11 +96,7 @@ export async function ensureUnknownLocationSession(insideRealGeofence: boolean):
   const unknown = getUnknownGeofence();
   if (!unknown) return;
 
-  const hasLocationSession = getActiveSessions().some((session) => session.geofenceId != null);
-  if (hasLocationSession) return;
-
-  const active = getActiveSessionByGeofenceId(unknown.id);
-  if (active) return;
+  if (findActiveUnknownSession()) return;
 
   timerService.startGeofence(unknown.tagId, unknown.id);
   notifyDataRefresh();
@@ -84,10 +108,11 @@ export async function handleGeofenceEnter(geofenceId: string): Promise<void> {
     const geofence = getGeofenceById(geofenceId);
     if (!geofence || !geofence.enabled || isUnknownGeofence(geofence)) return;
 
+    await stopUnknownLocationSessionIfActive();
+
     const active = getActiveSessionByGeofenceId(geofenceId);
     if (active) return;
 
-    await stopUnknownLocationSessionIfActive();
     timerService.startGeofence(geofence.tagId, geofenceId);
 
     const tagName = geofence.tag?.name ?? 'activity';
@@ -225,4 +250,5 @@ export const geofenceService = {
   handleGeofenceExit,
   ensureUnknownLocationSession,
   isInsideGeofence,
+  reconcileUnknownSession,
 };

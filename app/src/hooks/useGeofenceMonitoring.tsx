@@ -17,6 +17,7 @@ import {
   requestBackgroundPermissions,
   syncGeofencingTask,
   disableBackgroundGeofencing,
+  reconcileUnknownSession,
 } from '@/services/geofenceService';
 import {
   ensureForegroundLocationPermission,
@@ -81,6 +82,7 @@ export function GeofenceMonitoringProvider({
       const location = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
+      await reconcileUnknownSession();
       const previous = insideIdsRef.current;
       const next = await checkForegroundGeofences(
         location.coords.latitude,

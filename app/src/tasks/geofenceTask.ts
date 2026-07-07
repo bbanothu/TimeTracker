@@ -1,7 +1,13 @@
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 
-import { GEOFENCE_TASK, handleGeofenceEnter, handleGeofenceExit } from '@/services/geofenceService';
+import {
+  ensureUnknownLocationSession,
+  GEOFENCE_TASK,
+  handleGeofenceEnter,
+  handleGeofenceExit,
+  reconcileUnknownSession,
+} from '@/services/geofenceService';
 
 TaskManager.defineTask(GEOFENCE_TASK, async ({ data, error }) => {
   if (error) {
@@ -19,8 +25,10 @@ TaskManager.defineTask(GEOFENCE_TASK, async ({ data, error }) => {
 
     if (eventType === Location.GeofencingEventType.Enter) {
       await handleGeofenceEnter(region.identifier);
+      await ensureUnknownLocationSession(true);
     } else if (eventType === Location.GeofencingEventType.Exit) {
       await handleGeofenceExit(region.identifier);
+      await reconcileUnknownSession();
     }
   } catch (taskError) {
     console.warn('Geofence task handler failed:', taskError);

@@ -3,6 +3,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { useAuth } from '@/hooks/useAuth';
 import { notifyDataRefresh, subscribeDataRefresh } from '@/lib/dataRefresh';
 import { initializeAppData, isDatabaseReady } from '@/services/appInitService';
+import { ensureUnknownLocationSession, reconcileUnknownSession } from '@/services/geofenceService';
 import { dismissGeofenceNotification } from '@/services/notificationService';
 import { pushChangesInBackground } from '@/services/syncScheduler';
 import { startDailyGoalScoreScheduler } from '@/services/dailyGoalScoreService';
@@ -37,6 +38,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     setSessions(timerService.getActiveSessions());
     setTodayEntries(timerService.getTodayEntries());
     setEntriesRevision((value) => value + 1);
+    reconcileUnknownSession().catch(console.warn);
   }, [user]);
 
   useEffect(() => {
@@ -89,6 +91,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
       timerService.startManual(tagIds);
       refresh();
       notifyDataRefresh();
+      ensureUnknownLocationSession(false).catch(console.warn);
       if (user) {
         pushChangesInBackground(user.id);
       }
@@ -104,6 +107,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
       if (session?.geofenceId) {
         dismissGeofenceNotification(session.geofenceId).catch(console.warn);
       }
+      ensureUnknownLocationSession(false).catch(console.warn);
       if (user) {
         pushChangesInBackground(user.id);
       }
