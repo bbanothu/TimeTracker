@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "TimeTracker",
+    "name": "Time_Trackers",
     "slug": "TimeTracker",
     "owner": "bbanothu",
     "version": "1.1.0",
@@ -9,14 +9,18 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "com.time_tracker.app",
+      "bundleIdentifier": "com.time-tracker.app",
       "supportsTablet": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "TimeTracker uses your location to auto-track time when you enter places like work.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "TimeTracker uses background location to automatically track time at saved places.",
         "NSPhotoLibraryUsageDescription": "TimeTracker needs photo library access so you can set a profile picture.",
         "NSUserNotificationsUsageDescription": "TimeTracker sends alerts when you arrive at saved places so you can stop tracking if needed.",
-        "UIBackgroundModes": ["location"]
+        "UIBackgroundModes": [
+          "location",
+          "location"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -34,7 +38,8 @@
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_BACKGROUND_LOCATION",
         "android.permission.FOREGROUND_SERVICE",
-        "android.permission.FOREGROUND_SERVICE_LOCATION"
+        "android.permission.FOREGROUND_SERVICE_LOCATION",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
