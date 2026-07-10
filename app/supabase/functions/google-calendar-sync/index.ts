@@ -7,10 +7,7 @@ import {
   getValidAccessToken,
   jsonResponse,
 } from '../_shared/googleCalendar.ts';
-import {
-  resetAndSyncGoogleCalendar,
-  syncCompletedEntries,
-} from '../_shared/googleCalendarSync.ts';
+import { resetAndSyncGoogleCalendar, syncCompletedEntries } from '../_shared/googleCalendarSync.ts';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {

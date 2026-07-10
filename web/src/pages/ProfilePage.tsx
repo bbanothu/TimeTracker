@@ -249,9 +249,7 @@ export function ProfilePage() {
     : calendarConnected
       ? [
           calendarStatus.googleEmail,
-          calendarStatus.pendingCount > 0
-            ? `${calendarStatus.pendingCount} pending`
-            : 'Up to date',
+          calendarStatus.pendingCount > 0 ? `${calendarStatus.pendingCount} pending` : 'Up to date',
           calendarStatus.lastSyncedAt
             ? `Last synced ${new Date(calendarStatus.lastSyncedAt).toLocaleString(undefined, {
                 month: 'short',

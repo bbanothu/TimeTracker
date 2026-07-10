@@ -9,15 +9,15 @@ export function PrivacyPage() {
   return (
     <LegalPageLayout title="Privacy Policy" updated="July 6, 2026">
       <p>
-        TimeTracker (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or &ldquo;the app&rdquo;) helps you track how
-        you spend your time. This policy explains what we collect, how we use it, and your choices.
+        TimeTracker (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or &ldquo;the app&rdquo;) helps you track
+        how you spend your time. This policy explains what we collect, how we use it, and your
+        choices.
       </p>
 
       <LegalSection title="Information we collect">
         <ul className="list-disc space-y-1 pl-5">
           <li>
-            <strong>Account information</strong> — email, password, optional name and profile
-            photo
+            <strong>Account information</strong> — email, password, optional name and profile photo
           </li>
           <li>
             <strong>Time tracking data</strong> — tags, session times, optional notes, manual vs.

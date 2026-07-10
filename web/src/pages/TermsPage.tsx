@@ -16,8 +16,8 @@ export function TermsPage() {
 
       <LegalSection title="The service">
         <p>
-          TimeTracker provides time-tracking tools including tags, goals, statistics, saved places, and
-          optional location-based auto-tracking. Features vary by platform. We may update or
+          TimeTracker provides time-tracking tools including tags, goals, statistics, saved places,
+          and optional location-based auto-tracking. Features vary by platform. We may update or
           discontinue features with reasonable notice when possible.
         </p>
       </LegalSection>
@@ -43,8 +43,8 @@ export function TermsPage() {
       <LegalSection title="Your content">
         <p>
           You retain ownership of the data you enter (time entries, tags, notes, etc.). You grant us
-          a limited license to store, process, and display that data solely to operate TimeTracker for
-          you, including sync and backup.
+          a limited license to store, process, and display that data solely to operate TimeTracker
+          for you, including sync and backup.
         </p>
       </LegalSection>
 
@@ -59,24 +59,25 @@ export function TermsPage() {
 
       <LegalSection title="Disclaimer">
         <p>
-          TimeTracker is provided &ldquo;as is&rdquo; without warranties of any kind. We do not guarantee
-          uninterrupted or error-free service. Time totals and stats are estimates based on your
-          inputs and device data.
+          TimeTracker is provided &ldquo;as is&rdquo; without warranties of any kind. We do not
+          guarantee uninterrupted or error-free service. Time totals and stats are estimates based
+          on your inputs and device data.
         </p>
       </LegalSection>
 
       <LegalSection title="Limitation of liability">
         <p>
           To the maximum extent permitted by law, QCSmallBusiness is not liable for indirect,
-          incidental, or consequential damages arising from your use of TimeTracker. Our total liability
-          is limited to the amount you paid us in the past twelve months (or zero for free use).
+          incidental, or consequential damages arising from your use of TimeTracker. Our total
+          liability is limited to the amount you paid us in the past twelve months (or zero for free
+          use).
         </p>
       </LegalSection>
 
       <LegalSection title="Termination">
         <p>
-          You may stop using TimeTracker and delete your account at any time. We may suspend or terminate
-          access for violations of these terms or to protect the service.
+          You may stop using TimeTracker and delete your account at any time. We may suspend or
+          terminate access for violations of these terms or to protect the service.
         </p>
       </LegalSection>
 

@@ -87,10 +87,7 @@ export function computeCategoryDurationsToday(
 
 export const MAX_ACCOUNTED_DAY_MS = 24 * 60 * 60 * 1000;
 
-export function sumAccountedDurationMs(
-  progressByTagId: Map<string, number>,
-  tags: Tag[],
-): number {
+export function sumAccountedDurationMs(progressByTagId: Map<string, number>, tags: Tag[]): number {
   const tagById = new Map(tags.map((tag) => [tag.id, tag]));
   let total = 0;
   for (const [tagId, ms] of progressByTagId) {

@@ -1,4 +1,8 @@
-import { DEFAULT_UNKNOWN_PLACE, isUnknownGeofence, isUnknownPlaceName } from '@/constants/defaultPlace';
+import {
+  DEFAULT_UNKNOWN_PLACE,
+  isUnknownGeofence,
+  isUnknownPlaceName,
+} from '@/constants/defaultPlace';
 import { nearestGoogleColorHex } from '@/constants/googleCalendarColors';
 import { DEFAULT_TAGS } from '@/theme/colors';
 import { supabase } from '@/lib/supabase';

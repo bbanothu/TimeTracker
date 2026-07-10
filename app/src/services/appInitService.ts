@@ -4,7 +4,11 @@ import {
   isDatabaseReady,
   seedLocalDefaultTagsIfEmpty,
 } from '@/db/client';
-import { ensureUnknownLocationSession, syncGeofencingTask, reconcileUnknownSession } from '@/services/geofenceService';
+import {
+  ensureUnknownLocationSession,
+  syncGeofencingTask,
+  reconcileUnknownSession,
+} from '@/services/geofenceService';
 import { runDailyGoalScoreSnapshot } from '@/services/dailyGoalScoreService';
 import { syncProfilePhotoFromCloud } from '@/services/profilePhotoService';
 import { setupNotifications } from '@/services/notificationService';
