@@ -1,6 +1,6 @@
 {
   "name": "timetracker",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "main": "expo-router/entry",
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -57,11 +57,12 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "format": "prettier --write .",
-    "build:android": "eas build --profile production --platform android",
-    "build:ios": "eas build --profile production --platform ios",
-    "build:all": "eas build --profile production --platform all",
-    "release:android": "eas build --profile production --platform android --auto-submit",
-    "release:ios": "eas build --profile production --platform ios --auto-submit",
+    "bump:minor": "node scripts/bump-minor-version.js",
+    "build:android": "npm run bump:minor && eas build --profile production --platform android",
+    "build:ios": "npm run bump:minor && eas build --profile production --platform ios",
+    "build:all": "npm run bump:minor && eas build --profile production --platform all",
+    "release:android": "npm run bump:minor && eas build --profile production --platform android --auto-submit",
+    "release:ios": "npm run bump:minor && eas build --profile production --platform ios --auto-submit",
     "publish:android": "eas submit --profile production --platform android --latest",
     "publish:ios": "eas submit --profile production --platform ios --latest",
     "publish:all": "eas submit --profile production --platform all --latest"

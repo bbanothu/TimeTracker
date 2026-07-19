@@ -3,7 +3,7 @@
     "name": "Time_Trackers",
     "slug": "TimeTracker",
     "owner": "bbanothu",
-    "version": "1.2.0",
+    "version": "1.1.0",
     "scheme": "timetracker",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -23,9 +23,8 @@
     "android": {
       "package": "com.time_tracker.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
+        "backgroundColor": "#1A1A1F",
+        "foregroundImage": "./assets/icon.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
