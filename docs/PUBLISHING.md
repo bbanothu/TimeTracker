@@ -15,6 +15,13 @@ EAS project: https://expo.dev/accounts/bbanothu/projects/TimeTracker
   `https://bbanothu.github.io/TimeTracker/privacy-policy.html`
 - Paste that URL in Play Console → **App content** → **Privacy policy**
 
+**Preferred (hosted on brainrotslop.com):**
+
+| Field | URL |
+|-------|-----|
+| Support URL (App Store) | `https://brainrotslop.com/support.html` |
+| Privacy Policy | `https://brainrotslop.com/privacy-policy.html` |
+
 ## 2. EAS environment variables (required — app won't sign in without these)
 
 The production build succeeded, but **Supabase credentials were not in EAS yet**. Add them before shipping:

@@ -5,6 +5,7 @@ import { useAppColors } from '@/contexts/ThemeContext';
 const FOOTER_LINKS = [
   { to: '/profile/about', label: 'About' },
   { to: '/profile/contact', label: 'Contact' },
+  { to: '/profile/support', label: 'Support' },
   { to: '/profile/privacy', label: 'Privacy' },
   { to: '/profile/terms', label: 'Terms' },
 ] as const;

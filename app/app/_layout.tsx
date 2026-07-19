@@ -134,6 +134,16 @@ function RootNavigator() {
                 }}
               />
               <Stack.Screen
+                name="support"
+                options={{
+                  headerShown: true,
+                  title: 'Support',
+                  headerBackTitle: '',
+                  headerBackButtonDisplayMode: 'minimal',
+                  ...getAppHeaderOptions(colors),
+                }}
+              />
+              <Stack.Screen
                 name="privacy"
                 options={{
                   headerShown: true,

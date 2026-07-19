@@ -1,13 +1,20 @@
 import { LegalPageLayout, LegalSection } from '@/components/layout/LegalPageLayout';
 import { useAppColors } from '@/contexts/ThemeContext';
+import { useLocation } from 'react-router-dom';
 
 const SUPPORT_EMAIL = 'bbanothu1997@gmail.com';
 
 export function ContactPage() {
   const colors = useAppColors();
+  const { pathname } = useLocation();
+  const isPublic = pathname === '/support' || pathname === '/contact';
+  const isSupport = pathname.includes('support');
 
   return (
-    <LegalPageLayout title="Contact">
+    <LegalPageLayout
+      title={isSupport ? 'Support' : 'Contact'}
+      backLink={isPublic ? { to: '/login', label: '← Sign in' } : undefined}
+    >
       <p>
         Questions about TimeTracker, your account, or a bug you hit? Reach out — we read every
         message.

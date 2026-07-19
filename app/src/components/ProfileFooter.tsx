@@ -6,6 +6,7 @@ import { useAppColors } from '@/hooks/useAppColors';
 const FOOTER_LINKS = [
   { href: '/about' as const, label: 'About' },
   { href: '/contact' as const, label: 'Contact' },
+  { href: '/support' as const, label: 'Support' },
   { href: '/privacy' as const, label: 'Privacy' },
   { href: '/terms' as const, label: 'Terms' },
 ];

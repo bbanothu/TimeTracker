@@ -7,15 +7,25 @@ import { useAppColors } from '@/contexts/ThemeContext';
 interface LegalPageLayoutProps {
   title: string;
   updated?: string;
+  backLink?: { to: string; label: string } | null;
   children: ReactNode;
 }
 
-export function LegalPageLayout({ title, updated, children }: LegalPageLayoutProps) {
+export function LegalPageLayout({
+  title,
+  updated,
+  backLink = { to: '/profile', label: '← Account' },
+  children,
+}: LegalPageLayoutProps) {
   const colors = useAppColors();
 
   return (
     <div>
-      <PageHeader title={title} backLink={{ to: '/profile', label: '← Account' }} />
+      <PageHeader
+        title={title}
+        backLink={backLink ?? undefined}
+        showMobileActions={false}
+      />
       <ThemedSurface className="p-5 lg:p-6">
         {updated ? (
           <p className="mb-5 text-sm" style={{ color: colors.textMuted }}>

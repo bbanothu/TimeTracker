@@ -20,12 +20,46 @@ import { TagsPage } from '@/pages/TagsPage';
 import { TermsPage } from '@/pages/TermsPage';
 import { TrackPage } from '@/pages/TrackPage';
 import { ProtectedLayout } from '@/routes/ProtectedLayout';
+import { PublicPageShell } from '@/routes/PublicPageShell';
 
 function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      {/* Public App Store / marketing pages (no login required) */}
+      <Route
+        path="/support"
+        element={
+          <PublicPageShell>
+            <ContactPage />
+          </PublicPageShell>
+        }
+      />
+      <Route
+        path="/contact"
+        element={
+          <PublicPageShell>
+            <ContactPage />
+          </PublicPageShell>
+        }
+      />
+      <Route
+        path="/privacy"
+        element={
+          <PublicPageShell>
+            <PrivacyPage />
+          </PublicPageShell>
+        }
+      />
+      <Route
+        path="/terms"
+        element={
+          <PublicPageShell>
+            <TermsPage />
+          </PublicPageShell>
+        }
+      />
       <Route element={<ProtectedLayout />}>
         <Route index element={<TrackPage />} />
         <Route path="tags" element={<TagsPage />} />
@@ -36,6 +70,7 @@ function AppRoutes() {
         <Route path="profile" element={<ProfilePage />} />
         <Route path="profile/about" element={<AboutPage />} />
         <Route path="profile/contact" element={<ContactPage />} />
+        <Route path="profile/support" element={<ContactPage />} />
         <Route path="profile/privacy" element={<PrivacyPage />} />
         <Route path="profile/terms" element={<TermsPage />} />
         <Route path="profile/friends" element={<FriendsPage />} />
