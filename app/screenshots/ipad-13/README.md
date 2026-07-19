@@ -5,4 +5,3 @@ ipad-02-map.png
 ipad-03-stats.png
 
 Upload in App Store Connect → Screenshots → 13-inch iPad displays.
-

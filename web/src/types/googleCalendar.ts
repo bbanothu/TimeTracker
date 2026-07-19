@@ -11,4 +11,5 @@ export interface GoogleCalendarSyncResult {
   failed: number;
   removed?: number;
   removeFailed?: number;
+  error?: string;
 }

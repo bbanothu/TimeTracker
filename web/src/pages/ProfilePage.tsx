@@ -187,7 +187,13 @@ export function ProfilePage() {
       setError(null);
       const result = await syncGoogleCalendar();
       await loadCalendarStatus();
-      if (result.created === 0 && result.failed === 0) {
+      if (result.failed > 0) {
+        setError(
+          result.error
+            ? `Synced ${result.created}, failed ${result.failed}. ${result.error}`
+            : `Synced ${result.created}, failed ${result.failed}.`,
+        );
+      } else if (result.created === 0) {
         setMessage('Calendar is up to date.');
       } else {
         setMessage(

@@ -240,7 +240,14 @@ export default function ProfileScreen() {
       setCalendarSyncing(true);
       const result = await syncGoogleCalendar();
       await loadCalendarStatus();
-      if (result.created === 0 && result.failed === 0) {
+      if (result.failed > 0) {
+        Alert.alert(
+          'Calendar sync',
+          result.error
+            ? `Added ${result.created}, failed ${result.failed}.\n\n${result.error}`
+            : `Added ${result.created}, failed ${result.failed}.`,
+        );
+      } else if (result.created === 0) {
         Alert.alert('Calendar sync', 'Your calendar is up to date.');
       } else {
         Alert.alert(

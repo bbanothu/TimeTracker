@@ -59,6 +59,10 @@ npx supabase functions deploy google-calendar-disconnect
 
 While the OAuth app is in **Testing**, add your Google account under Test users on the consent screen. Public release may require Google verification for the `calendar.events` scope.
 
+**Important:** In Testing mode, Google refresh tokens expire after ~7 days. If sync says “failed to refresh Google token” or creates 0 events after reconnecting, disconnect and connect Google Calendar again.
+
+Also verify **Google Calendar API** is enabled for the same Cloud project as your OAuth client (APIs & Services → Library).
+
 ## 4. Mobile deep link
 
 The app uses scheme `timetracker://` (see `app/app.json`). After Google OAuth, users are redirected to `timetracker://profile?calendar=connected`.

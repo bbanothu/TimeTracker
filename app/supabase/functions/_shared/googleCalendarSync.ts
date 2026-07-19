@@ -11,11 +11,19 @@ export interface GoogleCalendarSyncCounts {
   created: number;
   skipped: number;
   failed: number;
+  error?: string;
 }
 
 export interface GoogleCalendarResetCounts extends GoogleCalendarSyncCounts {
   removed: number;
   removeFailed: number;
+}
+
+function toEpochMs(value: number | string | null | undefined): number | null {
+  if (value == null) return null;
+  const n = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return n;
 }
 
 async function loadEntryContext(
@@ -32,7 +40,11 @@ async function loadEntryContext(
   if (tagLinksError) throw tagLinksError;
 
   const tags = (tagLinks ?? [])
-    .map((row) => row.tags as TagRow | null)
+    .map((row) => {
+      const nested = row.tags as TagRow | TagRow[] | null;
+      if (Array.isArray(nested)) return nested[0] ?? null;
+      return nested;
+    })
     .filter((tag): tag is TagRow => tag != null);
 
   let geofence: GeofenceRow | null = null;
@@ -57,9 +69,24 @@ async function createGoogleEventForEntry(
   accessToken: string,
   calendarId: string,
   entry: EntryRow,
-): Promise<boolean> {
-  const { tags, geofence } = await loadEntryContext(admin, userId, entry);
-  const eventBody = buildCalendarEvent(entry, tags, geofence);
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const startedAt = toEpochMs(entry.started_at);
+  const endedAt = toEpochMs(entry.ended_at);
+  if (startedAt == null || endedAt == null) {
+    return { ok: false, error: `Entry ${entry.id} has invalid timestamps` };
+  }
+  if (endedAt <= startedAt) {
+    return { ok: false, error: `Entry ${entry.id} ends before it starts` };
+  }
+
+  const normalizedEntry: EntryRow = {
+    ...entry,
+    started_at: startedAt,
+    ended_at: endedAt,
+  };
+
+  const { tags, geofence } = await loadEntryContext(admin, userId, normalizedEntry);
+  const eventBody = buildCalendarEvent(normalizedEntry, tags, geofence);
   const createResponse = await fetch(
     `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,
     {
@@ -72,11 +99,19 @@ async function createGoogleEventForEntry(
     },
   );
 
-  if (!createResponse.ok) return false;
+  if (!createResponse.ok) {
+    const text = await createResponse.text();
+    return {
+      ok: false,
+      error: `Google Calendar API ${createResponse.status}: ${text.slice(0, 300)}`,
+    };
+  }
 
   const createdEvent = await createResponse.json();
   const externalEventId = createdEvent.id as string | undefined;
-  if (!externalEventId) return false;
+  if (!externalEventId) {
+    return { ok: false, error: 'Google Calendar returned an event without an id' };
+  }
 
   const { error: insertError } = await admin.from('calendar_event_sync').insert({
     entry_id: entry.id,
@@ -85,7 +120,14 @@ async function createGoogleEventForEntry(
     external_event_id: externalEventId,
   });
 
-  return !insertError;
+  if (insertError) {
+    return {
+      ok: false,
+      error: `Saved to Google but failed to record sync: ${insertError.message}`,
+    };
+  }
+
+  return { ok: true };
 }
 
 export async function removeSyncedGoogleEvents(
@@ -180,18 +222,24 @@ export async function syncCompletedEntries(
 
   let created = 0;
   let failed = 0;
+  let firstError: string | undefined;
 
   for (const entry of entriesToSync) {
     try {
-      const ok = await createGoogleEventForEntry(admin, userId, accessToken, calendarId, entry);
-      if (ok) created += 1;
-      else failed += 1;
-    } catch {
+      const result = await createGoogleEventForEntry(admin, userId, accessToken, calendarId, entry);
+      if (result.ok) {
+        created += 1;
+      } else {
+        failed += 1;
+        firstError ??= result.error;
+      }
+    } catch (error) {
       failed += 1;
+      firstError ??= error instanceof Error ? error.message : 'Unknown sync error';
     }
   }
 
-  return { created, skipped, failed };
+  return { created, skipped, failed, ...(firstError ? { error: firstError } : {}) };
 }
 
 export async function resetAndSyncGoogleCalendar(

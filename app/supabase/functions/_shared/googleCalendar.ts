@@ -200,6 +200,27 @@ export async function getValidAccessToken(
 
   if (!tokenResponse.ok) {
     const text = await tokenResponse.text();
+    let googleError = '';
+    try {
+      googleError = String((JSON.parse(text) as { error?: string }).error ?? '');
+    } catch {
+      googleError = '';
+    }
+
+    // Refresh tokens expire after ~7 days in Google OAuth "Testing" mode,
+    // or when the user revokes access. Clear the stale connection so the
+    // client shows disconnected and the user can reconnect.
+    if (
+      googleError === 'invalid_grant' ||
+      googleError === 'invalid_client' ||
+      text.includes('invalid_grant')
+    ) {
+      await admin.from('user_google_calendar').delete().eq('user_id', userId);
+      throw new Error(
+        'Google Calendar access expired. Disconnect if needed, then Connect Google Calendar again.',
+      );
+    }
+
     throw new Error(`Failed to refresh Google token: ${text}`);
   }
 
@@ -207,12 +228,17 @@ export async function getValidAccessToken(
   const accessToken = tokenJson.access_token as string;
   const expiresIn = Number(tokenJson.expires_in ?? 3600);
   const tokenExpiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
+  const nextRefreshToken =
+    typeof tokenJson.refresh_token === 'string' && tokenJson.refresh_token.length > 0
+      ? tokenJson.refresh_token
+      : undefined;
 
   await admin
     .from('user_google_calendar')
     .update({
       access_token: accessToken,
       token_expires_at: tokenExpiresAt,
+      ...(nextRefreshToken ? { refresh_token: nextRefreshToken } : {}),
       updated_at: new Date().toISOString(),
     })
     .eq('user_id', userId);
