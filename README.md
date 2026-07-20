@@ -1,22 +1,29 @@
 # TimeTracker
 
-Track how you spend your time with tags, stats, and optional location-based auto-tracking. The repo contains two clients that share the same Supabase backend:
+Track how you spend your time with tags, stats, goals, and optional location-based auto-tracking. The repo contains two main clients that share the same Supabase backend:
 
 | Folder | Platform | Stack |
 |--------|----------|-------|
-| [`app/`](app/) | iOS & Android | Expo, React Native, Expo Router, SQLite |
-| [`web/`](web/) | Browser | Vite, React, Tailwind CSS |
+| [`app/`](app/) | iOS & Android | Expo 54, React Native, Expo Router, SQLite |
+| [`web/`](web/) | Browser | Vite, React, Tailwind CSS, Leaflet |
 | [`electron/`](electron/) | macOS, Windows, Linux | Electron (wraps the web client) |
+
+For a full feature breakdown and platform comparison, see [`docs/FEATURES.md`](docs/FEATURES.md).
 
 ## Features
 
-- **Manual tracking** — Start and stop a timer with one or more activity tags.
-- **Tags** — Hierarchical tags with colors; organize activities your way.
-- **Stats** — Daily, weekly, and monthly breakdowns by tag and saved place.
+- **Manual tracking** — Start and stop one or more timers at once, each tagged with activities.
+- **Tags** — Hierarchical tags with colors, descriptions, and an analytics on/off toggle.
+- **Stats** — Daily, weekly, and monthly breakdowns by tag and saved place; multiple chart views; view a friend's stats.
+- **Goals** — Daily minute targets per category with live progress and historical score snapshots.
+- **Friends** — Send requests by email and view accepted friends' stats.
 - **Geofencing** (mobile only) — Save places on a map; auto-start tracking when you enter, with optional notifications.
-- **Sync** — Mobile stores data locally in SQLite and syncs to Supabase when online.
-- **Export** — Download time entries as CSV from Profile.
-- **Google Calendar** (optional) — Connect Google Calendar from Profile and sync completed sessions as events.
+- **Map heatmap** (web & desktop) — Visualize where time was spent from stop locations over day/week/month.
+- **Stop details** — Capture GPS on stop and add optional session notes; editable later in History.
+- **Sync** — Mobile stores data locally in SQLite and syncs to Supabase when online; web talks to Supabase directly.
+- **Export** — Download aggregated time entries as CSV from Account.
+- **Google Calendar** (optional) — Connect from Account and sync completed sessions as calendar events.
+- **Profile** — Name, photo, dark/light theme, History, Friends, and password management.
 
 ## Prerequisites
 
@@ -27,14 +34,16 @@ Track how you spend your time with tags, stats, and optional location-based auto
 ## Supabase setup
 
 1. Create a Supabase project.
-2. Run the SQL migrations in [`app/supabase/migrations/`](app/supabase/migrations/) via the Supabase SQL Editor.
-3. Copy the project URL and anon key into each client’s env file (see below).
+2. Run the SQL migrations in [`app/supabase/migrations/`](app/supabase/migrations/) in order via the Supabase SQL Editor (through `014_google_calendar.sql` if using Google Calendar).
+3. Copy the project URL and anon key into each client's env file (see below).
 
 ## Mobile app (`app/`)
 
-### Environment
+Expo + React Native app with five tabs (Track, Tags, Map, Stats, Goals) plus stack screens for Account, History, Friends, Goal progress, and auth. Data is stored locally in SQLite and synced to Supabase.
 
-Copy the example env file and add your Supabase credentials:
+See [`app/README.md`](app/README.md) for folder-specific setup, scripts, and layout.
+
+### Environment
 
 ```bash
 cd app
@@ -45,6 +54,8 @@ cp .env.example .env
 EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
+
+For production builds on EAS, add the same variables to the **production** environment in the [Expo project settings](https://expo.dev/accounts/bbanothu/projects/TimeTracker/environment-variables).
 
 ### Install and run
 
@@ -59,29 +70,22 @@ Then open the project in Expo Go (scan the QR code) or press `i` / `a` for the i
 | Script | Description |
 |--------|-------------|
 | `npm start` | Start the Expo dev server |
-| `npm run ios` | Open on iOS simulator |
-| `npm run android` | Open on Android emulator |
+| `npm run ios` | Run on iOS simulator (`expo run:ios`) |
+| `npm run android` | Run on Android emulator (`expo run:android`) |
+| `npm run build:android` | Bump version + EAS production Android build |
+| `npm run build:ios` | Bump version + EAS production iOS build |
+| `npm run release:android` | Build + auto-submit to Play internal testing |
+| `npm run release:ios` | Build + auto-submit to App Store Connect |
 
-### Project layout
+Store publishing details: [`docs/PUBLISHING.md`](docs/PUBLISHING.md).
 
-```
-app/
-  app/              Expo Router screens (auth, tabs, profile)
-  src/
-    components/     UI components
-    contexts/       Auth, tags, timer, theme
-    db/             SQLite schema and client
-    hooks/          Session, stats, geofence hooks
-    services/       Sync, geofence, notifications, stats
-  assets/           Icons, login backgrounds
-  supabase/         Database migrations
-```
-
-Geofencing, background location, and push notifications are mobile-only features.
+Geofencing, background location, push notifications, and offline SQLite sync are mobile-only features.
 
 ## Web app (`web/`)
 
-A browser companion with the same look and feel. Uses Supabase directly (no local SQLite). Geofence enter/exit tracking is not available on web; you can still view and manage saved places.
+Browser companion with the same look and feel. Uses Supabase directly (no local SQLite). Geofence enter/exit auto-tracking is not available on web; you can still view and manage saved places and use the **Heatmap** view to see where time was spent.
+
+See [`web/README.md`](web/README.md) for folder-specific setup, Docker deployment, and layout.
 
 ### Environment
 
@@ -111,7 +115,10 @@ Open the URL shown in the terminal (typically `http://localhost:5173`).
 |--------|-------------|
 | `npm run dev` | Start the Vite dev server |
 | `npm run build` | Production build to `web/dist/` |
-| `npm run preview` | Preview the production build |
+| `npm run preview` | Preview the production build locally |
+| `npm run docker` | Build, containerize, and push Docker image (see `web/README.md`) |
+
+Static support and privacy pages are served at `/support` and `/privacy` (from `web/public/`).
 
 ## Desktop app (`electron/`)
 
@@ -164,7 +171,7 @@ On macOS this produces:
 
 After installing, launch **TimeTracker** from Applications or Spotlight like any other app.
 
-**First launch on macOS:** if macOS blocks the app (“unidentified developer”), right-click the app → **Open** → **Open** once. To avoid that long-term you’d need an Apple Developer certificate and notarization.
+**First launch on macOS:** if macOS blocks the app ("unidentified developer"), right-click the app → **Open** → **Open** once. To avoid that long-term you'd need an Apple Developer certificate and notarization.
 
 | Script | Description |
 |--------|-------------|
@@ -173,16 +180,20 @@ After installing, launch **TimeTracker** from Applications or Spotlight like any
 | `npm run pack` | Build web + unpackaged `.app` in `release/` (quick test) |
 | `npm run dist` | Build web + `.dmg` / `.zip` installer |
 
-Geofence auto-tracking is not available on desktop (same as web); you can still view the map and manage places.
+Geofence auto-tracking is not available on desktop (same as web); map places and heatmap work in the desktop window.
 
 ## Auth
 
-Both clients use Supabase Auth (email/password). Create an account from the Register screen on either client; the same login works across mobile and web.
+Both clients use Supabase Auth (email/password). Create an account from the Register screen on either client; the same login works across mobile, web, and desktop.
 
 ## Google Calendar (optional)
 
-You can export completed sessions to Google Calendar from **Account → Connect Google Calendar** (web and mobile). Setup requires Google Cloud OAuth credentials and Supabase Edge Functions — see [`docs/GOOGLE_CALENDAR.md`](docs/GOOGLE_CALENDAR.md).
+Connect Google Calendar from **Account → Connect Google Calendar** (web and mobile). Completed sessions can sync as calendar events. Setup requires Google Cloud OAuth credentials, Supabase Edge Functions, and migration `014_google_calendar.sql` — see [`docs/GOOGLE_CALENDAR.md`](docs/GOOGLE_CALENDAR.md).
 
-docker buildx build --platform linux/arm64 -t bbanothu1997/time-tracker:latest --push .
+## Documentation
 
-nohup /data/cloudflared tunnel run brainrotslop > /tmp/cloudflared.log 2>&1 &
+| Doc | Contents |
+|-----|----------|
+| [`docs/FEATURES.md`](docs/FEATURES.md) | Full feature list and platform comparison |
+| [`docs/GOOGLE_CALENDAR.md`](docs/GOOGLE_CALENDAR.md) | Google Calendar OAuth and sync setup |
+| [`docs/PUBLISHING.md`](docs/PUBLISHING.md) | Play Store and EAS submit workflow |
