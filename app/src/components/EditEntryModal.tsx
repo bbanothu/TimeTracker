@@ -1,0 +1,237 @@
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { format } from 'date-fns';
+import { useEffect, useRef, useState } from 'react';
+import {
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+
+import { BottomSheetModal, getBottomSheetScrollHeight } from '@/components/BottomSheetModal';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { TagDropdown } from '@/components/TagDropdown';
+import { useAppColors } from '@/hooks/useAppColors';
+import type { Tag, TimeEntry } from '@/types';
+
+interface EditEntryModalProps {
+  visible: boolean;
+  entry: TimeEntry | null;
+  tags: Tag[];
+  onClose: () => void;
+  onSave: (
+    entryId: string,
+    tagIds: string[],
+    startedAt: number,
+    endedAt: number,
+    details: string | null,
+  ) => void;
+}
+
+type PickerField = 'start' | 'end' | null;
+
+export function EditEntryModal({ visible, entry, tags, onClose, onSave }: EditEntryModalProps) {
+  const colors = useAppColors();
+  const { height: windowHeight } = useWindowDimensions();
+  const scrollRef = useRef<ScrollView>(null);
+  const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
+  const [startAt, setStartAt] = useState(new Date());
+  const [endAt, setEndAt] = useState(new Date());
+  const [pickerField, setPickerField] = useState<PickerField>(null);
+  const [details, setDetails] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!visible || !entry || entry.endedAt == null) return;
+    setStartAt(new Date(entry.startedAt));
+    setEndAt(new Date(entry.endedAt));
+    setSelectedTagId(entry.tags[0]?.id ?? null);
+    setDetails(entry.details ?? '');
+    setPickerField(null);
+    setError(null);
+    setSaving(false);
+  }, [visible, entry]);
+
+  useEffect(() => {
+    if (tags.length === 0) {
+      setSelectedTagId(null);
+      return;
+    }
+    if (!selectedTagId || !tags.some((tag) => tag.id === selectedTagId)) {
+      setSelectedTagId(tags[0].id);
+    }
+  }, [tags, selectedTagId]);
+
+  const handleSave = () => {
+    if (!entry || saving) return;
+
+    try {
+      setError(null);
+      if (!selectedTagId) {
+        setError('Choose an activity.');
+        return;
+      }
+      if (endAt.getTime() <= startAt.getTime()) {
+        setError('End must be after start.');
+        return;
+      }
+      if (endAt.getTime() > Date.now()) {
+        setError('End cannot be in the future.');
+        return;
+      }
+
+      setSaving(true);
+      onSave(entry.id, [selectedTagId], startAt.getTime(), endAt.getTime(), details.trim() || null);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save session');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const inputStyle = {
+    backgroundColor: colors.inputBg,
+    borderColor: colors.inputBorder,
+  };
+
+  const scrollMaxHeight = getBottomSheetScrollHeight(windowHeight, pickerField ? 0.45 : 0.55);
+
+  const saveButton = saving ? (
+    <LoadingIndicator size="small" />
+  ) : (
+    <Pressable
+      onPress={handleSave}
+      accessibilityRole="button"
+      accessibilityLabel="Save changes"
+      className="rounded-full p-1"
+      hitSlop={8}
+    >
+      <Ionicons name="checkmark" size={24} color={colors.primary} />
+    </Pressable>
+  );
+
+  return (
+    <BottomSheetModal
+      visible={visible}
+      title="Edit session"
+      onClose={onClose}
+      headerActions={saveButton}
+      maxHeightFraction={0.92}
+    >
+      <ScrollView
+        ref={scrollRef}
+        style={{ maxHeight: scrollMaxHeight }}
+        showsVerticalScrollIndicator
+        keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled
+      >
+        <Text className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
+          Activity
+        </Text>
+        <TagDropdown tags={tags} selectedId={selectedTagId} onSelect={setSelectedTagId} />
+
+        <Text className="mb-2 mt-4 text-sm font-medium" style={{ color: colors.textMuted }}>
+          Start
+        </Text>
+        <Pressable
+          onPress={() => {
+            setPickerField('start');
+            setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+          }}
+          className="rounded-xl border px-4 py-3"
+          style={inputStyle}
+        >
+          <Text className="text-base font-medium" style={{ color: colors.text }}>
+            {format(startAt, 'MMM d, yyyy · h:mm a')}
+          </Text>
+        </Pressable>
+
+        <Text className="mb-2 mt-4 text-sm font-medium" style={{ color: colors.textMuted }}>
+          End
+        </Text>
+        <Pressable
+          onPress={() => {
+            setPickerField('end');
+            setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+          }}
+          className="rounded-xl border px-4 py-3"
+          style={inputStyle}
+        >
+          <Text className="text-base font-medium" style={{ color: colors.text }}>
+            {format(endAt, 'MMM d, yyyy · h:mm a')}
+          </Text>
+        </Pressable>
+
+        <Text className="mb-2 mt-4 text-sm font-medium" style={{ color: colors.textMuted }}>
+          Details
+        </Text>
+        <TextInput
+          value={details}
+          onChangeText={setDetails}
+          placeholder="Notes about this session"
+          placeholderTextColor={colors.inputPlaceholder}
+          multiline
+          textAlignVertical="top"
+          className="min-h-[96px] rounded-xl border px-4 py-3 text-base"
+          style={{
+            backgroundColor: colors.inputBg,
+            borderColor: colors.inputBorder,
+            color: colors.text,
+          }}
+        />
+
+        {pickerField ? (
+          <View className="mt-3">
+            {Platform.OS === 'ios' ? (
+              <View className="mb-2 flex-row items-center justify-between">
+                <Text className="text-sm font-medium" style={{ color: colors.textMuted }}>
+                  {pickerField === 'start' ? 'Start time' : 'End time'}
+                </Text>
+                <Pressable
+                  onPress={() => setPickerField(null)}
+                  className="rounded-lg px-3 py-1.5"
+                  style={{ backgroundColor: colors.primary }}
+                >
+                  <Text className="text-sm font-semibold" style={{ color: colors.textOnPrimary }}>
+                    Done
+                  </Text>
+                </Pressable>
+              </View>
+            ) : null}
+            <DateTimePicker
+              value={pickerField === 'start' ? startAt : endAt}
+              mode="datetime"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={(event, date) => {
+                if (Platform.OS === 'android') {
+                  setPickerField(null);
+                }
+                if (event.type === 'dismissed' || !date) {
+                  if (Platform.OS === 'android') setPickerField(null);
+                  return;
+                }
+                if (pickerField === 'start') {
+                  setStartAt(date);
+                } else {
+                  setEndAt(date);
+                }
+              }}
+            />
+          </View>
+        ) : null}
+
+        {error ? (
+          <Text className="mt-3 text-sm font-medium" style={{ color: colors.destructive }}>
+            {error}
+          </Text>
+        ) : null}
+      </ScrollView>
+    </BottomSheetModal>
+  );
+}

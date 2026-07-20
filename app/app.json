@@ -1,0 +1,83 @@
+{
+  "expo": {
+    "name": "Time_Trackers",
+    "slug": "TimeTracker",
+    "owner": "bbanothu",
+    "version": "1.4.0",
+    "scheme": "timetracker",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "com.time-tracker.app",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "TimeTracker uses your location to auto-track time when you enter places like work.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "TimeTracker uses background location to automatically track time at saved places.",
+        "NSPhotoLibraryUsageDescription": "TimeTracker needs photo library access so you can set a profile picture.",
+        "NSUserNotificationsUsageDescription": "TimeTracker sends alerts when you arrive at saved places so you can stop tracking if needed.",
+        "UIBackgroundModes": [
+          "location",
+          "location"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.time_tracker.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#1A1A1F",
+        "foregroundImage": "./assets/icon.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "softwareKeyboardLayoutMode": "resize",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow TimeTracker to use your location to auto-track time at saved places.",
+          "locationWhenInUsePermission": "Allow TimeTracker to use your location on the map and for geofencing.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow TimeTracker to access your photos to set a profile picture."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#059669"
+        }
+      ],
+      "@react-native-community/datetimepicker",
+      "expo-web-browser"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "cc938791-055e-4928-858f-2cdaaad193f6"
+      }
+    }
+  }
+}
