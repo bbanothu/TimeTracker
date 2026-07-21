@@ -1,22 +1,19 @@
 import { View, type ViewProps } from 'react-native';
 
-import { useScreenTopPadding } from '@/hooks/useScreenTopPadding';
-
 interface TabScreenContainerProps extends ViewProps {
   children: React.ReactNode;
   className?: string;
 }
 
+/** Simple full-bleed tab scene wrapper. Page title lives inside TabScrollView. */
 export function TabScreenContainer({
   children,
   className,
   style,
   ...props
 }: TabScreenContainerProps) {
-  const paddingTop = useScreenTopPadding();
-
   return (
-    <View className={className} style={[{ flex: 1, paddingTop }, style]} {...props}>
+    <View className={className} style={[{ flex: 1 }, style]} {...props}>
       {children}
     </View>
   );

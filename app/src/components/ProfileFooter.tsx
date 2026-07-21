@@ -16,14 +16,14 @@ export function ProfileFooter() {
   const router = useRouter();
 
   return (
-    <View className="mt-8 border-t pt-6" style={{ borderColor: colors.surfaceBorder }}>
+    <View className="mt-8 border-t pt-6" style={{ borderColor: colors.separator }}>
       <Text className="mb-4 text-sm" style={{ color: colors.textMuted }}>
         © {new Date().getFullYear()} QCSmallBusiness. All rights reserved.
       </Text>
       <View className="flex-row flex-wrap gap-x-6 gap-y-2">
         {FOOTER_LINKS.map(({ href, label }) => (
           <Pressable key={href} onPress={() => router.push(href)} accessibilityRole="link">
-            <Text className="text-sm font-medium" style={{ color: colors.textSecondary }}>
+            <Text className="text-sm font-medium" style={{ color: colors.primary }}>
               {label}
             </Text>
           </Pressable>

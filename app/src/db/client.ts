@@ -1552,6 +1552,16 @@ export function getHistoryEntriesPage(
     params.push(filters.tagId);
   }
 
+  // Hide entries whose tags are all analytics-excluded.
+  where.push(
+    `EXISTS (
+      SELECT 1 FROM time_entry_tags tet
+      INNER JOIN tags t ON t.id = tet.tag_id AND t.user_id = tet.user_id
+      WHERE tet.entry_id = te.id AND tet.user_id = te.user_id
+        AND t.include_in_analytics != 0
+    )`,
+  );
+
   const whereSql = where.join(' AND ');
 
   const countRow = database.getFirstSync<{ count: number }>(

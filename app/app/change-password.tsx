@@ -1,5 +1,6 @@
+import { useNavigation } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -16,8 +17,10 @@ import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppColors } from '@/hooks/useAppColors';
 import { useScreenTopPadding } from '@/hooks/useScreenTopPadding';
+import { getStackScreenOptions } from '@/navigation/headerOptions';
 
 export default function ChangePasswordScreen() {
+  const navigation = useNavigation();
   const router = useRouter();
   const topPadding = useScreenTopPadding(8);
   const colors = useAppColors();
@@ -26,6 +29,12 @@ export default function ChangePasswordScreen() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [saving, setSaving] = useState(false);
+
+  useLayoutEffect(() => {
+    navigation.setOptions(
+      getStackScreenOptions(colors, 'Password')({ navigation: navigation as never }),
+    );
+  }, [colors, navigation]);
 
   const inputStyle = {
     backgroundColor: colors.inputBg,

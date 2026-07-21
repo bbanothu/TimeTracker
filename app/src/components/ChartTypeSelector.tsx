@@ -32,10 +32,7 @@ export function ChartTypeSelector({ period, visualization, onChange }: ChartType
       >
         Visualization
       </Text>
-      <View
-        className="flex-row rounded-xl p-1"
-        style={{ backgroundColor: colors.glass, borderColor: colors.glassBorder, borderWidth: 1 }}
-      >
+      <View className="flex-row rounded-xl p-1" style={{ backgroundColor: colors.secondaryBg }}>
         {options.map((item) => {
           const selected = visualization === item.value;
           return (

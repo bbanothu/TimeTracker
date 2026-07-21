@@ -18,8 +18,8 @@ export function HistoryPagination({ page, totalPages, onPageChange }: HistoryPag
 
   return (
     <View
-      className="mt-4 flex-row items-center justify-between rounded-xl border px-3 py-2"
-      style={{ backgroundColor: colors.glass, borderColor: colors.glassBorder }}
+      className="mt-4 flex-row items-center justify-between rounded-xl px-3 py-2"
+      style={{ backgroundColor: colors.surface }}
     >
       <Pressable
         onPress={() => canPrev && onPageChange(page - 1)}

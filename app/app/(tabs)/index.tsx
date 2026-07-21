@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 
 import { ActiveSessionsList } from '@/components/ActiveSessionsList';
@@ -10,6 +10,7 @@ import { TabScrollView } from '@/components/TabScrollView';
 import { TabScreenContainer } from '@/components/TabScreenContainer';
 import { TagDropdown } from '@/components/TagDropdown';
 import { ThemedSurface } from '@/components/ThemedSurface';
+import { TimerDisplay } from '@/components/TimerDisplay';
 import { StopSessionDetailsModal } from '@/components/StopSessionDetailsModal';
 import { getGeofenceById, mergeEntries, updateEntryStopDetails } from '@/db/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -24,6 +25,11 @@ import { notifyDataRefresh } from '@/lib/dataRefresh';
 import { timerService } from '@/services/timerService';
 import { isActiveUnknownSession, suppressUnknownAutoTracking } from '@/services/geofenceService';
 import { buildMergedFields } from '@/utils/entryMerge';
+import {
+  analyticsVisibleDurationMs,
+  filterAnalyticsVisibleItems,
+  isAnalyticsVisibleItem,
+} from '@/utils/tagAnalytics';
 
 export default function TrackScreen() {
   const { user } = useAuth();
@@ -36,7 +42,10 @@ export default function TrackScreen() {
   const [stopDetailsEntryId, setStopDetailsEntryId] = useState<string | null>(null);
   const [savingStopDetails, setSavingStopDetails] = useState(false);
 
-  void tick;
+  const visibleTodayEntries = useMemo(
+    () => filterAnalyticsVisibleItems(todayEntries),
+    [todayEntries],
+  );
 
   const geofenceNames = useMemo(() => {
     if (!ready) return new Map<string, string>();
@@ -47,7 +56,7 @@ export default function TrackScreen() {
     for (const session of sessions) {
       if (session.geofenceId) ids.add(session.geofenceId);
     }
-    for (const entry of todayEntries) {
+    for (const entry of visibleTodayEntries) {
       if (entry.geofenceId) ids.add(entry.geofenceId);
     }
 
@@ -57,7 +66,22 @@ export default function TrackScreen() {
     }
 
     return map;
-  }, [ready, sessions, todayEntries]);
+  }, [ready, sessions, visibleTodayEntries]);
+
+  const heroElapsedMs = useMemo(() => {
+    const now = Date.now();
+    const todayCompletedMs = todayEntries.reduce((sum, entry) => {
+      if (entry.endedAt == null) return sum;
+      return (
+        sum + analyticsVisibleDurationMs(Math.max(0, entry.endedAt - entry.startedAt), entry.tags)
+      );
+    }, 0);
+    const activeVisibleMs = sessions.map((session) =>
+      analyticsVisibleDurationMs(Math.max(0, now - session.startedAt), session.tags),
+    );
+    const activeMs = activeVisibleMs.length === 0 ? 0 : Math.max(...activeVisibleMs);
+    return todayCompletedMs + activeMs;
+  }, [todayEntries, sessions, tick]);
 
   const handleStart = () => {
     try {
@@ -110,8 +134,8 @@ export default function TrackScreen() {
   };
 
   const handleMerge = (keepEntryId: string, deleteEntryId: string) => {
-    const older = todayEntries.find((entry) => entry.id === keepEntryId);
-    const newer = todayEntries.find((entry) => entry.id === deleteEntryId);
+    const older = visibleTodayEntries.find((entry) => entry.id === keepEntryId);
+    const newer = visibleTodayEntries.find((entry) => entry.id === deleteEntryId);
     if (!older || !newer) return;
 
     try {
@@ -128,12 +152,22 @@ export default function TrackScreen() {
 
   return (
     <TabScreenContainer>
-      <AutoTrackingBanner />
-      <TabScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-2">
+      <TabScrollView className="flex-1" contentContainerClassName="pb-8">
+        <AutoTrackingBanner className="-mx-4" />
+        <View className="mb-6 items-center pt-2">
+          <TimerDisplay
+            elapsedMs={heroElapsedMs}
+            isRunning={sessions.some(isAnalyticsVisibleItem)}
+          />
+        </View>
+
         <ThemedSurface className="mb-6 p-4">
           <View className="mb-3 flex-row items-center justify-between">
-            <Text className="text-2xl font-medium" style={{ color: colors.textMuted }}>
-              Start new session
+            <Text
+              className="text-[13px] font-semibold uppercase tracking-wide"
+              style={{ color: colors.textMuted }}
+            >
+              Start session
             </Text>
             <Pressable
               onPress={() => setManualModalOpen(true)}
@@ -141,10 +175,10 @@ export default function TrackScreen() {
               accessibilityRole="button"
               className="rounded-full p-1 active:opacity-70"
             >
-              <Ionicons name="add-circle-outline" size={34} color={colors.primary} />
+              <Ionicons name="add-circle" size={28} color={colors.primary} />
             </Pressable>
           </View>
-          <View className="flex-row items-center gap-2">
+          <View className="flex-row items-center gap-3">
             <View className="min-w-0 flex-1">
               <TagDropdown tags={tags} selectedId={selectedTagId} onSelect={setSelectedTagId} />
             </View>
@@ -154,40 +188,49 @@ export default function TrackScreen() {
               accessibilityLabel="Start session"
               className="items-center justify-center rounded-full active:opacity-80"
               style={{
-                width: 28,
-                height: 28,
-                borderWidth: 2.5,
-                borderColor: colors.primary,
-                backgroundColor: 'transparent',
+                width: 52,
+                height: 52,
+                backgroundColor: colors.primary,
               }}
             >
-              <Ionicons name="play" size={12} color={colors.primary} style={{ marginLeft: 1 }} />
+              <Ionicons
+                name="play"
+                size={22}
+                color={colors.textOnPrimary}
+                style={{ marginLeft: 2 }}
+              />
             </Pressable>
           </View>
         </ThemedSurface>
 
+        <Text
+          className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide"
+          style={{ color: colors.textMuted }}
+        >
+          Active ({sessions.length})
+        </Text>
         {sessions.length > 0 ? (
-          <View className="mb-4">
-            <Text className="mb-2 text-base font-medium" style={{ color: colors.textMuted }}>
-              Active ({sessions.length})
-            </Text>
-            <ActiveSessionsList
-              sessions={sessions}
-              geofenceNames={geofenceNames}
-              onStop={handleStop}
-            />
-          </View>
+          <ActiveSessionsList
+            sessions={sessions}
+            geofenceNames={geofenceNames}
+            onStop={handleStop}
+          />
         ) : (
-          <Text className="mb-4 text-center text-base" style={{ color: colors.textMuted }}>
-            No active sessions yet.
-          </Text>
+          <ThemedSurface className="mb-4 px-4 py-5">
+            <Text className="text-center text-[15px]" style={{ color: colors.textMuted }}>
+              No active sessions
+            </Text>
+          </ThemedSurface>
         )}
 
-        <Text className="mb-2 text-base font-medium" style={{ color: colors.textMuted }}>
-          Today ({todayEntries.length})
+        <Text
+          className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide"
+          style={{ color: colors.textMuted }}
+        >
+          Today ({visibleTodayEntries.length})
         </Text>
         <EntryList
-          entries={todayEntries}
+          entries={visibleTodayEntries}
           emptyMessage="No tracked time yet today."
           geofenceNames={geofenceNames}
           onMerge={handleMerge}

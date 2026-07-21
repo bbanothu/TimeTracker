@@ -51,7 +51,7 @@ export function ActionButton({
     },
     secondary: {
       backgroundColor: colors.secondaryBgSolid,
-      borderColor: colors.surfaceBorder,
+      borderColor: colors.secondaryBgSolid,
       textColor: colors.secondaryText,
       spinnerColor: colors.secondaryText,
     },
@@ -64,7 +64,7 @@ export function ActionButton({
     <Pressable
       onPress={onPress}
       disabled={disabled || loading}
-      className={`rounded-xl border ${paddingY} ${className ?? ''}`}
+      className={`rounded-full border ${paddingY} ${className ?? ''}`}
       style={[
         {
           backgroundColor: disabled ? colors.disabled : variantStyles.backgroundColor,

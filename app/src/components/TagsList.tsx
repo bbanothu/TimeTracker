@@ -1,4 +1,4 @@
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, Switch, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedSurface } from '@/components/ThemedSurface';
@@ -26,9 +26,11 @@ export function TagsList({
 
   if (items.length === 0) {
     return (
-      <Text className="py-2 text-center text-base" style={{ color: colors.textMuted }}>
-        {emptyMessage}
-      </Text>
+      <ThemedSurface className="px-4 py-5">
+        <Text className="text-center text-[15px]" style={{ color: colors.textMuted }}>
+          {emptyMessage}
+        </Text>
+      </ThemedSurface>
     );
   }
 
@@ -43,11 +45,11 @@ export function TagsList({
         return (
           <View
             key={item.tag.id}
-            className="flex-row items-center gap-2.5 py-3.5 pr-3"
+            className="flex-row items-center gap-2.5 py-3 pr-3"
             style={{
               paddingLeft: 14 + indent,
               borderBottomWidth: index < items.length - 1 ? 1 : 0,
-              borderBottomColor: colors.surfaceBorder,
+              borderBottomColor: colors.separator,
             }}
           >
             <View
@@ -55,28 +57,21 @@ export function TagsList({
               style={{ backgroundColor: item.tag.color }}
             />
             <Text
-              className="min-w-0 flex-1 text-base font-semibold"
+              className="min-w-0 flex-1 text-[15px] font-medium"
               style={{ color: included ? colors.textOnBg : colors.textMuted }}
               numberOfLines={1}
               accessibilityLabel={pathLabel}
             >
               {label}
             </Text>
-            <Pressable
-              onPress={() => onToggleAnalytics(item.tag, !included)}
-              accessibilityRole="switch"
-              accessibilityState={{ checked: included }}
+            <Switch
+              value={included}
+              onValueChange={(value) => onToggleAnalytics(item.tag, value)}
+              trackColor={{ false: colors.switchTrackOff, true: colors.switchTrackOn }}
+              thumbColor="#FFFFFF"
+              ios_backgroundColor={colors.switchTrackOff}
               accessibilityLabel="Include in analytics"
-              hitSlop={8}
-              className="h-7 w-12 shrink-0 flex-row items-center overflow-hidden rounded-full border p-0.5"
-              style={{
-                backgroundColor: included ? colors.primary : colors.secondaryBg,
-                borderColor: included ? colors.primary : colors.surfaceBorder,
-                justifyContent: included ? 'flex-end' : 'flex-start',
-              }}
-            >
-              <View className="h-5 w-5 rounded-full bg-white" />
-            </Pressable>
+            />
             <Pressable
               onPress={() => onEdit(item.tag)}
               accessibilityRole="button"
@@ -84,7 +79,7 @@ export function TagsList({
               hitSlop={8}
               className="shrink-0 p-1.5"
             >
-              <Ionicons name="create-outline" size={22} color={colors.textMuted} />
+              <Ionicons name="create-outline" size={20} color={colors.textMuted} />
             </Pressable>
             <Pressable
               onPress={() => {
@@ -102,7 +97,7 @@ export function TagsList({
               hitSlop={8}
               className="shrink-0 p-1.5"
             >
-              <Ionicons name="trash-outline" size={22} color={colors.destructiveText} />
+              <Ionicons name="trash-outline" size={20} color={colors.destructive} />
             </Pressable>
           </View>
         );

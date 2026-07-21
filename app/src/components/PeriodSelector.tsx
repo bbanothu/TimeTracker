@@ -29,7 +29,7 @@ export function PeriodSelector({
     <View className="mb-4">
       <View
         className="mb-3 flex-row rounded-xl p-1"
-        style={{ backgroundColor: colors.glass, borderColor: colors.glassBorder, borderWidth: 1 }}
+        style={{ backgroundColor: colors.secondaryBg }}
       >
         {PERIODS.map((item) => {
           const selected = period === item;

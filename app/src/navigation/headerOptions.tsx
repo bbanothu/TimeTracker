@@ -4,18 +4,20 @@ import type { ParamListBase } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Platform, StatusBar } from 'react-native';
 
-import { TabHeaderBackground } from '@/components/TabHeaderBackground';
 import type { AppColors } from '@/theme/colors';
 
 const ANDROID_HEADER_BODY = 52;
-export const TAB_ICON_SIZE = 30;
-export const TAB_LABEL_FONT_SIZE = 14;
-export const TAB_EDGE_INSET = 12;
-const TAB_ITEM_SPACING = -8;
+export const TAB_ICON_SIZE = 22;
+export const TAB_LABEL_FONT_SIZE = 10;
+export const TAB_EDGE_INSET = 4;
+export const TAB_BAR_FLOAT_MARGIN = 20;
+export const TAB_BAR_HEIGHT = 64;
+export const TAB_BAR_BOTTOM_GAP = 8;
+const TAB_ITEM_SPACING = 0;
 
 export function getTabBarItemStyle() {
   return {
-    paddingVertical: 4,
+    paddingVertical: 6,
     paddingHorizontal: 0,
     marginHorizontal: TAB_ITEM_SPACING,
   };
@@ -42,21 +44,25 @@ export function getAppHeaderOptions(colors: AppColors) {
   const androidStatusBarHeight = StatusBar.currentHeight ?? 0;
 
   return {
-    headerTransparent: !isAndroid,
-    headerBackground: isAndroid ? undefined : () => <TabHeaderBackground />,
+    headerTransparent: true,
+    headerBackground: () => null,
     headerStyle: Platform.select({
-      ios: { height: 108 },
+      ios: {
+        backgroundColor: 'transparent',
+      },
       android: {
-        backgroundColor: colors.surfaceSolid,
+        backgroundColor: 'transparent',
         elevation: 0,
         height: ANDROID_HEADER_BODY + androidStatusBarHeight,
       },
-      default: {},
+      default: {
+        backgroundColor: 'transparent',
+      },
     }),
     headerTintColor: colors.headerText,
     headerTitleStyle: {
       fontWeight: '700' as const,
-      fontSize: 24,
+      fontSize: 28,
       color: colors.headerText,
     },
     headerShadowVisible: false,
@@ -93,29 +99,27 @@ export function getStackScreenOptions(
 }
 
 export function getTabBarStyle(colors: AppColors) {
-  return Platform.select({
-    android: {
-      backgroundColor: colors.surfaceSolid,
-      borderTopColor: colors.tabBarBorder,
-      elevation: 8,
-      minHeight: 72,
-      paddingTop: 6,
-      paddingBottom: 10,
-      paddingHorizontal: 0,
-    },
-    default: {
-      backgroundColor: colors.tabBarBg,
-      borderTopColor: colors.tabBarBorder,
-      paddingTop: 8,
-      paddingHorizontal: 0,
-    },
-  });
+  return {
+    position: 'absolute' as const,
+    backgroundColor: 'transparent',
+    borderTopWidth: 0,
+    borderTopColor: 'transparent',
+    elevation: 0,
+    // Visual chrome lives in FloatingGlassTabBar; keep shell transparent.
+    height: 0,
+    opacity: colors.tabBarBg ? 1 : 1,
+  };
 }
 
 export function getTabBarLabelStyle() {
   return {
     fontSize: TAB_LABEL_FONT_SIZE,
     fontWeight: '600' as const,
-    marginTop: 2,
+    marginTop: 0,
   };
+}
+
+/** Extra bottom inset so scroll content clears the floating pill tab bar. */
+export function getFloatingTabBarClearance(safeAreaBottom: number) {
+  return TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_GAP + Math.max(safeAreaBottom, 8) + 8;
 }

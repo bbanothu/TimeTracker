@@ -13,8 +13,9 @@ import {
   type HistoryDatePreset,
   type HistoryFilterState,
 } from '@/utils/historyFilters';
-import { flattenTags } from '@/utils/tagTree';
 import { formatTagName } from '@/utils/formatDuration';
+import { isTagIncludedInAnalytics } from '@/utils/tagAnalytics';
+import { flattenTags } from '@/utils/tagTree';
 
 interface HistoryFiltersProps {
   tags: Tag[];
@@ -49,7 +50,7 @@ function FilterChip({
       className="mr-2 rounded-full border px-3 py-1.5"
       style={{
         backgroundColor: active ? colors.selectedBg : colors.secondaryBg,
-        borderColor: active ? colors.primary : colors.surfaceBorder,
+        borderColor: active ? colors.primary : colors.separator,
       }}
     >
       <Text
@@ -66,9 +67,13 @@ export function HistoryFilters({ tags, geofences, filters, onChange }: HistoryFi
   const colors = useAppColors();
   const [expanded, setExpanded] = useState(false);
   const [picker, setPicker] = useState<PickerKind>(null);
-  const flatTags = useMemo(() => flattenTags(tags), [tags]);
+  const flatTags = useMemo(
+    () => flattenTags(tags).filter((item) => isTagIncludedInAnalytics(item.tag)),
+    [tags],
+  );
 
-  const selectedTag = tags.find((tag) => tag.id === filters.tagId) ?? null;
+  const selectedTag =
+    tags.find((tag) => tag.id === filters.tagId && isTagIncludedInAnalytics(tag)) ?? null;
   const selectedGeofence = geofences.find((geofence) => geofence.id === filters.geofenceId) ?? null;
 
   const tagLabel = selectedTag ? formatTagName(selectedTag.name) : 'All tags';

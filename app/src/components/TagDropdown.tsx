@@ -9,6 +9,7 @@ import { useFlatTagsByUsage } from '@/hooks/useFlatTagsByUsage';
 import type { Tag } from '@/types';
 import { getTagPath } from '@/utils/tagTree';
 import { formatTagName } from '@/utils/formatDuration';
+import { analyticsIncludedTags } from '@/utils/tagAnalytics';
 
 interface TagDropdownProps {
   tags: Tag[];
@@ -20,8 +21,15 @@ interface TagDropdownProps {
 export function TagDropdown({ tags, selectedId, onSelect, disabled }: TagDropdownProps) {
   const colors = useAppColors();
   const [open, setOpen] = useState(false);
-  const flatTags = useFlatTagsByUsage(filterDisplayTags(tags));
-  const selectedTag = filterDisplayTags(tags).find((tag) => tag.id === selectedId) ?? null;
+  const displayTags = filterDisplayTags(tags);
+  const selectableTags = (() => {
+    const included = analyticsIncludedTags(displayTags);
+    if (!selectedId || included.some((tag) => tag.id === selectedId)) return included;
+    const selected = displayTags.find((tag) => tag.id === selectedId);
+    return selected ? [...included, selected] : included;
+  })();
+  const flatTags = useFlatTagsByUsage(selectableTags);
+  const selectedTag = selectableTags.find((tag) => tag.id === selectedId) ?? null;
   const selectedLabel = selectedTag ? getTagPath(selectedTag.id, tags) : null;
 
   const handleSelect = (tagId: string) => {
@@ -32,12 +40,11 @@ export function TagDropdown({ tags, selectedId, onSelect, disabled }: TagDropdow
   return (
     <>
       <Pressable
-        disabled={disabled || filterDisplayTags(tags).length === 0}
+        disabled={disabled || selectableTags.length === 0}
         onPress={() => setOpen(true)}
-        className="flex-row items-center justify-between rounded-xl border px-4 py-3"
+        className="flex-row items-center justify-between rounded-xl px-4 py-3"
         style={{
-          backgroundColor: colors.inputBgSolid,
-          borderColor: colors.inputBorder,
+          backgroundColor: colors.inputBg,
         }}
       >
         <View className="flex-1 flex-row items-center">

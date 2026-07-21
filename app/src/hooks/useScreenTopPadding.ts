@@ -2,7 +2,7 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-/** iOS headers are transparent; Android headers are opaque and already offset content. */
+/** Offset content below a transparent navigator header. */
 export function useScreenTopPadding(extra = 0): number {
   const headerHeight = useHeaderHeight();
 

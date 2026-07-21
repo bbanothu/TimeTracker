@@ -3,17 +3,9 @@ import { Tabs } from 'expo-router';
 import type { ComponentProps } from 'react';
 
 import { AppBackground } from '@/components/AppBackground';
-import { ProfileButton } from '@/components/ProfileButton';
+import { FloatingGlassTabBar } from '@/components/FloatingGlassTabBar';
 import { useAppColors } from '@/hooks/useAppColors';
-import {
-  getAppHeaderOptions,
-  getTabBarGoalsItemStyle,
-  getTabBarItemStyle,
-  getTabBarLabelStyle,
-  getTabBarStyle,
-  getTabBarTrackItemStyle,
-  TAB_ICON_SIZE,
-} from '@/navigation/headerOptions';
+import { TAB_ICON_SIZE } from '@/navigation/headerOptions';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -34,20 +26,23 @@ function TabIcon({
 
 function TabsNavigator() {
   const colors = useAppColors();
-  const headerOptions = getAppHeaderOptions(colors);
 
   return (
     <Tabs
+      tabBar={(props) => <FloatingGlassTabBar {...props} />}
       screenOptions={{
-        headerShown: true,
-        ...headerOptions,
-        headerRight: () => <ProfileButton />,
+        headerShown: false,
         sceneStyle: { backgroundColor: 'transparent' },
         tabBarActiveTintColor: colors.tabActive,
         tabBarInactiveTintColor: colors.tabInactive,
-        tabBarStyle: getTabBarStyle(colors),
-        tabBarLabelStyle: getTabBarLabelStyle(),
-        tabBarItemStyle: getTabBarItemStyle(),
+        tabBarStyle: {
+          position: 'absolute',
+          backgroundColor: 'transparent',
+          borderTopWidth: 0,
+          elevation: 0,
+          height: 0,
+        },
+        tabBarHideOnKeyboard: true,
       }}
     >
       <Tabs.Screen
@@ -55,7 +50,6 @@ function TabsNavigator() {
         options={{
           title: 'Track',
           tabBarLabel: 'Track',
-          tabBarItemStyle: getTabBarTrackItemStyle(),
           tabBarIcon: ({ color, size, focused }) => (
             <TabIcon
               focused={focused}
@@ -120,7 +114,6 @@ function TabsNavigator() {
         options={{
           title: 'Goals',
           tabBarLabel: 'Goals',
-          tabBarItemStyle: getTabBarGoalsItemStyle(),
           tabBarIcon: ({ color, size, focused }) => (
             <TabIcon
               focused={focused}

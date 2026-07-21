@@ -1,6 +1,6 @@
 import { Link, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -21,7 +21,7 @@ import {
   CARD_STAGGER,
   HERO_ENTER,
 } from '@/components/auth/authEnterAnimations';
-import { authScreenStyles as styles } from '@/components/auth/authScreenStyles';
+import { getAuthScreenStyles } from '@/components/auth/authScreenStyles';
 import { GlassInput } from '@/components/auth/GlassInput';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { useAuth } from '@/hooks/useAuth';
@@ -32,6 +32,7 @@ import { isSupabaseConfigured } from '@/lib/supabase';
 export default function LoginScreen() {
   const router = useRouter();
   const colors = useAppColors();
+  const styles = useMemo(() => getAuthScreenStyles(colors), [colors]);
   const { signIn } = useAuth();
   const ready = useAuthScreenEnter();
   const [email, setEmail] = useState('');

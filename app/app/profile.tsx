@@ -1,13 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Linking,
-  Platform,
-  ScrollView,
-  Text,
-} from 'react-native';
+import { Alert, KeyboardAvoidingView, Linking, Platform, ScrollView, Text } from 'react-native';
 
 import { AppBackground } from '@/components/AppBackground';
 import { ProfileFooter } from '@/components/ProfileFooter';

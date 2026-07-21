@@ -357,7 +357,10 @@ export default function MapScreen() {
         />
       </ThemedSurface>
 
-      <Text className="mx-4 mb-2 mt-1 text-sm font-medium" style={{ color: colors.textMuted }}>
+      <Text
+        className="mx-4 mb-2 mt-1 px-1 text-[13px] font-semibold uppercase tracking-wide"
+        style={{ color: colors.textMuted }}
+      >
         Saved places ({displayGeofences.length})
       </Text>
       <View className="mx-4 mb-6">
@@ -376,6 +379,7 @@ export default function MapScreen() {
       <TabScrollView
         className="flex-1"
         contentContainerClassName="pb-6"
+        contentPad={false}
         scrollEnabled={!addressModalOpen}
         keyboardShouldPersistTaps="handled"
         onRefreshExtra={refreshMapData}

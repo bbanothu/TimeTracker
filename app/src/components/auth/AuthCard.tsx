@@ -1,39 +1,48 @@
 import { BlurView } from 'expo-blur';
 import { Platform, StyleSheet, View } from 'react-native';
 
-import { authScreenStyles as styles } from '@/components/auth/authScreenStyles';
+import { useAppColors } from '@/hooks/useAppColors';
 
 interface AuthCardProps {
   children: React.ReactNode;
 }
 
-export function AuthCard({ children }: AuthCardProps) {
-  const inner = (
-    <View style={Platform.OS === 'android' ? androidStyles.inner : styles.cardInner}>
-      {children}
-    </View>
-  );
+const RADIUS = 20;
 
-  if (Platform.OS === 'android') {
-    return <View style={androidStyles.card}>{inner}</View>;
+export function AuthCard({ children }: AuthCardProps) {
+  const colors = useAppColors();
+
+  if (Platform.OS === 'ios') {
+    return (
+      <View
+        style={{
+          borderRadius: RADIUS,
+          overflow: 'hidden',
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.glassBorder,
+        }}
+      >
+        <BlurView
+          intensity={Math.max(colors.blurIntensity, 40)}
+          tint={colors.blurTint}
+          style={StyleSheet.absoluteFillObject}
+        />
+        <View style={{ padding: 20, backgroundColor: colors.glass }}>{children}</View>
+      </View>
+    );
   }
 
   return (
-    <BlurView intensity={40} tint="light" style={styles.card}>
-      {inner}
-    </BlurView>
+    <View
+      style={{
+        overflow: 'hidden',
+        borderRadius: RADIUS,
+        backgroundColor: colors.surfaceSolid,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: colors.glassBorder,
+      }}
+    >
+      <View style={{ padding: 20 }}>{children}</View>
+    </View>
   );
 }
-
-const androidStyles = StyleSheet.create({
-  card: {
-    overflow: 'hidden',
-    borderRadius: 28,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    backgroundColor: '#1C1917',
-  },
-  inner: {
-    padding: 22,
-  },
-});

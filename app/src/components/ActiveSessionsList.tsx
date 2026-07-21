@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAppColors } from '@/hooks/useAppColors';
@@ -28,7 +28,10 @@ export function ActiveSessionsList({ sessions, geofenceNames, onStop }: ActiveSe
             className="flex-row items-center gap-2 px-3 py-2.5"
             style={
               index < sessions.length - 1
-                ? { borderBottomWidth: 1, borderBottomColor: colors.surfaceBorder }
+                ? {
+                    borderBottomWidth: StyleSheet.hairlineWidth,
+                    borderBottomColor: colors.separator,
+                  }
                 : undefined
             }
           >
@@ -68,19 +71,17 @@ export function ActiveSessionsList({ sessions, geofenceNames, onStop }: ActiveSe
               accessibilityLabel="Stop session"
               className="items-center justify-center rounded-full active:opacity-80"
               style={{
-                width: 28,
-                height: 28,
-                borderWidth: 2.5,
-                borderColor: colors.stop,
-                backgroundColor: 'transparent',
+                width: 36,
+                height: 36,
+                backgroundColor: colors.stop,
               }}
             >
               <View
                 style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 2.5,
-                  backgroundColor: colors.stop,
+                  width: 12,
+                  height: 12,
+                  borderRadius: 2,
+                  backgroundColor: '#FFFFFF',
                 }}
               />
             </Pressable>

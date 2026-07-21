@@ -14,7 +14,7 @@ import { AuthProvider, useAuth } from '@/hooks/useAuth';
 import { useAppColors } from '@/hooks/useAppColors';
 import { TagsProvider } from '@/hooks/useTags';
 import { ThemeProvider, useTheme } from '@/hooks/useTheme';
-import { getAppHeaderOptions, getStackScreenOptions } from '@/navigation/headerOptions';
+import { getStackScreenOptions } from '@/navigation/headerOptions';
 import {
   registerNotificationResponseHandler,
   setupNotifications,
@@ -60,17 +60,16 @@ function RootNavigator() {
       <TimerProvider>
         <TagsProvider>
           <AppBootGate>
-            <Stack screenOptions={{ headerShown: false }}>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: colors.pageBg },
+              }}
+            >
               <Stack.Screen name="(auth)" options={{ title: '' }} />
               <Stack.Screen name="(tabs)" options={{ title: '' }} />
               <Stack.Screen name="profile" options={getStackScreenOptions(colors, 'Account')} />
-              <Stack.Screen name="friends" options={getStackScreenOptions(colors, 'Friends')} />
-              <Stack.Screen
-                name="change-password"
-                options={getStackScreenOptions(colors, 'Password')}
-              />
               <Stack.Screen name="history" options={getStackScreenOptions(colors, 'History')} />
-              <Stack.Screen name="progress" options={getStackScreenOptions(colors, 'Progress')} />
               <Stack.Screen name="about" options={getStackScreenOptions(colors, 'About')} />
               <Stack.Screen name="contact" options={getStackScreenOptions(colors, 'Contact')} />
               <Stack.Screen name="support" options={getStackScreenOptions(colors, 'Support')} />

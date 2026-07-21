@@ -214,7 +214,7 @@ export function GoalsList({
             className="px-3 py-3"
             style={{
               borderBottomWidth: index < categories.length - 1 ? 1 : 0,
-              borderBottomColor: colors.surfaceBorder,
+              borderBottomColor: colors.separator,
             }}
           >
             <View className="flex-row items-center gap-2">
@@ -241,7 +241,7 @@ export function GoalsList({
               <View className="mt-3">
                 <View
                   className="h-2 overflow-hidden rounded-full"
-                  style={{ backgroundColor: colors.surfaceBorder }}
+                  style={{ backgroundColor: colors.separator }}
                 >
                   <View
                     className="h-full rounded-full"

@@ -1,5 +1,5 @@
 import { Fragment, useMemo, useState } from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ExpandableDetails, ExpandChevron } from '@/components/ExpandableDetails';
@@ -70,9 +70,11 @@ export function EntryList({
 
   if (completedEntries.length === 0) {
     return (
-      <Text className="py-2 text-center text-sm" style={{ color: colors.textMuted }}>
-        {emptyMessage}
-      </Text>
+      <ThemedSurface className="mb-4 px-4 py-5">
+        <Text className="text-center text-[15px]" style={{ color: colors.textMuted }}>
+          {emptyMessage}
+        </Text>
+      </ThemedSurface>
     );
   }
 
@@ -136,7 +138,10 @@ export function EntryList({
             <View
               style={
                 showBottomBorder
-                  ? { borderBottomWidth: 1, borderBottomColor: colors.surfaceBorder }
+                  ? {
+                      borderBottomWidth: StyleSheet.hairlineWidth,
+                      borderBottomColor: colors.separator,
+                    }
                   : undefined
               }
             >
@@ -222,9 +227,10 @@ export function EntryList({
                 accessibilityLabel="Merge with session below"
                 className="flex-row items-center justify-center gap-1.5 px-3 py-2"
                 style={{
-                  borderBottomWidth: index < completedEntries.length - 1 ? 1 : 0,
-                  borderBottomColor: colors.surfaceBorder,
-                  backgroundColor: colors.secondaryBgSolid,
+                  borderBottomWidth:
+                    index < completedEntries.length - 1 ? StyleSheet.hairlineWidth : 0,
+                  borderBottomColor: colors.separator,
+                  backgroundColor: colors.secondaryBg,
                 }}
               >
                 <Ionicons name="git-merge-outline" size={14} color={colors.primary} />

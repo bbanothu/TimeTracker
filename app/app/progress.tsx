@@ -1,5 +1,6 @@
+import { useNavigation } from '@react-navigation/native';
 import { useLocalSearchParams } from 'expo-router';
-import { useMemo } from 'react';
+import { useLayoutEffect, useMemo } from 'react';
 import { Text } from 'react-native';
 
 import { AppBackground } from '@/components/AppBackground';
@@ -12,6 +13,7 @@ import { useAppColors } from '@/hooks/useAppColors';
 import { useDailyGoalScores } from '@/hooks/useDailyGoalScores';
 import { useGoals } from '@/hooks/useGoals';
 import { useTags } from '@/hooks/useTags';
+import { getStackScreenOptions } from '@/navigation/headerOptions';
 import type { PeriodType } from '@/types';
 import { formatPeriodLabel } from '@/utils/periodBounds';
 import { buildProgressDisplayScores } from '@/utils/goalProgressHistory';
@@ -32,6 +34,7 @@ function parseProgressParams(
 }
 
 export default function ProgressScreen() {
+  const navigation = useNavigation();
   const colors = useAppColors();
   const params = useLocalSearchParams<{ anchorDate?: string; period?: string }>();
   const { anchorDate, period } = parseProgressParams(params.anchorDate, params.period);
@@ -39,6 +42,12 @@ export default function ProgressScreen() {
   const { goals } = useGoals();
   const { scores } = useDailyGoalScores();
   const { entriesRevision, sessions, tick } = useActiveSession();
+
+  useLayoutEffect(() => {
+    navigation.setOptions(
+      getStackScreenOptions(colors, 'Progress')({ navigation: navigation as never }),
+    );
+  }, [colors, navigation]);
 
   const displayScores = useMemo(() => {
     const entries = getAllEntries();
@@ -60,7 +69,11 @@ export default function ProgressScreen() {
   return (
     <AppBackground>
       <TabScreenContainer>
-        <TabScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-2">
+        <TabScrollView
+          className="flex-1"
+          contentContainerClassName="px-4 pb-8 pt-2"
+          pageHeader={false}
+        >
           <Text className="mb-1 text-sm font-medium" style={{ color: colors.textMuted }}>
             {subtitle}
           </Text>

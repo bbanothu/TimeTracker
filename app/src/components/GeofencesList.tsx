@@ -69,7 +69,7 @@ function GeofenceRow({
         className="h-7 w-12 shrink-0 flex-row items-center overflow-hidden rounded-full border p-0.5"
         style={{
           backgroundColor: geofence.enabled ? colors.primary : colors.secondaryBg,
-          borderColor: geofence.enabled ? colors.primary : colors.surfaceBorder,
+          borderColor: geofence.enabled ? colors.primary : colors.separator,
           justifyContent: geofence.enabled ? 'flex-end' : 'flex-start',
         }}
       >
@@ -142,7 +142,7 @@ export function GeofencesList({
         const anyEnabled = group.geofences.some((geofence) => geofence.enabled);
         const borderStyle =
           groupIndex < groups.length - 1
-            ? { borderBottomWidth: 1, borderBottomColor: colors.surfaceBorder }
+            ? { borderBottomWidth: 1, borderBottomColor: colors.separator }
             : undefined;
 
         if (!isMultiPlace) {
@@ -210,7 +210,7 @@ export function GeofencesList({
                     className="flex-row items-center gap-2.5 px-3 py-2.5"
                     style={
                       index < group.geofences.length - 1
-                        ? { borderBottomWidth: 1, borderBottomColor: colors.surfaceBorder }
+                        ? { borderBottomWidth: 1, borderBottomColor: colors.separator }
                         : undefined
                     }
                   >

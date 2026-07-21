@@ -35,7 +35,7 @@ export function DailyGoalScoreList({
           className="flex-row items-center justify-between px-3 py-3"
           style={{
             borderBottomWidth: index < scores.length - 1 ? 1 : 0,
-            borderBottomColor: colors.surfaceBorder,
+            borderBottomColor: colors.separator,
           }}
         >
           <Text className="text-sm font-medium" style={{ color: colors.textOnBg }}>

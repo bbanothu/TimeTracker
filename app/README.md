@@ -14,49 +14,49 @@ Run migrations in [`supabase/migrations/`](supabase/migrations/) against your Su
 
 ## Environment
 
-| Variable | Description |
-|----------|-------------|
-| `EXPO_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| Variable                        | Description                |
+| ------------------------------- | -------------------------- |
+| `EXPO_PUBLIC_SUPABASE_URL`      | Supabase project URL       |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon (public) key |
 
 For EAS production builds, set the same variables in the Expo **production** environment — see [`docs/PUBLISHING.md`](../docs/PUBLISHING.md).
 
 ## Scripts
 
-| Script | Description |
-|--------|-------------|
-| `npm start` | Expo dev server |
-| `npm run ios` | iOS simulator via `expo run:ios` |
-| `npm run android` | Android emulator via `expo run:android` |
-| `npm run web` | Expo web preview |
-| `npm run format` | Prettier |
-| `npm run bump:minor` | Bump patch/minor version in `package.json` and native config |
-| `npm run build:android` | Bump + EAS Android production build |
-| `npm run build:ios` | Bump + EAS iOS production build |
-| `npm run build:all` | Bump + EAS build for both platforms |
-| `npm run release:android` | Build + auto-submit to Play internal track |
-| `npm run release:ios` | Build + auto-submit to App Store Connect |
-| `npm run publish:android` | Submit latest Android build to Play |
-| `npm run publish:ios` | Submit latest iOS build to App Store |
-| `npm run publish:all` | Submit latest builds for both platforms |
+| Script                    | Description                                                  |
+| ------------------------- | ------------------------------------------------------------ |
+| `npm start`               | Expo dev server                                              |
+| `npm run ios`             | iOS simulator via `expo run:ios`                             |
+| `npm run android`         | Android emulator via `expo run:android`                      |
+| `npm run web`             | Expo web preview                                             |
+| `npm run format`          | Prettier                                                     |
+| `npm run bump:minor`      | Bump patch/minor version in `package.json` and native config |
+| `npm run build:android`   | Bump + EAS Android production build                          |
+| `npm run build:ios`       | Bump + EAS iOS production build                              |
+| `npm run build:all`       | Bump + EAS build for both platforms                          |
+| `npm run release:android` | Build + auto-submit to Play internal track                   |
+| `npm run release:ios`     | Build + auto-submit to App Store Connect                     |
+| `npm run publish:android` | Submit latest Android build to Play                          |
+| `npm run publish:ios`     | Submit latest iOS build to App Store                         |
+| `npm run publish:all`     | Submit latest builds for both platforms                      |
 
 EAS config: [`eas.json`](eas.json). Package name: `com.time_tracker.app`.
 
 ## Screens
 
-| Route | Purpose |
-|-------|---------|
-| `(tabs)/` Track | Manual timers, active sessions, today's entries |
-| `(tabs)/tags` | Tag CRUD with hierarchy, colors, descriptions |
-| `(tabs)/map` | Saved places; geofence setup |
-| `(tabs)/stats` | Period stats, charts, friend selector |
-| `(tabs)/goals` | Daily minute targets and progress |
-| `profile` | Account, sync, export, theme, navigation |
-| `history` | Filtered entry list; edit times, tags, details |
-| `friends` | Friend requests and list |
-| `progress` | Goal progress history |
-| `(auth)/login`, `(auth)/register` | Sign in / sign up |
-| `change-password`, `privacy`, `terms`, `about`, `contact`, `support` | Account and legal pages |
+| Route                                                                | Purpose                                         |
+| -------------------------------------------------------------------- | ----------------------------------------------- |
+| `(tabs)/` Track                                                      | Manual timers, active sessions, today's entries |
+| `(tabs)/tags`                                                        | Tag CRUD with hierarchy, colors, descriptions   |
+| `(tabs)/map`                                                         | Saved places; geofence setup                    |
+| `(tabs)/stats`                                                       | Period stats, charts, friend selector           |
+| `(tabs)/goals`                                                       | Daily minute targets and progress               |
+| `profile`                                                            | Account, sync, export, theme, navigation        |
+| `history`                                                            | Filtered entry list; edit times, tags, details  |
+| `friends`                                                            | Friend requests and list                        |
+| `progress`                                                           | Goal progress history                           |
+| `(auth)/login`, `(auth)/register`                                    | Sign in / sign up                               |
+| `change-password`, `privacy`, `terms`, `about`, `contact`, `support` | Account and legal pages                         |
 
 ## Project layout
 

@@ -4,21 +4,23 @@ import { useAppColors } from '@/hooks/useAppColors';
 import { formatDuration } from '@/utils/formatDuration';
 
 interface TimerDisplayProps {
-  startedAt: number | null;
+  elapsedMs: number;
   isRunning: boolean;
 }
 
-export function TimerDisplay({ startedAt, isRunning }: TimerDisplayProps) {
+export function TimerDisplay({ elapsedMs, isRunning }: TimerDisplayProps) {
   const colors = useAppColors();
-  const elapsed = startedAt ? Date.now() - startedAt : 0;
 
   return (
-    <View className="items-center py-6">
-      <Text className="font-mono text-5xl font-bold" style={{ color: colors.textOnBg }}>
-        {formatDuration(elapsed)}
+    <View className="items-center py-4">
+      <Text
+        className="font-mono text-6xl font-light tracking-tight tabular-nums"
+        style={{ color: colors.textOnBg }}
+      >
+        {formatDuration(elapsedMs)}
       </Text>
       <Text className="mt-2 text-sm" style={{ color: colors.textMuted }}>
-        {isRunning ? 'Tracking now' : 'Ready to track'}
+        {isRunning ? 'Tracking' : 'Ready to track'}
       </Text>
     </View>
   );

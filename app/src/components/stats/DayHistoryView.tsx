@@ -97,7 +97,7 @@ export function DayHistoryView({
             key={entry.id}
             style={
               index < entries.length - 1
-                ? { borderBottomWidth: 1, borderBottomColor: colors.surfaceBorder }
+                ? { borderBottomWidth: 1, borderBottomColor: colors.separator }
                 : undefined
             }
           >

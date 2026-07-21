@@ -53,7 +53,7 @@ export default function StatsScreen() {
   if (!user) return null;
 
   return (
-    <TabScreenContainer className="px-4 pt-2">
+    <TabScreenContainer>
       <TabScrollView showsVerticalScrollIndicator={false} contentContainerClassName="pb-8">
         <StatsPersonSelector
           friends={friends}

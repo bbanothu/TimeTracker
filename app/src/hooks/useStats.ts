@@ -8,6 +8,7 @@ import { fetchFriendEntries, fetchFriendGeofences } from '@/services/friendsServ
 import { getStatsSummary } from '@/services/statsService';
 import type { Geofence, PeriodType, StatsSummary, TimeEntry } from '@/types';
 import { ROLLING_MONTH_DAYS, ROLLING_WEEK_DAYS, getPeriodBounds } from '@/utils/periodBounds';
+import { filterAnalyticsVisibleItems } from '@/utils/tagAnalytics';
 
 const EMPTY_SUMMARY: StatsSummary = {
   totalMs: 0,
@@ -85,12 +86,12 @@ export function useStats(initialPeriod: PeriodType = 'day', subjectUserId?: stri
     const rangeStart = start.getTime();
     const rangeEnd = end.getTime();
 
-    return entries
-      .filter(
+    return filterAnalyticsVisibleItems(
+      entries.filter(
         (entry) =>
           entry.endedAt != null && entry.endedAt > rangeStart && entry.startedAt < rangeEnd,
-      )
-      .sort((a, b) => b.startedAt - a.startedAt);
+      ),
+    ).sort((a, b) => b.startedAt - a.startedAt);
   }, [entries, anchorDate]);
 
   const shift = useCallback(

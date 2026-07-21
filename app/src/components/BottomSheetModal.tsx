@@ -8,6 +8,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   useWindowDimensions,
   View,
@@ -15,6 +16,7 @@ import {
   type ViewProps,
 } from 'react-native';
 
+import { BlurView } from 'expo-blur';
 import { useAppColors } from '@/hooks/useAppColors';
 
 interface BottomSheetModalProps {
@@ -180,14 +182,33 @@ export function BottomSheetModal({
         />
 
         <Animated.View
-          className={`rounded-t-3xl pb-8 ${sheetClassName ?? ''}`}
+          className={`overflow-hidden rounded-t-3xl pb-8 ${sheetClassName ?? ''}`}
           style={{
-            backgroundColor: colors.surfaceSolid,
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            overflow: 'hidden',
             transform: [{ translateY }],
             maxHeight: maxSheetHeight,
             marginBottom: keyboardInset,
           }}
         >
+          {Platform.OS === 'ios' ? (
+            <>
+              <BlurView
+                intensity={Math.max(colors.blurIntensity, 50)}
+                tint={colors.blurTint}
+                style={StyleSheet.absoluteFillObject}
+              />
+              <View
+                style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.glass }]}
+                pointerEvents="none"
+              />
+            </>
+          ) : (
+            <View
+              style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.surfaceSolid }]}
+            />
+          )}
           <View className="px-4 pb-2 pt-3">
             <View {...panResponder.panHandlers} className="mb-3 items-center py-2">
               <View

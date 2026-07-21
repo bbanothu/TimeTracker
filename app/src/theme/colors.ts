@@ -1,8 +1,7 @@
-import { DEFAULT_TAG_COLORS } from '@/constants/googleCalendarColors';
-
 export { GOOGLE_EVENT_COLORS, TAG_COLOR_OPTIONS } from '@/constants/googleCalendarColors';
 
 export interface AppColors {
+  pageBg: string;
   primary: string;
   primaryBright: string;
   textOnPrimary: string;
@@ -15,6 +14,7 @@ export interface AppColors {
   surfaceBorder: string;
   glass: string;
   glassBorder: string;
+  separator: string;
   text: string;
   textSecondary: string;
   textMuted: string;
@@ -40,13 +40,14 @@ export interface AppColors {
   chartSecondary: string;
   chartText: string;
   blurIntensity: number;
-  blurTint: 'light' | 'dark';
+  blurTint: 'light' | 'dark' | 'default';
   backgroundGradient: [string, string, string];
   authGradient: [string, string, string];
   stop: string;
   disabled: string;
   spinnerOnPrimary: string;
   switchTrackOff: string;
+  switchTrackOn: string;
   overlay: string;
   authText: string;
   authTextSecondary: string;
@@ -54,116 +55,123 @@ export interface AppColors {
   authPlaceholder: string;
 }
 
-/** Warm botanical palette — cream surfaces, emerald accents */
+const ACCENT = '#FF9F0A';
+const ACCENT_BRIGHT = '#FFB340';
+const SECONDARY = '#8E8E93';
+
+/** Frosted light — clear white glass over photo atmosphere */
 export const lightColors: AppColors = {
-  primary: '#047857',
-  primaryBright: '#10B981',
+  pageBg: '#E8E8ED',
+  primary: ACCENT,
+  primaryBright: ACCENT_BRIGHT,
   textOnPrimary: '#FFFFFF',
-  destructive: '#DC2626',
-  destructiveText: '#B91C1C',
-  destructiveBg: 'rgba(220, 38, 38, 0.1)',
-  destructiveBorder: 'rgba(220, 38, 38, 0.25)',
-  surface: 'rgba(255, 252, 245, 0.88)',
-  surfaceSolid: '#FFFCF5',
-  surfaceBorder: 'rgba(68, 64, 60, 0.1)',
-  glass: 'rgba(255, 252, 245, 0.5)',
+  destructive: '#FF3B30',
+  destructiveText: '#FF3B30',
+  destructiveBg: 'rgba(255, 59, 48, 0.12)',
+  destructiveBorder: 'rgba(255, 59, 48, 0.28)',
+  // Washes must stay nearly clear or BlurView looks like a gray slab
+  surface: 'rgba(255, 255, 255, 0.18)',
+  surfaceSolid: 'rgba(255, 255, 255, 0.5)',
+  surfaceBorder: 'rgba(255, 255, 255, 0.55)',
+  glass: 'rgba(255, 255, 255, 0.1)',
   glassBorder: 'rgba(255, 255, 255, 0.65)',
-  text: '#1C1917',
-  textSecondary: '#1C1917',
-  textMuted: '#1C1917',
-  textDisabled: '#78716C',
-  textOnGlass: '#1C1917',
-  textOnBg: '#1C1917',
-  tabActive: '#059669',
-  tabInactive: '#A8A29E',
-  tabBarBg: 'rgba(255, 252, 245, 0.82)',
-  tabBarBorder: 'rgba(68, 64, 60, 0.08)',
-  headerText: '#1C1917',
-  inputBg: 'rgba(255, 255, 255, 0.75)',
-  inputBgSolid: '#FFFFFF',
-  inputBorder: 'rgba(68, 64, 60, 0.12)',
-  inputPlaceholder: '#A8A29E',
-  selectedBg: 'rgba(5, 150, 105, 0.16)',
-  selectedBgSolid: '#D1FAE5',
-  selectedText: '#047857',
-  secondaryBg: 'rgba(68, 64, 60, 0.08)',
-  secondaryBgSolid: '#E7E5E4',
-  secondaryText: '#1C1917',
-  chartPrimary: '#059669',
-  chartSecondary: '#34D399',
-  chartText: '#1C1917',
-  blurIntensity: 18,
+  separator: 'rgba(60, 60, 67, 0.16)',
+  text: '#000000',
+  textSecondary: SECONDARY,
+  textMuted: SECONDARY,
+  textDisabled: '#C7C7CC',
+  textOnGlass: '#000000',
+  textOnBg: '#000000',
+  tabActive: ACCENT,
+  tabInactive: 'rgba(60, 60, 67, 0.55)',
+  tabBarBg: 'rgba(255, 255, 255, 0.22)',
+  tabBarBorder: 'rgba(255, 255, 255, 0.65)',
+  headerText: '#000000',
+  inputBg: 'rgba(255, 255, 255, 0.22)',
+  inputBgSolid: 'rgba(255, 255, 255, 0.35)',
+  inputBorder: 'rgba(255, 255, 255, 0.45)',
+  inputPlaceholder: SECONDARY,
+  selectedBg: 'rgba(255, 159, 10, 0.22)',
+  selectedBgSolid: 'rgba(255, 232, 194, 0.7)',
+  selectedText: '#000000',
+  secondaryBg: 'rgba(255, 255, 255, 0.18)',
+  secondaryBgSolid: 'rgba(255, 255, 255, 0.35)',
+  secondaryText: '#000000',
+  chartPrimary: ACCENT,
+  chartSecondary: ACCENT_BRIGHT,
+  chartText: '#000000',
+  blurIntensity: 32,
   blurTint: 'light',
   backgroundGradient: [
-    'rgba(254, 243, 199, 0.14)',
-    'rgba(255, 252, 245, 0.22)',
-    'rgba(231, 229, 228, 0.38)',
+    'rgba(255, 255, 255, 0.28)',
+    'rgba(242, 242, 247, 0.4)',
+    'rgba(255, 255, 255, 0.5)',
   ],
-  authGradient: ['#6EE7B7', '#059669', '#047857'],
-  stop: '#DC2626',
-  disabled: '#A8A29E',
+  authGradient: [ACCENT_BRIGHT, ACCENT, '#E68600'],
+  stop: '#FF3B30',
+  disabled: '#C7C7CC',
   spinnerOnPrimary: '#FFFFFF',
-  switchTrackOff: '#D6D3D1',
-  overlay: 'rgba(0, 0, 0, 0.65)',
-  authText: '#FFFFFF',
-  authTextSecondary: '#F5F5F4',
-  authTextMuted: '#D6D3D1',
-  authPlaceholder: '#A8A29E',
+  switchTrackOff: '#E9E9EB',
+  switchTrackOn: ACCENT,
+  overlay: 'rgba(0, 0, 0, 0.4)',
+  authText: '#000000',
+  authTextSecondary: SECONDARY,
+  authTextMuted: SECONDARY,
+  authPlaceholder: SECONDARY,
 };
 
-/** Warm ember palette — stone dark surfaces, amber/coral accents */
+/** Frosted dark — translucent white glass (not charcoal fill) over photo */
 export const darkColors: AppColors = {
-  primary: '#FB923C',
-  primaryBright: '#FDBA74',
-  textOnPrimary: '#1C1917',
-  destructive: '#FB7185',
-  destructiveText: '#FECDD3',
-  destructiveBg: 'rgba(251, 113, 133, 0.15)',
-  destructiveBorder: 'rgba(251, 113, 133, 0.35)',
-  surface: 'rgba(28, 25, 23, 0.78)',
-  surfaceSolid: '#1C1917',
-  surfaceBorder: 'rgba(255, 255, 255, 0.1)',
-  glass: 'rgba(255, 255, 255, 0.08)',
-  glassBorder: 'rgba(255, 255, 255, 0.16)',
+  pageBg: '#000000',
+  primary: ACCENT,
+  primaryBright: ACCENT_BRIGHT,
+  textOnPrimary: '#000000',
+  destructive: '#FF453A',
+  destructiveText: '#FF453A',
+  destructiveBg: 'rgba(255, 69, 58, 0.15)',
+  destructiveBorder: 'rgba(255, 69, 58, 0.35)',
+  surface: 'rgba(255, 255, 255, 0.08)',
+  surfaceSolid: 'rgba(255, 255, 255, 0.14)',
+  surfaceBorder: 'rgba(255, 255, 255, 0.2)',
+  glass: 'rgba(255, 255, 255, 0.06)',
+  glassBorder: 'rgba(255, 255, 255, 0.22)',
+  separator: 'rgba(255, 255, 255, 0.14)',
   text: '#FFFFFF',
-  textSecondary: '#FFFFFF',
-  textMuted: '#FFFFFF',
-  textDisabled: '#78716C',
+  textSecondary: SECONDARY,
+  textMuted: SECONDARY,
+  textDisabled: '#636366',
   textOnGlass: '#FFFFFF',
   textOnBg: '#FFFFFF',
-  tabActive: '#FB923C',
-  tabInactive: '#FFFFFF',
-  tabBarBg: 'rgba(28, 25, 23, 0.92)',
-  tabBarBorder: 'rgba(255, 255, 255, 0.1)',
+  tabActive: ACCENT,
+  tabInactive: 'rgba(235, 235, 245, 0.55)',
+  tabBarBg: 'rgba(255, 255, 255, 0.1)',
+  tabBarBorder: 'rgba(255, 255, 255, 0.28)',
   headerText: '#FFFFFF',
-  inputBg: 'rgba(255, 255, 255, 0.08)',
-  inputBgSolid: '#292524',
-  inputBorder: 'rgba(255, 255, 255, 0.18)',
-  inputPlaceholder: '#78716C',
-  selectedBg: 'rgba(251, 146, 60, 0.2)',
-  selectedBgSolid: '#422006',
+  inputBg: 'rgba(255, 255, 255, 0.1)',
+  inputBgSolid: 'rgba(255, 255, 255, 0.12)',
+  inputBorder: 'rgba(255, 255, 255, 0.2)',
+  inputPlaceholder: SECONDARY,
+  selectedBg: 'rgba(255, 159, 10, 0.22)',
+  selectedBgSolid: 'rgba(58, 42, 10, 0.65)',
   selectedText: '#FFFFFF',
   secondaryBg: 'rgba(255, 255, 255, 0.1)',
-  secondaryBgSolid: '#292524',
+  secondaryBgSolid: 'rgba(255, 255, 255, 0.14)',
   secondaryText: '#FFFFFF',
-  chartPrimary: '#FB923C',
-  chartSecondary: '#FDBA74',
+  chartPrimary: ACCENT,
+  chartSecondary: ACCENT_BRIGHT,
   chartText: '#FFFFFF',
-  blurIntensity: 52,
+  blurIntensity: 38,
   blurTint: 'dark',
-  backgroundGradient: [
-    'rgba(28, 25, 23, 0.18)',
-    'rgba(41, 37, 36, 0.58)',
-    'rgba(28, 25, 23, 0.92)',
-  ],
-  authGradient: ['#FDBA74', '#FB923C', '#EA580C'],
-  stop: '#FB7185',
-  disabled: '#78716C',
-  spinnerOnPrimary: '#1C1917',
-  switchTrackOff: '#57534E',
-  overlay: 'rgba(0, 0, 0, 0.75)',
+  backgroundGradient: ['rgba(0, 0, 0, 0.35)', 'rgba(0, 0, 0, 0.55)', 'rgba(0, 0, 0, 0.72)'],
+  authGradient: [ACCENT_BRIGHT, ACCENT, '#E68600'],
+  stop: '#FF453A',
+  disabled: '#636366',
+  spinnerOnPrimary: '#000000',
+  switchTrackOff: '#39393D',
+  switchTrackOn: ACCENT,
+  overlay: 'rgba(0, 0, 0, 0.65)',
   authText: '#FFFFFF',
-  authTextSecondary: '#F5F5F4',
-  authTextMuted: '#D6D3D1',
-  authPlaceholder: '#A8A29E',
+  authTextSecondary: SECONDARY,
+  authTextMuted: SECONDARY,
+  authPlaceholder: SECONDARY,
 };

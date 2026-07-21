@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -21,7 +21,7 @@ import {
   CARD_STAGGER,
   HERO_ENTER,
 } from '@/components/auth/authEnterAnimations';
-import { authScreenStyles as styles } from '@/components/auth/authScreenStyles';
+import { getAuthScreenStyles } from '@/components/auth/authScreenStyles';
 import { GlassInput } from '@/components/auth/GlassInput';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { useAuth } from '@/hooks/useAuth';
@@ -29,11 +29,10 @@ import { useAuthScreenEnter } from '@/hooks/useAuthScreenEnter';
 import { useAppColors } from '@/hooks/useAppColors';
 import { isSupabaseConfigured } from '@/lib/supabase';
 
-const registerBackground = require('../../assets/login2.jpg');
-
 export default function RegisterScreen() {
   const router = useRouter();
   const colors = useAppColors();
+  const styles = useMemo(() => getAuthScreenStyles(colors), [colors]);
   const { signUp } = useAuth();
   const ready = useAuthScreenEnter();
   const [email, setEmail] = useState('');
@@ -80,7 +79,7 @@ export default function RegisterScreen() {
   };
 
   return (
-    <AuthBackground source={registerBackground}>
+    <AuthBackground>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flex}

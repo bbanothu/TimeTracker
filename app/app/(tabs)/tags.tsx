@@ -109,7 +109,7 @@ export default function TagsScreen() {
   };
 
   return (
-    <TabScreenContainer className="px-4 pt-2">
+    <TabScreenContainer>
       <TabScrollView className="flex-1" contentContainerClassName="pb-8">
         <ActionButton
           label="Create new tag"
@@ -119,7 +119,10 @@ export default function TagsScreen() {
           className="mb-4"
         />
 
-        <Text className="mb-2 text-base font-medium" style={{ color: colors.textMuted }}>
+        <Text
+          className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide"
+          style={{ color: colors.textMuted }}
+        >
           Tags ({flatTags.length})
         </Text>
         <TagsList

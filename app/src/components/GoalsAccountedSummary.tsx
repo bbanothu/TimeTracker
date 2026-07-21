@@ -35,7 +35,7 @@ export function GoalsAccountedSummary({ progressByTagId, tags }: GoalsAccountedS
 
       <View
         className="mt-3 h-2 overflow-hidden rounded-full"
-        style={{ backgroundColor: colors.surfaceBorder }}
+        style={{ backgroundColor: colors.separator }}
       >
         <View
           className="h-full rounded-full"

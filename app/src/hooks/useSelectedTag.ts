@@ -4,6 +4,7 @@ import { filterDisplayTags } from '@/constants/defaultPlace';
 import { useFlatTagsByUsage } from '@/hooks/useFlatTagsByUsage';
 import { getLastSelectedTagId, setLastSelectedTagId } from '@/lib/lastSelectedTag';
 import type { Tag } from '@/types';
+import { analyticsIncludedTags } from '@/utils/tagAnalytics';
 
 function pickDefaultTagId(tags: Tag[], flatTagIds: string[]): string | null {
   if (tags.length === 0) return null;
@@ -14,7 +15,7 @@ function pickDefaultTagId(tags: Tag[], flatTagIds: string[]): string | null {
 }
 
 export function useSelectedTag(tags: Tag[]) {
-  const displayTags = filterDisplayTags(tags);
+  const displayTags = analyticsIncludedTags(filterDisplayTags(tags));
   const flatTags = useFlatTagsByUsage(displayTags);
   const flatTagIds = flatTags.map((item) => item.tag.id);
   const flatTagIdsKey = flatTagIds.join('\0');

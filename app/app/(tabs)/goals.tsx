@@ -76,7 +76,7 @@ export default function GoalsScreen() {
       <TabScrollView
         ref={scrollRef}
         className="flex-1"
-        contentContainerClassName="px-4 pb-8 pt-2"
+        contentContainerClassName="pb-8"
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets
         scrollEventThrottle={16}

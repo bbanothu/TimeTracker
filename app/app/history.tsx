@@ -23,6 +23,7 @@ import { useTags } from '@/hooks/useTags';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
 import { pushChangesInBackground } from '@/services/syncScheduler';
 import type { TimeEntry } from '@/types';
+import { buildMergedFields } from '@/utils/entryMerge';
 import {
   defaultHistoryFilters,
   getHistoryDateRange,
@@ -30,7 +31,7 @@ import {
   HISTORY_PAGE_SIZE,
   type HistoryFilterState,
 } from '@/utils/historyFilters';
-import { buildMergedFields } from '@/utils/entryMerge';
+import { isTagIncludedInAnalytics } from '@/utils/tagAnalytics';
 
 export default function HistoryScreen() {
   const colors = useAppColors();
@@ -67,6 +68,16 @@ export default function HistoryScreen() {
   useEffect(() => {
     loadPage(page);
   }, [loadPage, page, entriesRevision]);
+
+  useEffect(() => {
+    if (
+      filters.tagId &&
+      !tags.some((tag) => tag.id === filters.tagId && isTagIncludedInAnalytics(tag))
+    ) {
+      setFilters((current) => ({ ...current, tagId: null }));
+      setPage(0);
+    }
+  }, [filters.tagId, tags]);
 
   const handleFiltersChange = (next: HistoryFilterState) => {
     setFilters(next);
@@ -130,6 +141,7 @@ export default function HistoryScreen() {
           className="flex-1"
           contentContainerClassName="px-4 pb-8 pt-2"
           cloudPull="none"
+          pageHeader={false}
           onRefreshExtra={() => {
             loadPage(page);
           }}

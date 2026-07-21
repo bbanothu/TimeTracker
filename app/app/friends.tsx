@@ -1,6 +1,6 @@
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -18,6 +18,7 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAppColors } from '@/hooks/useAppColors';
 import { useScreenTopPadding } from '@/hooks/useScreenTopPadding';
+import { getStackScreenOptions } from '@/navigation/headerOptions';
 import {
   fetchFriendships,
   friendLabel,
@@ -28,6 +29,7 @@ import {
 import type { Friendship } from '@/types';
 
 export default function FriendsScreen() {
+  const navigation = useNavigation();
   const topPadding = useScreenTopPadding(8);
   const colors = useAppColors();
   const [friendships, setFriendships] = useState<Friendship[]>([]);
@@ -35,6 +37,12 @@ export default function FriendsScreen() {
   const [email, setEmail] = useState('');
   const [sending, setSending] = useState(false);
   const [actingId, setActingId] = useState<string | null>(null);
+
+  useLayoutEffect(() => {
+    navigation.setOptions(
+      getStackScreenOptions(colors, 'Friends')({ navigation: navigation as never }),
+    );
+  }, [colors, navigation]);
 
   const load = useCallback(async () => {
     setLoading(true);
