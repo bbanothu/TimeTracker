@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Linking, Platform, ScrollView, Text } from 'react-native';
 
 import { AppBackground } from '@/components/AppBackground';
+import { DeleteAccountModal } from '@/components/DeleteAccountModal';
 import { ProfileFooter } from '@/components/ProfileFooter';
 import { ProfileIdentityCard } from '@/components/ProfileIdentityCard';
 import { ProfileLinkRows } from '@/components/ProfileLinkRows';
@@ -10,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGeofenceMonitoring } from '@/hooks/useGeofenceMonitoring';
 import { useScreenScrollPadding } from '@/hooks/useScreenTopPadding';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
+import { deleteAccount } from '@/services/accountService';
 import { clearTrackedData, exportTrackedDataCsv } from '@/services/dataService';
 import { useProfileName } from '@/hooks/useProfileName';
 import { fetchIncomingPendingCount } from '@/services/friendsService';
@@ -45,6 +47,8 @@ export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const [exporting, setExporting] = useState(false);
   const [clearing, setClearing] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
   const [pendingFriendCount, setPendingFriendCount] = useState(0);
@@ -350,6 +354,32 @@ export default function ProfileScreen() {
     ]);
   };
 
+  const handleDeleteAccount = async (password: string) => {
+    setDeletingAccount(true);
+    try {
+      await deleteAccount(password);
+      try {
+        await signOut();
+      } catch {
+        // Auth user is already gone; local sign-out may fail.
+      }
+      setDeleteAccountOpen(false);
+      router.replace('/(auth)/login');
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
+
+  const accountBusy =
+    syncing ||
+    exporting ||
+    clearing ||
+    deletingAccount ||
+    calendarConnecting ||
+    calendarSyncing ||
+    calendarResetting ||
+    calendarDisconnecting;
+
   const memberSince = user?.created_at
     ? new Date(user.created_at).toLocaleDateString(undefined, {
         month: 'long',
@@ -481,7 +511,7 @@ export default function ProfileScreen() {
                 subtitle: lastSyncedLabel,
                 onPress: handleSync,
                 loading: syncing,
-                disabled: syncing || exporting || clearing,
+                disabled: accountBusy,
                 showChevron: false,
               },
               {
@@ -490,7 +520,7 @@ export default function ProfileScreen() {
                 icon: 'export',
                 onPress: handleExportCsv,
                 loading: exporting,
-                disabled: syncing || exporting || clearing,
+                disabled: accountBusy,
                 showChevron: false,
               },
               {
@@ -500,7 +530,18 @@ export default function ProfileScreen() {
                 variant: 'destructive',
                 onPress: handleClearAllData,
                 loading: clearing,
-                disabled: syncing || exporting || clearing,
+                disabled: accountBusy,
+                showChevron: false,
+              },
+              {
+                id: 'delete-account',
+                label: 'Delete account',
+                icon: 'deleteAccount',
+                variant: 'destructive',
+                subtitle: 'Permanently remove your account and all data',
+                onPress: () => setDeleteAccountOpen(true),
+                loading: deletingAccount,
+                disabled: accountBusy,
                 showChevron: false,
               },
             ]}
@@ -514,6 +555,7 @@ export default function ProfileScreen() {
                 icon: 'signout',
                 variant: 'destructive',
                 onPress: handleLogout,
+                disabled: deletingAccount,
                 showChevron: false,
               },
             ]}
@@ -522,6 +564,14 @@ export default function ProfileScreen() {
           <ProfileFooter />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <DeleteAccountModal
+        visible={deleteAccountOpen}
+        onClose={() => {
+          if (!deletingAccount) setDeleteAccountOpen(false);
+        }}
+        onConfirm={handleDeleteAccount}
+      />
     </AppBackground>
   );
 }

@@ -3,12 +3,14 @@ import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-route
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ProfileFooter } from '@/components/layout/ProfileFooter';
+import { DeleteAccountModal } from '@/components/ui/DeleteAccountModal';
 import { ProfileIdentityCard } from '@/components/ui/ProfileIdentityCard';
 import { ProfileLinkRows } from '@/components/ui/ProfileLinkRows';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRefresh } from '@/contexts/RefreshContext';
 // import { useAppColors } from '@/contexts/ThemeContext';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
+import { deleteAccount } from '@/services/accountService';
 import {
   deleteAllEntries,
   downloadCsv,
@@ -56,6 +58,8 @@ export function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [clearing, setClearing] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
   const [lastRefreshedAt, setLastRefreshedAt] = useState<number | null>(null);
   const [pendingFriendCount, setPendingFriendCount] = useState(0);
   const [calendarStatus, setCalendarStatus] = useState<GoogleCalendarStatus | null>(null);
@@ -168,6 +172,28 @@ export function ProfilePage() {
     await signOut();
     navigate('/login');
   };
+
+  const handleDeleteAccount = async (password: string) => {
+    setDeletingAccount(true);
+    setError(null);
+    try {
+      await deleteAccount(password);
+      await signOut();
+      navigate('/login', { replace: true });
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
+
+  const accountBusy =
+    refreshing ||
+    exporting ||
+    clearing ||
+    deletingAccount ||
+    calendarConnecting ||
+    calendarSyncing ||
+    calendarResetting ||
+    calendarDisconnecting;
 
   const handleConnectCalendar = async () => {
     try {
@@ -383,7 +409,7 @@ export function ProfilePage() {
               subtitle: lastRefreshedLabel,
               onClick: handleRefresh,
               loading: refreshing,
-              disabled: refreshing || exporting || clearing,
+              disabled: accountBusy,
               showChevron: false,
             },
             {
@@ -392,7 +418,7 @@ export function ProfilePage() {
               icon: 'export',
               onClick: handleExport,
               loading: exporting,
-              disabled: refreshing || exporting || clearing,
+              disabled: accountBusy,
               showChevron: false,
             },
             {
@@ -402,7 +428,21 @@ export function ProfilePage() {
               variant: 'destructive',
               onClick: handleClear,
               loading: clearing,
-              disabled: refreshing || exporting || clearing,
+              disabled: accountBusy,
+              showChevron: false,
+            },
+            {
+              id: 'delete-account',
+              label: 'Delete account',
+              icon: 'deleteAccount',
+              variant: 'destructive',
+              subtitle: 'Permanently remove your account and all data',
+              onClick: () => {
+                setError(null);
+                setDeleteAccountOpen(true);
+              },
+              loading: deletingAccount,
+              disabled: accountBusy,
               showChevron: false,
             },
           ]}
@@ -416,6 +456,7 @@ export function ProfilePage() {
               icon: 'signout',
               variant: 'destructive',
               onClick: handleSignOut,
+              disabled: deletingAccount,
               showChevron: false,
             },
           ]}
@@ -423,6 +464,14 @@ export function ProfilePage() {
       </div>
 
       <ProfileFooter />
+
+      <DeleteAccountModal
+        visible={deleteAccountOpen}
+        onClose={() => {
+          if (!deletingAccount) setDeleteAccountOpen(false);
+        }}
+        onConfirm={handleDeleteAccount}
+      />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import {
   lockClosed,
   logOut,
   people,
+  personRemove,
   time,
   trash,
 } from 'ionicons/icons';
@@ -16,7 +17,15 @@ import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAppColors } from '@/contexts/ThemeContext';
 
 export type ProfileLinkIcon =
-  'friends' | 'history' | 'password' | 'calendar' | 'sync' | 'export' | 'clear' | 'signout';
+  | 'friends'
+  | 'history'
+  | 'password'
+  | 'calendar'
+  | 'sync'
+  | 'export'
+  | 'clear'
+  | 'deleteAccount'
+  | 'signout';
 
 export interface ProfileLinkRow {
   id: string;
@@ -39,6 +48,7 @@ const ICONS: Record<ProfileLinkIcon, string> = {
   sync: cloudUpload,
   export: download,
   clear: trash,
+  deleteAccount: personRemove,
   signout: logOut,
 };
 
@@ -50,6 +60,7 @@ const ICON_COLORS: Record<ProfileLinkIcon, string> = {
   sync: '#32ADE6',
   export: '#AF52DE',
   clear: '#FF3B30',
+  deleteAccount: '#FF3B30',
   signout: '#FF3B30',
 };
 

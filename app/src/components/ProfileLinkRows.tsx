@@ -15,6 +15,7 @@ export type ProfileLinkIcon =
   | 'sync'
   | 'export'
   | 'clear'
+  | 'deleteAccount'
   | 'signout';
 
 export interface ProfileLinkRow {
@@ -43,6 +44,7 @@ const ICONS: Record<ProfileLinkIcon, IoniconName> = {
   sync: 'cloud-upload',
   export: 'download',
   clear: 'trash',
+  deleteAccount: 'person-remove',
   signout: 'log-out',
 };
 
@@ -55,6 +57,7 @@ const ICON_COLORS: Record<ProfileLinkIcon, string> = {
   sync: '#32ADE6',
   export: '#AF52DE',
   clear: '#FF3B30',
+  deleteAccount: '#FF3B30',
   signout: '#FF3B30',
 };
 
