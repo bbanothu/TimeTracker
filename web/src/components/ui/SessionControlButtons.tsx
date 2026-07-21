@@ -1,12 +1,10 @@
+import { play, stop } from 'ionicons/icons';
+
+import { AppIcon } from '@/components/ui/AppIcon';
 import { useAppColors } from '@/contexts/ThemeContext';
 
-function PlayIcon({ color }: { color: string }) {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M8 5v14l11-7L8 5Z" fill={color} />
-    </svg>
-  );
-}
+const CONTROL_SIZE = 20;
+const CONTROL_ICON_SIZE = 12;
 
 interface StartSessionButtonProps {
   onClick: () => void;
@@ -24,17 +22,14 @@ export function StartSessionButton({ onClick, disabled, className = '' }: StartS
       disabled={disabled}
       aria-label="Start session"
       title="Start session"
-      className={`inline-flex shrink-0 items-center justify-center rounded-full border-[2.5px] transition hover:opacity-80 disabled:opacity-50 ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-full transition hover:opacity-80 disabled:opacity-50 ${className}`}
       style={{
-        width: 28,
-        height: 28,
-        borderColor: colors.primary,
-        backgroundColor: 'transparent',
+        width: CONTROL_SIZE,
+        height: CONTROL_SIZE,
+        backgroundColor: colors.primary,
       }}
     >
-      <span className="ml-0.5">
-        <PlayIcon color={colors.primary} />
-      </span>
+      <AppIcon icon={play} size={CONTROL_ICON_SIZE} color={colors.textOnPrimary} />
     </button>
   );
 }
@@ -53,22 +48,14 @@ export function StopSessionButton({ onClick, className = '' }: StopSessionButton
       onClick={onClick}
       aria-label="Stop session"
       title="Stop session"
-      className={`inline-flex shrink-0 items-center justify-center rounded-full border-[2.5px] transition hover:opacity-80 ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-full transition hover:opacity-80 ${className}`}
       style={{
-        width: 28,
-        height: 28,
-        borderColor: colors.stop,
-        backgroundColor: 'transparent',
+        width: CONTROL_SIZE,
+        height: CONTROL_SIZE,
+        backgroundColor: colors.stop,
       }}
     >
-      <span
-        className="rounded-[2.5px]"
-        style={{
-          width: 10,
-          height: 10,
-          backgroundColor: colors.stop,
-        }}
-      />
+      <AppIcon icon={stop} size={CONTROL_ICON_SIZE} color="#FFFFFF" />
     </button>
   );
 }

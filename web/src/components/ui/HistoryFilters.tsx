@@ -13,6 +13,7 @@ import {
 } from '@/utils/historyFilters';
 import { flattenTags } from '@/utils/tagTree';
 import { formatTagName } from '@/utils/formatDuration';
+import { isTagIncludedInAnalytics } from '@/utils/tagAnalytics';
 
 interface HistoryFiltersProps {
   tags: Tag[];
@@ -61,9 +62,13 @@ export function HistoryFilters({ tags, geofences, filters, onChange }: HistoryFi
   const colors = useAppColors();
   const [expanded, setExpanded] = useState(false);
   const [picker, setPicker] = useState<PickerKind>(null);
-  const flatTags = useMemo(() => flattenTags(tags), [tags]);
+  const flatTags = useMemo(
+    () => flattenTags(tags).filter((item) => isTagIncludedInAnalytics(item.tag)),
+    [tags],
+  );
 
-  const selectedTag = tags.find((tag) => tag.id === filters.tagId) ?? null;
+  const selectedTag =
+    tags.find((tag) => tag.id === filters.tagId && isTagIncludedInAnalytics(tag)) ?? null;
   const selectedGeofence = geofences.find((geofence) => geofence.id === filters.geofenceId) ?? null;
 
   return (

@@ -49,22 +49,26 @@ export function TagsProvider({ children }: { children: ReactNode }) {
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const refresh = useCallback(async () => {
-    if (!user) {
-      setTags([]);
-      setLoading(false);
-      return;
-    }
+  const refresh = useCallback(
+    async (options?: { showLoading?: boolean }) => {
+      if (!user) {
+        setTags([]);
+        setLoading(false);
+        return;
+      }
 
-    setLoading(true);
-    try {
-      await seedDefaultTags(user.id);
-      await ensureDefaultUnknownPlace(user.id);
-      setTags(await fetchTags(user.id));
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
+      const showLoading = options?.showLoading !== false;
+      if (showLoading) setLoading(true);
+      try {
+        await seedDefaultTags(user.id);
+        await ensureDefaultUnknownPlace(user.id);
+        setTags(await fetchTags(user.id));
+      } finally {
+        if (showLoading) setLoading(false);
+      }
+    },
+    [user],
+  );
 
   useEffect(() => {
     refresh().catch(console.error);
@@ -73,12 +77,12 @@ export function TagsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) return;
     return subscribeDataRefresh(() => {
-      refresh().catch(console.error);
+      refresh({ showLoading: false }).catch(console.error);
     });
   }, [user, refresh]);
 
   const afterMutation = useCallback(async () => {
-    await refresh();
+    await refresh({ showLoading: false });
     notifyDataRefresh();
   }, [refresh]);
 
@@ -123,10 +127,18 @@ export function TagsProvider({ children }: { children: ReactNode }) {
   const toggleTagAnalytics = useCallback(
     async (id: string, includeInAnalytics: boolean) => {
       if (!user) return;
-      await setTagIncludeInAnalytics(user.id, id, includeInAnalytics);
-      await afterMutation();
+      setTags((current) =>
+        current.map((tag) => (tag.id === id ? { ...tag, includeInAnalytics } : tag)),
+      );
+      try {
+        await setTagIncludeInAnalytics(user.id, id, includeInAnalytics);
+        notifyDataRefresh();
+      } catch (error) {
+        await refresh({ showLoading: false });
+        throw error;
+      }
     },
-    [user, afterMutation],
+    [user, refresh],
   );
 
   const value = useMemo(

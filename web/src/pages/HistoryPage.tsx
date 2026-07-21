@@ -20,6 +20,7 @@ import {
   updateTimeEntry,
 } from '@/services/data';
 import type { Geofence, TimeEntry } from '@/types';
+import { buildMergedFields } from '@/utils/entryMerge';
 import {
   defaultHistoryFilters,
   filterHistoryEntries,
@@ -28,7 +29,7 @@ import {
   paginateHistoryEntries,
   type HistoryFilterState,
 } from '@/utils/historyFilters';
-import { buildMergedFields } from '@/utils/entryMerge';
+import { filterAnalyticsVisibleItems, isTagIncludedInAnalytics } from '@/utils/tagAnalytics';
 
 export function HistoryPage() {
   const colors = useAppColors();
@@ -74,7 +75,19 @@ export function HistoryPage() {
     });
   }, [user, loadEntries]);
 
-  const filteredEntries = useMemo(() => filterHistoryEntries(entries, filters), [entries, filters]);
+  const filteredEntries = useMemo(() => {
+    const visible = filterAnalyticsVisibleItems(entries);
+    return filterHistoryEntries(visible, filters);
+  }, [entries, filters]);
+
+  useEffect(() => {
+    if (
+      filters.tagId &&
+      !tags.some((tag) => tag.id === filters.tagId && isTagIncludedInAnalytics(tag))
+    ) {
+      setFilters((current) => ({ ...current, tagId: null }));
+    }
+  }, [filters.tagId, tags]);
 
   useEffect(() => {
     setPage(0);

@@ -28,7 +28,7 @@ export function AccountNavLink() {
     <NavLink
       to="/profile"
       aria-label="Account"
-      className="flex min-w-0 max-w-[14rem] items-center gap-2.5 rounded-xl px-2 py-1 transition hover:opacity-90"
+      className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-2 py-1 transition hover:opacity-90"
       style={({ isActive }) => ({
         backgroundColor: isActive ? colors.selectedBgSolid : 'transparent',
       })}

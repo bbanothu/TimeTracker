@@ -1,7 +1,9 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { checkmark, close } from 'ionicons/icons';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ActionButton } from '@/components/ui/ActionButton';
+import { AppIcon } from '@/components/ui/AppIcon';
 import { LoadingIndicator } from '@/components/ui/LoadingIndicator';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAppColors } from '@/contexts/ThemeContext';
@@ -13,34 +15,6 @@ import {
   sendFriendRequest,
 } from '@/services/friendsService';
 import type { Friendship } from '@/types';
-
-function CheckIcon({ color }: { color: string }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M20 6 9 17l-5-5"
-        stroke={color}
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function XIcon({ color }: { color: string }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M18 6 6 18M6 6l12 12"
-        stroke={color}
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
 
 export function FriendsPage() {
   const colors = useAppColors();
@@ -215,7 +189,7 @@ export function FriendsPage() {
                         className="rounded-full p-2 disabled:opacity-50"
                         style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)' }}
                       >
-                        <CheckIcon color={colors.primaryBright} />
+                        <AppIcon icon={checkmark} size={20} color={colors.primaryBright} />
                       </button>
                       <button
                         type="button"
@@ -225,7 +199,7 @@ export function FriendsPage() {
                         className="rounded-full p-2 disabled:opacity-50"
                         style={{ backgroundColor: colors.destructiveBg }}
                       >
-                        <XIcon color={colors.destructive} />
+                        <AppIcon icon={close} size={20} color={colors.destructive} />
                       </button>
                     </div>
                   </li>
@@ -259,7 +233,7 @@ export function FriendsPage() {
                       className="shrink-0 rounded-full p-2 disabled:opacity-50"
                       style={{ backgroundColor: colors.destructiveBg }}
                     >
-                      <XIcon color={colors.destructive} />
+                      <AppIcon icon={close} size={20} color={colors.destructive} />
                     </button>
                   </li>
                 ))}
@@ -296,7 +270,7 @@ export function FriendsPage() {
                       className="shrink-0 rounded-full p-2 disabled:opacity-50"
                       style={{ backgroundColor: colors.destructiveBg }}
                     >
-                      <XIcon color={colors.destructive} />
+                      <AppIcon icon={close} size={20} color={colors.destructive} />
                     </button>
                   </li>
                 ))}

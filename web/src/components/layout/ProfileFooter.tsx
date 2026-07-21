@@ -15,7 +15,7 @@ export function ProfileFooter() {
 
   return (
     <footer
-      className="mt-8 flex flex-col gap-4 border-t px-1 py-6 sm:flex-row sm:items-center sm:justify-between"
+      className="mt-auto flex flex-col gap-4 border-t px-1 pb-6 pt-8 sm:flex-row sm:items-center sm:justify-between"
       style={{ borderColor: colors.surfaceBorder }}
     >
       <p className="text-sm" style={{ color: colors.textMuted }}>

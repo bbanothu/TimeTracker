@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
 
+import { AppIcon } from '@/components/ui/AppIcon';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { confirmDelete } from '@/lib/confirm';
 import type { Geofence } from '@/types';
 import { formatTagName } from '@/utils/formatDuration';
 import { groupGeofencesByTag, tagGroupSubtitle } from '@/utils/groupGeofences';
+import { chevronDown, createOutline, trashOutline } from 'ionicons/icons';
 
 interface GeofencesListProps {
   geofences: Geofence[];
@@ -13,63 +15,6 @@ interface GeofencesListProps {
   onEdit: (geofence: Geofence) => void;
   onToggle: (geofence: Geofence, enabled: boolean) => void;
   onDelete: (geofence: Geofence) => void;
-}
-
-function EditIcon({ color }: { color: string }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function DeleteIcon({ color }: { color: string }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M10 11v6M14 11v6" stroke={color} strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function ChevronIcon({ color, expanded }: { color: string; expanded: boolean }) {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-      className={`shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`}
-    >
-      <path
-        d="m6 9 6 6 6-6"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
 }
 
 function GeofenceRow({
@@ -123,15 +68,15 @@ function GeofenceRow({
         aria-label={`Auto-tracking for ${geofence.name}`}
         title={geofence.enabled ? 'Auto-tracking on' : 'Auto-tracking off'}
         onClick={() => onToggle(geofence, !geofence.enabled)}
-        className="relative h-5 w-9 shrink-0 rounded-full border transition"
+        className="relative h-5 w-9 shrink-0 overflow-hidden rounded-full border transition"
         style={{
           backgroundColor: geofence.enabled ? colors.primary : colors.secondaryBg,
           borderColor: geofence.enabled ? colors.primary : colors.surfaceBorder,
         }}
       >
         <span
-          className="absolute top-0.5 h-3.5 w-3.5 rounded-full bg-white transition-all"
-          style={{ left: geofence.enabled ? '18px' : '2px' }}
+          className="absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-white transition-all"
+          style={{ left: geofence.enabled ? 'calc(100% - 0.875rem - 2px)' : '2px' }}
         />
       </button>
       <button
@@ -141,7 +86,7 @@ function GeofenceRow({
         onClick={() => onEdit(geofence)}
         className="flex h-5 w-5 shrink-0 items-center justify-center rounded transition hover:opacity-80"
       >
-        <EditIcon color={colors.textMuted} />
+        <AppIcon icon={createOutline} size={20} color={colors.textMuted} />
       </button>
       <button
         type="button"
@@ -153,7 +98,7 @@ function GeofenceRow({
         }}
         className="flex h-5 w-5 shrink-0 items-center justify-center rounded transition hover:opacity-80"
       >
-        <DeleteIcon color={colors.destructiveText} />
+        <AppIcon icon={trashOutline} size={20} color={colors.destructiveText} />
       </button>
     </>
   );
@@ -244,7 +189,12 @@ export function GeofencesList({
                   {tagGroupSubtitle(group.geofences)}
                 </p>
               </div>
-              <ChevronIcon color={colors.textMuted} expanded={expanded} />
+              <AppIcon
+                icon={chevronDown}
+                size={16}
+                color={colors.textMuted}
+                className={`transition-transform ${expanded ? 'rotate-180' : ''}`}
+              />
             </button>
 
             {expanded

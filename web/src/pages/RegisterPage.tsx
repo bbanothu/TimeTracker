@@ -3,6 +3,7 @@ import { FormEvent, useState } from 'react';
 
 import { AuthBackground } from '@/components/layout/AuthBackground';
 import { LoadingIndicator } from '@/components/ui/LoadingIndicator';
+import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -18,9 +19,9 @@ export function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
 
   const inputStyle = {
-    color: colors.authText,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    color: colors.text,
+    borderColor: colors.inputBorder,
+    backgroundColor: colors.inputBg,
   };
 
   if (user) return <Navigate to="/" replace />;
@@ -53,82 +54,83 @@ export function RegisterPage() {
   };
 
   return (
-    <AuthBackground image="/assets/login2.jpg">
+    <AuthBackground>
       <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-6 py-10">
         <div className="mb-8">
-          <p
-            className="mb-2 text-sm font-semibold uppercase tracking-wide"
-            style={{ color: colors.authTextSecondary }}
-          >
-            Get started
-          </p>
-          <h1 className="text-4xl font-extrabold tracking-tight" style={{ color: colors.authText }}>
+          <h1 className="text-4xl font-semibold tracking-tight" style={{ color: colors.text }}>
             TimeTracker
           </h1>
-          <p className="mt-2" style={{ color: colors.authTextSecondary }}>
+          <p className="mt-2" style={{ color: colors.textMuted }}>
             Create an account and sync your time everywhere
           </p>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="rounded-[28px] border border-white/25 bg-white/10 p-6 shadow-glass backdrop-blur-md"
-        >
-          <h2 className="text-xl font-bold" style={{ color: colors.authText }}>
-            Create account
-          </h2>
-          <p className="mb-5 mt-1 text-sm" style={{ color: colors.authTextMuted }}>
-            Track tags, stats, and places across devices.
-          </p>
+        <ThemedSurface className="p-6">
+          <form onSubmit={handleSubmit}>
+            <h2 className="text-xl font-semibold" style={{ color: colors.text }}>
+              Create account
+            </h2>
+            <p className="mb-5 mt-1 text-sm" style={{ color: colors.textMuted }}>
+              Track tags, stats, and places across devices.
+            </p>
 
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            type="email"
-            className="mb-3 w-full rounded-2xl border px-4 py-3 placeholder:text-[#A8A29E]"
-            style={inputStyle}
-          />
-          <input
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            type="password"
-            className="mb-3 w-full rounded-2xl border px-4 py-3 placeholder:text-[#A8A29E]"
-            style={inputStyle}
-          />
-          <input
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Confirm password"
-            type="password"
-            className="mb-4 w-full rounded-2xl border px-4 py-3 placeholder:text-[#A8A29E]"
-            style={inputStyle}
-          />
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+              type="email"
+              className="mb-3 w-full rounded-full border px-4 py-3 outline-none"
+              style={inputStyle}
+            />
+            <input
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              type="password"
+              className="mb-3 w-full rounded-full border px-4 py-3 outline-none"
+              style={inputStyle}
+            />
+            <input
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm password"
+              type="password"
+              className="mb-4 w-full rounded-full border px-4 py-3 outline-none"
+              style={inputStyle}
+            />
 
-          {error ? <p className="mb-3 text-sm text-rose-200">{error}</p> : null}
-          {message ? <p className="mb-3 text-sm text-emerald-100">{message}</p> : null}
+            {error ? (
+              <p className="mb-3 text-sm" style={{ color: colors.destructiveText }}>
+                {error}
+              </p>
+            ) : null}
+            {message ? (
+              <p className="mb-3 text-sm" style={{ color: colors.primary }}>
+                {message}
+              </p>
+            ) : null}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="flex w-full items-center justify-center rounded-2xl py-3.5 font-bold"
-            style={{
-              color: colors.authText,
-              backgroundImage: `linear-gradient(90deg, ${colors.authGradient.join(', ')})`,
-            }}
-          >
-            {submitting ? <LoadingIndicator size="small" /> : 'Create account'}
-          </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex w-full items-center justify-center rounded-full py-3.5 font-semibold"
+              style={{
+                color: colors.textOnPrimary,
+                backgroundColor: colors.primary,
+              }}
+            >
+              {submitting ? <LoadingIndicator size="small" /> : 'Create account'}
+            </button>
 
-          <Link
-            to="/login"
-            className="mt-4 block text-center text-sm font-semibold"
-            style={{ color: colors.authText }}
-          >
-            Already have an account? Sign in
-          </Link>
-        </form>
+            <Link
+              to="/login"
+              className="mt-4 block text-center text-sm font-semibold"
+              style={{ color: colors.primary }}
+            >
+              Already have an account? Sign in
+            </Link>
+          </form>
+        </ThemedSurface>
       </div>
     </AuthBackground>
   );

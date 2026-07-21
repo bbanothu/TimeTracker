@@ -8,6 +8,15 @@ export function analyticsIncludedTags(tags: Tag[]): Tag[] {
   return tags.filter(isTagIncludedInAnalytics);
 }
 
+/** Entries/sessions with at least one analytics-included tag. */
+export function isAnalyticsVisibleItem(item: { tags: Tag[] }): boolean {
+  return item.tags.some(isTagIncludedInAnalytics);
+}
+
+export function filterAnalyticsVisibleItems<T extends { tags: Tag[] }>(items: T[]): T[] {
+  return items.filter(isAnalyticsVisibleItem);
+}
+
 export function goalCategories(tags: Tag[]): Tag[] {
   return tags
     .filter((tag) => tag.parentId === null && isTagIncludedInAnalytics(tag))

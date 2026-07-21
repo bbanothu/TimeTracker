@@ -1,6 +1,19 @@
-import { useAppColors } from '@/contexts/ThemeContext';
+import {
+  calendar,
+  chevronForward,
+  cloudUpload,
+  download,
+  lockClosed,
+  logOut,
+  people,
+  time,
+  trash,
+} from 'ionicons/icons';
+
+import { AppIcon } from '@/components/ui/AppIcon';
 import { LoadingIndicator } from '@/components/ui/LoadingIndicator';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
+import { useAppColors } from '@/contexts/ThemeContext';
 
 export type ProfileLinkIcon =
   'friends' | 'history' | 'password' | 'calendar' | 'sync' | 'export' | 'clear' | 'signout';
@@ -18,118 +31,27 @@ export interface ProfileLinkRow {
   showChevron?: boolean;
 }
 
-function LockIcon({ color }: { color: string }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <rect x="5" y="11" width="14" height="10" rx="2" stroke={color} strokeWidth="2" />
-      <path d="M8 11V8a4 4 0 0 1 8 0v3" stroke={color} strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
+const ICONS: Record<ProfileLinkIcon, string> = {
+  friends: people,
+  history: time,
+  password: lockClosed,
+  calendar: calendar,
+  sync: cloudUpload,
+  export: download,
+  clear: trash,
+  signout: logOut,
+};
 
-function FriendsIcon({ color }: { color: string }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="9" cy="8" r="3" stroke={color} strokeWidth="2" />
-      <path
-        d="M3 19v-1a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v1"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M16 4.5a2.5 2.5 0 0 1 0 5M19 19v-1a3.5 3.5 0 0 0-2.5-3.36"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function HistoryIcon({ color }: { color: string }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="12" r="8" stroke={color} strokeWidth="2" />
-      <path d="M12 8v4l3 2" stroke={color} strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function CalendarIcon({ color }: { color: string }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <rect x="3" y="5" width="18" height="16" rx="2" stroke={color} strokeWidth="2" />
-      <path d="M8 3v4M16 3v4M3 10h18" stroke={color} strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function SyncIcon({ color }: { color: string }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M4 12a8 8 0 0 1 13.7-5.7M20 12a8 8 0 0 1-13.7 5.7"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path d="M16 4h4v4M8 20H4v-4" stroke={color} strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function ExportIcon({ color }: { color: string }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 3v10M8 9l4 4 4-4" stroke={color} strokeWidth="2" strokeLinecap="round" />
-      <path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" stroke={color} strokeWidth="2" />
-    </svg>
-  );
-}
-
-function TrashIcon({ color }: { color: string }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function SignOutIcon({ color }: { color: string }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke={color} strokeWidth="2" />
-      <path d="M16 17l5-5-5-5M21 12H9" stroke={color} strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function RowIcon({ icon, color }: { icon: ProfileLinkIcon; color: string }) {
-  switch (icon) {
-    case 'password':
-      return <LockIcon color={color} />;
-    case 'friends':
-      return <FriendsIcon color={color} />;
-    case 'history':
-      return <HistoryIcon color={color} />;
-    case 'calendar':
-      return <CalendarIcon color={color} />;
-    case 'sync':
-      return <SyncIcon color={color} />;
-    case 'export':
-      return <ExportIcon color={color} />;
-    case 'clear':
-      return <TrashIcon color={color} />;
-    case 'signout':
-      return <SignOutIcon color={color} />;
-  }
-}
+const ICON_COLORS: Record<ProfileLinkIcon, string> = {
+  friends: '#007AFF',
+  history: '#5856D6',
+  password: '#8E8E93',
+  calendar: '#FF9500',
+  sync: '#32ADE6',
+  export: '#AF52DE',
+  clear: '#FF3B30',
+  signout: '#FF3B30',
+};
 
 interface ProfileLinkRowsProps {
   rows: ProfileLinkRow[];
@@ -148,12 +70,12 @@ export function ProfileLinkRows({ rows }: ProfileLinkRowsProps) {
           : isInactive
             ? colors.textDisabled
             : colors.text;
-        const iconColor = destructive
-          ? colors.destructive
-          : isInactive
-            ? colors.textDisabled
-            : colors.textMuted;
         const showChevron = row.showChevron ?? true;
+        const badgeColor = row.icon
+          ? destructive
+            ? colors.destructive
+            : ICON_COLORS[row.icon]
+          : colors.textMuted;
 
         return (
           <button
@@ -169,8 +91,11 @@ export function ProfileLinkRows({ rows }: ProfileLinkRowsProps) {
           >
             <span className="flex min-w-0 items-center gap-3">
               {row.icon ? (
-                <span className="shrink-0">
-                  <RowIcon icon={row.icon} color={iconColor} />
+                <span
+                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                  style={{ backgroundColor: badgeColor, opacity: isInactive ? 0.55 : 1 }}
+                >
+                  <AppIcon icon={ICONS[row.icon]} size={15} color="#FFFFFF" />
                 </span>
               ) : null}
               <span className="min-w-0">
@@ -196,9 +121,7 @@ export function ProfileLinkRows({ rows }: ProfileLinkRowsProps) {
               {row.loading ? (
                 <LoadingIndicator size="small" />
               ) : showChevron ? (
-                <span className="text-base" style={{ color: colors.textMuted }}>
-                  ›
-                </span>
+                <AppIcon icon={chevronForward} size={18} color={colors.textMuted} />
               ) : null}
             </span>
           </button>

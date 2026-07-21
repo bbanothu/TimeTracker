@@ -1,5 +1,8 @@
 import type { ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+import { closeOutline } from 'ionicons/icons';
 
+import { AppIcon } from '@/components/ui/AppIcon';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAppColors } from '@/contexts/ThemeContext';
 
@@ -53,7 +56,7 @@ export function BottomSheetModal({
 
   if (!visible) return null;
 
-  return (
+  return createPortal(
     <div
       className={`fixed inset-0 ${zIndexClass} flex flex-col justify-end sm:justify-center sm:p-4`}
     >
@@ -94,13 +97,14 @@ export function BottomSheetModal({
                 aria-label="Close"
                 className="rounded-full p-1"
               >
-                <span style={{ color: colors.textMuted }}>✕</span>
+                <AppIcon icon={closeOutline} size={22} color={colors.textMuted} />
               </button>
             </div>
           </div>
         </div>
         <div className="px-4">{children}</div>
       </ThemedSurface>
-    </div>
+    </div>,
+    document.body,
   );
 }

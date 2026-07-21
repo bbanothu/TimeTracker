@@ -1,7 +1,11 @@
 import { addDays, endOfDay, format, startOfDay } from 'date-fns';
 
 import { getPeriodBounds, ROLLING_MONTH_DAYS, ROLLING_WEEK_DAYS } from '@/utils/periodBounds';
-import { analyticsIncludedTags, analyticsVisibleDurationMs } from '@/utils/tagAnalytics';
+import {
+  analyticsIncludedTags,
+  analyticsVisibleDurationMs,
+  isAnalyticsVisibleItem,
+} from '@/utils/tagAnalytics';
 import type {
   Geofence,
   PeriodType,
@@ -55,7 +59,10 @@ function aggregateByGeofence(
 
   for (const entry of entries) {
     if (!entry.geofenceId || entry.endedAt == null) continue;
-    const duration = clipDuration(entry.startedAt, entry.endedAt, rangeStart, rangeEnd);
+    const duration = analyticsVisibleDurationMs(
+      clipDuration(entry.startedAt, entry.endedAt, rangeStart, rangeEnd),
+      entry.tags,
+    );
     if (duration <= 0) continue;
 
     const existing = totals.get(entry.geofenceId);
@@ -141,7 +148,11 @@ export function getStatsSummary(
   const rangeStart = start.getTime();
   const rangeEnd = end.getTime();
   const filtered = entries.filter(
-    (entry) => entry.endedAt != null && entry.endedAt > rangeStart && entry.startedAt < rangeEnd,
+    (entry) =>
+      entry.endedAt != null &&
+      entry.endedAt > rangeStart &&
+      entry.startedAt < rangeEnd &&
+      isAnalyticsVisibleItem(entry),
   );
   const byTag = aggregateByTag(filtered, rangeStart, rangeEnd);
   const byGeofence = aggregateByGeofence(filtered, geofences, rangeStart, rangeEnd);

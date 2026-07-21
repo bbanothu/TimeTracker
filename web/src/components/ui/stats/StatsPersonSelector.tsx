@@ -1,3 +1,6 @@
+import { chevronDown } from 'ionicons/icons';
+
+import { AppIcon } from '@/components/ui/AppIcon';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { friendLabel } from '@/services/friendsService';
 import type { FriendshipOtherUser } from '@/types';
@@ -32,26 +35,31 @@ export function StatsPersonSelector({
       <label className="mb-2 block text-sm font-medium" style={{ color: colors.textMuted }}>
         Viewing stats for
       </label>
-      <select
-        value={value}
-        onChange={(e) => {
-          const next = e.target.value;
-          onChange(next === selfUserId ? null : next);
-        }}
-        className="w-full rounded-xl border px-4 py-3 text-sm font-medium"
-        style={{
-          backgroundColor: colors.inputBg,
-          borderColor: colors.inputBorder,
-          color: colors.text,
-        }}
-      >
-        <option value={selfUserId}>Me</option>
-        {friends.map((friend) => (
-          <option key={friend.userId} value={friend.userId}>
-            {friendLabel(friend)}
-          </option>
-        ))}
-      </select>
+      <div className="relative">
+        <select
+          value={value}
+          onChange={(e) => {
+            const next = e.target.value;
+            onChange(next === selfUserId ? null : next);
+          }}
+          className="w-full appearance-none rounded-xl border py-1.5 pl-4 pr-10 text-left text-sm font-medium"
+          style={{
+            backgroundColor: colors.inputBg,
+            borderColor: colors.inputBorder,
+            color: colors.text,
+          }}
+        >
+          <option value={selfUserId}>Me</option>
+          {friends.map((friend) => (
+            <option key={friend.userId} value={friend.userId}>
+              {friendLabel(friend)}
+            </option>
+          ))}
+        </select>
+        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+          <AppIcon icon={chevronDown} size={18} color={colors.textMuted} />
+        </span>
+      </div>
       {viewingFriend ? (
         <p className="mt-2 text-sm" style={{ color: colors.textMuted }}>
           Viewing {friendLabel(viewingFriend)}&apos;s stats (read-only)

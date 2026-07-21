@@ -4,10 +4,21 @@ import { AppBackground } from '@/components/layout/AppBackground';
 import { AppBootSplash } from '@/components/layout/AppBootSplash';
 import { AppShell } from '@/components/layout/AppShell';
 import { DesktopSidebar } from '@/components/layout/DesktopSidebar';
-import { DesktopTopBar, DESKTOP_TOP_BAR_PADDING_CLASS } from '@/components/layout/DesktopTopBar';
 import { TabNav } from '@/components/layout/TabNav';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppDataProviders } from '@/routes/AppDataProviders';
+
+function AppChrome({ children, hideTabNav }: { children: React.ReactNode; hideTabNav?: boolean }) {
+  return (
+    <div className="flex h-full w-full">
+      <DesktopSidebar />
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <AppShell className={hideTabNav ? 'pb-10 lg:pb-8' : undefined}>{children}</AppShell>
+      </div>
+      {hideTabNav ? null : <TabNav />}
+    </div>
+  );
+}
 
 export function ProtectedLayout() {
   const { user, loading } = useAuth();
@@ -17,15 +28,9 @@ export function ProtectedLayout() {
   if (loading) {
     return (
       <AppBackground>
-        <div
-          className={`min-h-dvh w-full lg:h-dvh lg:overflow-hidden lg:pl-60 ${DESKTOP_TOP_BAR_PADDING_CLASS}`}
-        >
-          <DesktopTopBar />
-          <DesktopSidebar />
-          <AppShell>
-            <AppBootSplash />
-          </AppShell>
-        </div>
+        <AppChrome>
+          <AppBootSplash />
+        </AppChrome>
       </AppBackground>
     );
   }
@@ -35,16 +40,9 @@ export function ProtectedLayout() {
   return (
     <AppDataProviders>
       <AppBackground>
-        <div
-          className={`min-h-dvh w-full lg:h-dvh lg:overflow-hidden lg:pl-60 ${DESKTOP_TOP_BAR_PADDING_CLASS}`}
-        >
-          <DesktopTopBar />
-          <DesktopSidebar />
-          <AppShell className={hideTabNav ? 'pb-10 lg:pb-8' : undefined}>
-            <Outlet />
-          </AppShell>
-        </div>
-        {hideTabNav ? null : <TabNav />}
+        <AppChrome hideTabNav={hideTabNav}>
+          <Outlet />
+        </AppChrome>
       </AppBackground>
     </AppDataProviders>
   );

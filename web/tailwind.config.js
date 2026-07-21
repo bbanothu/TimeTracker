@@ -9,23 +9,23 @@ export default {
       fontSize,
       colors: {
         primary: {
-          DEFAULT: '#047857',
-          bright: '#10B981',
+          DEFAULT: '#FF9F0A',
+          bright: '#FFB340',
         },
         ember: {
-          DEFAULT: '#FB923C',
-          bright: '#FDBA74',
+          DEFAULT: '#FF9F0A',
+          bright: '#FFB340',
         },
         surface: {
-          light: 'rgba(255, 252, 245, 0.88)',
-          dark: 'rgba(28, 25, 23, 0.78)',
+          light: 'rgba(255, 255, 255, 0.18)',
+          dark: 'rgba(255, 255, 255, 0.08)',
         },
       },
       fontFamily: {
         mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       boxShadow: {
-        glass: '0 8px 32px rgba(0, 0, 0, 0.12)',
+        glass: '0 8px 32px rgba(0, 0, 0, 0.18)',
       },
     },
   },

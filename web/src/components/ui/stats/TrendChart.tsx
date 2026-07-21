@@ -11,10 +11,13 @@ interface TrendChartProps {
   minHeight?: number;
 }
 
+const MIN_POINT_GAP = 56;
+
 export function TrendChart({ buckets, className = '', minHeight = 220 }: TrendChartProps) {
   const colors = useAppColors();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState({ width: 0, height: minHeight });
+  const [containerWidth, setContainerWidth] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(minHeight);
   const data = buckets.filter((bucket) => bucket.durationMs >= 0);
 
   useEffect(() => {
@@ -23,9 +26,8 @@ export function TrendChart({ buckets, className = '', minHeight = 220 }: TrendCh
 
     const updateSize = () => {
       const { width, height } = element.getBoundingClientRect();
-      if (width > 0 && height > 0) {
-        setSize({ width, height });
-      }
+      if (width > 0) setContainerWidth(width);
+      if (height > 0) setContainerHeight(height);
     };
 
     updateSize();
@@ -36,18 +38,21 @@ export function TrendChart({ buckets, className = '', minHeight = 220 }: TrendCh
 
   if (data.length === 0) return null;
 
-  const width = Math.max(size.width, 280);
-  const height = Math.max(size.height, minHeight);
   const bottomPad = 36;
   const topPad = 28;
   const leftPad = 56;
   const rightPad = 24;
+  const height = Math.max(containerHeight, minHeight);
   const chartHeight = height - topPad - bottomPad;
-  const plotWidth = width - leftPad - rightPad;
+  const neededPlotWidth = data.length <= 1 ? 120 : (data.length - 1) * MIN_POINT_GAP;
+  const availablePlotWidth = Math.max(containerWidth - leftPad - rightPad, 0);
+  const plotWidth = Math.max(neededPlotWidth, availablePlotWidth);
+  const width = leftPad + plotWidth + rightPad;
   const maxMs = Math.max(...data.map((bucket) => bucket.durationMs), 1);
   const yTicks = chartYAxisTicks(maxMs, 4);
   const pointRadius = width > 700 ? 5 : 4;
   const strokeWidth = width > 700 ? 3.5 : 3;
+  const scrollable = width > containerWidth + 1;
 
   const points = data.map((bucket, index) => {
     const x =
@@ -65,13 +70,17 @@ export function TrendChart({ buckets, className = '', minHeight = 220 }: TrendCh
   const areaPath = `${linePath} L ${points[points.length - 1].x} ${baseline} L ${points[0].x} ${baseline} Z`;
 
   return (
-    <div ref={containerRef} className={`w-full ${className}`} style={{ minHeight }}>
-      {size.width > 0 ? (
+    <div
+      ref={containerRef}
+      className={`w-full ${scrollable ? 'overflow-x-auto' : ''} ${className}`}
+      style={{ minHeight }}
+    >
+      {containerWidth > 0 ? (
         <svg
-          width="100%"
-          height="100%"
+          width={width}
+          height={height}
           viewBox={`0 0 ${width} ${height}`}
-          className="block h-full w-full"
+          className="block"
           role="img"
           aria-label="Tracked time trend"
         >

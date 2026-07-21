@@ -1,5 +1,7 @@
 import { Fragment, useMemo, useState } from 'react';
+import { createOutline, gitMergeOutline, trashOutline } from 'ionicons/icons';
 
+import { AppIcon } from '@/components/ui/AppIcon';
 import { ExpandableDetails, ExpandChevron } from '@/components/ui/ExpandableDetails';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAppColors } from '@/contexts/ThemeContext';
@@ -39,46 +41,6 @@ function formatTimeRange(startedAt: number, endedAt: number, showDate: boolean):
 
   const endDate = end.toLocaleDateString([], dateOptions);
   return `${startDate} ${startTime} – ${endDate} ${endTime}`;
-}
-
-function EditIcon({ color }: { color: string }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function DeleteIcon({ color }: { color: string }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M10 11v6M14 11v6" stroke={color} strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function MergeIcon({ color }: { color: string }) {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="6" cy="6" r="2.5" stroke={color} strokeWidth="1.75" />
-      <circle cx="6" cy="18" r="2.5" stroke={color} strokeWidth="1.75" />
-      <circle cx="18" cy="12" r="2.5" stroke={color} strokeWidth="1.75" />
-      <path d="M8 7.5v9M8 12h8" stroke={color} strokeWidth="1.75" strokeLinecap="round" />
-    </svg>
-  );
 }
 
 export function EntryList({
@@ -197,7 +159,7 @@ export function EntryList({
                     onClick={() => onEdit(entry)}
                     className="shrink-0 rounded p-1 transition hover:opacity-80"
                   >
-                    <EditIcon color={colors.textMuted} />
+                    <AppIcon icon={createOutline} size={18} color={colors.textMuted} />
                   </button>
                 ) : null}
                 {onDelete ? (
@@ -217,7 +179,7 @@ export function EntryList({
                     }}
                     className="shrink-0 rounded p-1 transition hover:opacity-80"
                   >
-                    <DeleteIcon color={colors.destructiveText} />
+                    <AppIcon icon={trashOutline} size={18} color={colors.destructiveText} />
                   </button>
                 ) : null}
               </div>
@@ -244,7 +206,7 @@ export function EntryList({
                   color: colors.primary,
                 }}
               >
-                <MergeIcon color={colors.primary} />
+                <AppIcon icon={gitMergeOutline} size={14} color={colors.primary} />
                 Merge
               </button>
             ) : null}

@@ -16,3 +16,19 @@ interface Window {
     platform: string;
   };
 }
+
+declare namespace React {
+  namespace JSX {
+    interface IntrinsicElements {
+      'ion-icon': React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement> & {
+          icon?: string;
+          name?: string;
+          src?: string;
+          lazy?: boolean | string;
+        },
+        HTMLElement
+      >;
+    }
+  }
+}

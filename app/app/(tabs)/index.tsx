@@ -25,6 +25,7 @@ import { notifyDataRefresh } from '@/lib/dataRefresh';
 import { timerService } from '@/services/timerService';
 import { isActiveUnknownSession, suppressUnknownAutoTracking } from '@/services/geofenceService';
 import { buildMergedFields } from '@/utils/entryMerge';
+import { clipDurationMs, getPeriodBounds } from '@/utils/periodBounds';
 import {
   analyticsVisibleDurationMs,
   filterAnalyticsVisibleItems,
@@ -70,14 +71,26 @@ export default function TrackScreen() {
 
   const heroElapsedMs = useMemo(() => {
     const now = Date.now();
+    const { start, end } = getPeriodBounds(new Date(), 'day');
+    const rangeStart = start.getTime();
+    const rangeEnd = end.getTime();
+
     const todayCompletedMs = todayEntries.reduce((sum, entry) => {
       if (entry.endedAt == null) return sum;
       return (
-        sum + analyticsVisibleDurationMs(Math.max(0, entry.endedAt - entry.startedAt), entry.tags)
+        sum +
+        analyticsVisibleDurationMs(
+          clipDurationMs(entry.startedAt, entry.endedAt, rangeStart, rangeEnd),
+          entry.tags,
+        )
       );
     }, 0);
+
     const activeVisibleMs = sessions.map((session) =>
-      analyticsVisibleDurationMs(Math.max(0, now - session.startedAt), session.tags),
+      analyticsVisibleDurationMs(
+        clipDurationMs(session.startedAt, now, rangeStart, rangeEnd),
+        session.tags,
+      ),
     );
     const activeMs = activeVisibleMs.length === 0 ? 0 : Math.max(...activeVisibleMs);
     return todayCompletedMs + activeMs;

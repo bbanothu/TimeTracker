@@ -288,133 +288,139 @@ export function ProfilePage() {
     : undefined;
 
   return (
-    <div>
-      <PageHeader title="Account" backLink={{ to: '/', label: '← Back' }} />
+    <div className="flex min-h-full flex-col">
+      <div className="flex-1">
+        <PageHeader
+          title="Account"
+          showMobileActions={false}
+          backLink={{ to: '/', label: '← Back', mobileOnly: true }}
+        />
 
-      <ProfileIdentityCard
-        email={user.email ?? ''}
-        memberSince={memberSince}
-        firstName={firstName}
-        lastName={lastName}
-        onFirstNameChange={setFirstName}
-        onLastNameChange={setLastName}
-        saving={profileSaving}
-        disabled={profileLoading}
-      />
+        <ProfileIdentityCard
+          email={user.email ?? ''}
+          memberSince={memberSince}
+          firstName={firstName}
+          lastName={lastName}
+          onFirstNameChange={setFirstName}
+          onLastNameChange={setLastName}
+          saving={profileSaving}
+          disabled={profileLoading}
+        />
 
-      {profileError ? <p className="mb-3 text-sm text-rose-500">{profileError}</p> : null}
-      {message ? <p className="mb-3 text-sm text-emerald-600">{message}</p> : null}
-      {error ? <p className="mb-3 text-sm text-rose-500">{error}</p> : null}
+        {profileError ? <p className="mb-3 text-sm text-rose-500">{profileError}</p> : null}
+        {message ? <p className="mb-3 text-sm text-emerald-600">{message}</p> : null}
+        {error ? <p className="mb-3 text-sm text-rose-500">{error}</p> : null}
 
-      <ProfileLinkRows
-        rows={[
-          {
-            id: 'friends',
-            label: 'Friends',
-            icon: 'friends',
-            badge: pendingFriendCount,
-            onClick: () => navigate('/profile/friends'),
-          },
-          {
-            id: 'history',
-            label: 'History',
-            icon: 'history',
-            onClick: () => navigate('/profile/history'),
-          },
-          {
-            id: 'password',
-            label: 'Password',
-            icon: 'password',
-            onClick: () => navigate('/profile/password'),
-          },
-        ]}
-      />
+        <ProfileLinkRows
+          rows={[
+            {
+              id: 'friends',
+              label: 'Friends',
+              icon: 'friends',
+              badge: pendingFriendCount,
+              onClick: () => navigate('/profile/friends'),
+            },
+            {
+              id: 'history',
+              label: 'History',
+              icon: 'history',
+              onClick: () => navigate('/profile/history'),
+            },
+            {
+              id: 'password',
+              label: 'Password',
+              icon: 'password',
+              onClick: () => navigate('/profile/password'),
+            },
+          ]}
+        />
 
-      <ProfileLinkRows
-        rows={[
-          {
-            id: 'calendar',
-            label: calendarConnected ? 'Sync to Calendar' : 'Connect Google Calendar',
-            icon: 'calendar',
-            subtitle: calendarSubtitle,
-            onClick: calendarConnected ? handleSyncCalendar : handleConnectCalendar,
-            loading: calendarConnecting || calendarSyncing,
-            disabled: calendarBusy || refreshing || exporting || clearing,
-            showChevron: false,
-          },
-          ...(calendarConnected
-            ? [
-                {
-                  id: 'calendar-reset',
-                  label: 'Reset & re-sync calendar',
-                  icon: 'calendar' as const,
-                  subtitle: 'Delete TimeTracker events and re-create with tag colors',
-                  onClick: handleResetCalendar,
-                  loading: calendarResetting,
-                  disabled: calendarBusy || refreshing || exporting || clearing,
-                  showChevron: false,
-                },
-                {
-                  id: 'calendar-disconnect',
-                  label: 'Disconnect Google Calendar',
-                  icon: 'calendar' as const,
-                  subtitle: 'Stop exporting sessions to Google',
-                  onClick: handleDisconnectCalendar,
-                  loading: calendarDisconnecting,
-                  disabled: calendarBusy || refreshing || exporting || clearing,
-                  showChevron: false,
-                },
-              ]
-            : []),
-        ]}
-      />
+        <ProfileLinkRows
+          rows={[
+            {
+              id: 'calendar',
+              label: calendarConnected ? 'Sync to Calendar' : 'Connect Google Calendar',
+              icon: 'calendar',
+              subtitle: calendarSubtitle,
+              onClick: calendarConnected ? handleSyncCalendar : handleConnectCalendar,
+              loading: calendarConnecting || calendarSyncing,
+              disabled: calendarBusy || refreshing || exporting || clearing,
+              showChevron: false,
+            },
+            ...(calendarConnected
+              ? [
+                  {
+                    id: 'calendar-reset',
+                    label: 'Reset & re-sync calendar',
+                    icon: 'calendar' as const,
+                    subtitle: 'Delete TimeTracker events and re-create with tag colors',
+                    onClick: handleResetCalendar,
+                    loading: calendarResetting,
+                    disabled: calendarBusy || refreshing || exporting || clearing,
+                    showChevron: false,
+                  },
+                  {
+                    id: 'calendar-disconnect',
+                    label: 'Disconnect Google Calendar',
+                    icon: 'calendar' as const,
+                    subtitle: 'Stop exporting sessions to Google',
+                    onClick: handleDisconnectCalendar,
+                    loading: calendarDisconnecting,
+                    disabled: calendarBusy || refreshing || exporting || clearing,
+                    showChevron: false,
+                  },
+                ]
+              : []),
+          ]}
+        />
 
-      <ProfileLinkRows
-        rows={[
-          {
-            id: 'refresh',
-            label: 'Refresh data',
-            icon: 'sync',
-            subtitle: lastRefreshedLabel,
-            onClick: handleRefresh,
-            loading: refreshing,
-            disabled: refreshing || exporting || clearing,
-            showChevron: false,
-          },
-          {
-            id: 'export',
-            label: 'Export CSV',
-            icon: 'export',
-            onClick: handleExport,
-            loading: exporting,
-            disabled: refreshing || exporting || clearing,
-            showChevron: false,
-          },
-          {
-            id: 'clear',
-            label: 'Clear all data',
-            icon: 'clear',
-            variant: 'destructive',
-            onClick: handleClear,
-            loading: clearing,
-            disabled: refreshing || exporting || clearing,
-            showChevron: false,
-          },
-        ]}
-      />
+        <ProfileLinkRows
+          rows={[
+            {
+              id: 'refresh',
+              label: 'Refresh data',
+              icon: 'sync',
+              subtitle: lastRefreshedLabel,
+              onClick: handleRefresh,
+              loading: refreshing,
+              disabled: refreshing || exporting || clearing,
+              showChevron: false,
+            },
+            {
+              id: 'export',
+              label: 'Export CSV',
+              icon: 'export',
+              onClick: handleExport,
+              loading: exporting,
+              disabled: refreshing || exporting || clearing,
+              showChevron: false,
+            },
+            {
+              id: 'clear',
+              label: 'Clear all data',
+              icon: 'clear',
+              variant: 'destructive',
+              onClick: handleClear,
+              loading: clearing,
+              disabled: refreshing || exporting || clearing,
+              showChevron: false,
+            },
+          ]}
+        />
 
-      <ProfileLinkRows
-        rows={[
-          {
-            id: 'signout',
-            label: 'Sign out',
-            icon: 'signout',
-            variant: 'destructive',
-            onClick: handleSignOut,
-            showChevron: false,
-          },
-        ]}
-      />
+        <ProfileLinkRows
+          rows={[
+            {
+              id: 'signout',
+              label: 'Sign out',
+              icon: 'signout',
+              variant: 'destructive',
+              onClick: handleSignOut,
+              showChevron: false,
+            },
+          ]}
+        />
+      </div>
 
       <ProfileFooter />
     </div>

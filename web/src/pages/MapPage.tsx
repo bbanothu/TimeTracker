@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { addCircleOutline } from 'ionicons/icons';
 
 import { PageHeader } from '@/components/layout/PageHeader';
-import { LoadingIndicator } from '@/components/ui/LoadingIndicator';
 import { PageLoading } from '@/components/ui/PageLoading';
 import { ActionButton } from '@/components/ui/ActionButton';
 import { AddressSearchModal } from '@/components/ui/AddressSearchModal';
+import { AppIcon } from '@/components/ui/AppIcon';
 import { EditGeofenceModal } from '@/components/ui/EditGeofenceModal';
 import { GeofenceMap, DEFAULT_CENTER } from '@/components/ui/GeofenceMap';
 import { GeofencesList } from '@/components/ui/GeofencesList';
@@ -16,18 +17,12 @@ import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { useTags } from '@/contexts/TagsContext';
+import { useTrackingData } from '@/contexts/TrackingDataContext';
 import { useSelectedTag } from '@/hooks/useSelectedTag';
-import { notifyDataRefresh, subscribeDataRefresh } from '@/lib/dataRefresh';
-import {
-  createGeofence,
-  deleteGeofence,
-  ensureDefaultUnknownPlace,
-  fetchAllEntries,
-  fetchGeofences,
-  updateGeofence,
-} from '@/services/data';
+import { notifyDataRefresh } from '@/lib/dataRefresh';
+import { createGeofence, deleteGeofence, updateGeofence } from '@/services/data';
 import { filterDisplayGeofences } from '@/constants/defaultPlace';
-import type { Geofence, PeriodType, TimeEntry } from '@/types';
+import type { Geofence, PeriodType } from '@/types';
 import { formatDurationLong } from '@/utils/formatDuration';
 import { buildHeatmapSummary } from '@/utils/heatmapPoints';
 
@@ -65,15 +60,7 @@ function DropPinHeader({
         aria-label="Find address"
         className="rounded-full p-1 transition hover:opacity-70"
       >
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="12" cy="12" r="9" stroke={colors.primary} strokeWidth="1.5" />
-          <path
-            d="M12 8v8M8 12h8"
-            stroke={colors.primary}
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
+        <AppIcon icon={addCircleOutline} size={26} color={colors.primary} />
       </button>
     </div>
   );
@@ -83,12 +70,9 @@ export function MapPage() {
   const colors = useAppColors();
   const { user } = useAuth();
   const { tags } = useTags();
+  const { entries, geofences, ready, patchGeofence, removeGeofence } = useTrackingData();
   const { selectedTagId, setSelectedTagId } = useSelectedTag(tags);
   const [viewMode, setViewMode] = useState<MapViewMode>('places');
-  const [geofences, setGeofences] = useState<Geofence[]>([]);
-  const [entries, setEntries] = useState<TimeEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [entriesLoading, setEntriesLoading] = useState(false);
   const [draftLat, setDraftLat] = useState<number | null>(null);
   const [draftLng, setDraftLng] = useState<number | null>(null);
   const [name, setName] = useState('');
@@ -105,43 +89,7 @@ export function MapPage() {
   const hasPin = draftLat != null && draftLng != null;
   const canSave = hasPin && !!selectedTagId && name.trim().length > 0 && !saving;
 
-  const loadGeofences = useCallback(async () => {
-    if (!user) return;
-    await ensureDefaultUnknownPlace(user.id);
-    setGeofences(await fetchGeofences(user.id));
-    setLoading(false);
-  }, [user]);
-
   const displayGeofences = useMemo(() => filterDisplayGeofences(geofences), [geofences]);
-
-  const loadEntries = useCallback(async () => {
-    if (!user) return;
-    setEntriesLoading(true);
-    try {
-      setEntries(await fetchAllEntries(user.id));
-    } finally {
-      setEntriesLoading(false);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    loadGeofences().catch(console.error);
-  }, [loadGeofences]);
-
-  useEffect(() => {
-    if (viewMode !== 'heatmap') return;
-    loadEntries().catch(console.error);
-  }, [viewMode, loadEntries]);
-
-  useEffect(() => {
-    if (!user) return;
-    return subscribeDataRefresh(() => {
-      loadGeofences().catch(console.error);
-      if (viewMode === 'heatmap') {
-        loadEntries().catch(console.error);
-      }
-    });
-  }, [user, viewMode, loadGeofences, loadEntries]);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -195,7 +143,6 @@ export function MapPage() {
       setDraftLat(null);
       setDraftLng(null);
       setSaveMessage('Place saved. Use the mobile app for arrival alerts and automatic tracking.');
-      await loadGeofences();
       notifyDataRefresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save place');
@@ -216,11 +163,10 @@ export function MapPage() {
   ) => {
     if (!user) return;
     await updateGeofence(user.id, geofenceId, input);
-    await loadGeofences();
     notifyDataRefresh();
   };
 
-  if (loading) {
+  if (!ready) {
     return <PageLoading />;
   }
 
@@ -332,18 +278,18 @@ export function MapPage() {
                 <GeofencesList
                   geofences={displayGeofences}
                   onEdit={setEditingGeofence}
-                  onToggle={(geofence, enabled) =>
-                    updateGeofence(user!.id, geofence.id, { enabled }).then(() => {
-                      loadGeofences();
-                      notifyDataRefresh();
-                    })
-                  }
-                  onDelete={(geofence) =>
-                    deleteGeofence(user!.id, geofence.id).then(() => {
-                      loadGeofences();
-                      notifyDataRefresh();
-                    })
-                  }
+                  onToggle={(geofence, enabled) => {
+                    patchGeofence(geofence.id, { enabled });
+                    updateGeofence(user!.id, geofence.id, { enabled })
+                      .then(() => notifyDataRefresh())
+                      .catch(() => notifyDataRefresh());
+                  }}
+                  onDelete={(geofence) => {
+                    removeGeofence(geofence.id);
+                    deleteGeofence(user!.id, geofence.id)
+                      .then(() => notifyDataRefresh())
+                      .catch(() => notifyDataRefresh());
+                  }}
                 />
               </div>
             </div>
@@ -386,14 +332,7 @@ export function MapPage() {
             onAnchorDateChange={setHeatmapAnchorDate}
           />
 
-          {entriesLoading ? (
-            <div className="mb-3 flex items-center gap-2">
-              <LoadingIndicator size="small" />
-              <p className="text-sm" style={{ color: colors.textMuted }}>
-                Loading sessions…
-              </p>
-            </div>
-          ) : heatmapSummary.sessionCount > 0 ? (
+          {heatmapSummary.sessionCount > 0 ? (
             <p className="mb-3 text-sm font-medium" style={{ color: colors.textMuted }}>
               {heatmapSummary.sessionCount} session{heatmapSummary.sessionCount === 1 ? '' : 's'} ·{' '}
               {formatDurationLong(heatmapSummary.totalDurationMs)} tracked in this period

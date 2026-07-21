@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { chevronDown } from 'ionicons/icons';
 
+import { AppIcon } from '@/components/ui/AppIcon';
 import { BottomSheetModal, BottomSheetScroll } from '@/components/ui/BottomSheetModal';
 import { filterDisplayTags } from '@/constants/defaultPlace';
 import { useAppColors } from '@/contexts/ThemeContext';
@@ -7,6 +9,7 @@ import { useFlatTagsByUsage } from '@/hooks/useFlatTagsByUsage';
 import type { Tag } from '@/types';
 import { getTagPath } from '@/utils/tagTree';
 import { formatTagName } from '@/utils/formatDuration';
+import { analyticsIncludedTags } from '@/utils/tagAnalytics';
 
 interface TagDropdownProps {
   tags: Tag[];
@@ -18,19 +21,25 @@ export function TagDropdown({ tags, selectedId, onSelect }: TagDropdownProps) {
   const colors = useAppColors();
   const [open, setOpen] = useState(false);
   const displayTags = filterDisplayTags(tags);
-  const flatTags = useFlatTagsByUsage(displayTags);
-  const selectedTag = displayTags.find((tag) => tag.id === selectedId) ?? null;
-  const selectedLabel = selectedTag ? getTagPath(selectedTag.id, displayTags) : null;
+  const selectableTags = (() => {
+    const included = analyticsIncludedTags(displayTags);
+    if (!selectedId || included.some((tag) => tag.id === selectedId)) return included;
+    const selected = displayTags.find((tag) => tag.id === selectedId);
+    return selected ? [...included, selected] : included;
+  })();
+  const flatTags = useFlatTagsByUsage(selectableTags);
+  const selectedTag = selectableTags.find((tag) => tag.id === selectedId) ?? null;
+  const selectedLabel = selectedTag ? getTagPath(selectedTag.id, tags) : null;
 
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        disabled={displayTags.length === 0}
-        className="flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left disabled:opacity-100"
+        disabled={selectableTags.length === 0}
+        className="flex w-full items-center justify-between rounded-xl border px-4 py-1.5 text-left disabled:opacity-100"
         style={{
-          backgroundColor: colors.inputBgSolid,
+          backgroundColor: colors.inputBg,
           borderColor: colors.inputBorder,
           color: colors.text,
         }}
@@ -45,12 +54,10 @@ export function TagDropdown({ tags, selectedId, onSelect }: TagDropdownProps) {
               <span className="truncate">{formatTagName(selectedLabel ?? '')}</span>
             </>
           ) : (
-            <span>{displayTags.length === 0 ? 'Add tags first' : 'Select activity'}</span>
+            <span>{selectableTags.length === 0 ? 'Add tags first' : 'Select activity'}</span>
           )}
         </span>
-        <span className="shrink-0" style={{ color: colors.textMuted }}>
-          ▾
-        </span>
+        <AppIcon icon={chevronDown} size={18} color={colors.textMuted} />
       </button>
 
       <BottomSheetModal

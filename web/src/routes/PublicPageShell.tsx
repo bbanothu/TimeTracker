@@ -7,7 +7,7 @@ import { AppShell } from '@/components/layout/AppShell';
 export function PublicPageShell({ children }: { children: ReactNode }) {
   return (
     <AppBackground>
-      <div className="min-h-dvh w-full">
+      <div className="flex h-full w-full flex-col">
         <AppShell className="pb-10">{children}</AppShell>
       </div>
     </AppBackground>

@@ -1,4 +1,7 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { chevronDown } from 'ionicons/icons';
+
+import { AppIcon } from '@/components/ui/AppIcon';
 
 interface ExpandableDetailsProps {
   expanded: boolean;
@@ -36,22 +39,12 @@ export function ExpandableDetails({ expanded, children, className = '' }: Expand
 
 export function ExpandChevron({ expanded, color }: { expanded: boolean; color: string }) {
   return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
+    <AppIcon
+      icon={chevronDown}
+      size={16}
+      color={color}
       className="shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
       style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
-    >
-      <path
-        d="M6 9l6 6 6-6"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    />
   );
 }

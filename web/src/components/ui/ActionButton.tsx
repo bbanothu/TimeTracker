@@ -36,8 +36,11 @@ export function ActionButton({
     <button
       {...props}
       disabled={disabled || loading}
-      className={`rounded-2xl px-4 py-3 text-sm font-semibold transition hover:opacity-90 disabled:opacity-50 ${className}`}
-      style={styles[variant]}
+      className={`rounded-full px-5 py-3 text-sm font-semibold transition hover:opacity-90 disabled:opacity-50 ${className}`}
+      style={{
+        ...styles[variant],
+        ...(disabled ? { backgroundColor: colors.disabled } : null),
+      }}
     >
       {loading ? (
         <span className="inline-flex items-center justify-center">

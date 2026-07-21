@@ -1,13 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { addCircle } from 'ionicons/icons';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageLoading } from '@/components/ui/PageLoading';
 import { AddManualSessionModal } from '@/components/ui/AddManualSessionModal';
 import { ActiveSessionsList } from '@/components/ui/ActiveSessionsList';
+import { AppIcon } from '@/components/ui/AppIcon';
 import { EntryList } from '@/components/ui/EntryList';
 import { StartSessionButton } from '@/components/ui/SessionControlButtons';
 import { TagDropdown } from '@/components/ui/TagDropdown';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
+import { TimerDisplay } from '@/components/ui/TimerDisplay';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTimer } from '@/contexts/TimerContext';
 import { useAppColors } from '@/contexts/ThemeContext';
@@ -16,7 +19,13 @@ import { useSelectedTag } from '@/hooks/useSelectedTag';
 import { StopSessionDetailsModal } from '@/components/ui/StopSessionDetailsModal';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
 import { buildMergedFields } from '@/utils/entryMerge';
+import { clipDurationMs, getPeriodBounds } from '@/utils/periodBounds';
 import { fetchGeofences, mergeTimeEntries, updateTimeEntryStopDetails } from '@/services/data';
+import {
+  analyticsVisibleDurationMs,
+  filterAnalyticsVisibleItems,
+  isAnalyticsVisibleItem,
+} from '@/utils/tagAnalytics';
 
 export function TrackPage() {
   const colors = useAppColors();
@@ -31,7 +40,46 @@ export function TrackPage() {
   const [error, setError] = useState<string | null>(null);
   const [geofenceNames, setGeofenceNames] = useState<Map<string, string>>(new Map());
 
-  void tick;
+  const visibleTodayEntries = useMemo(
+    () => filterAnalyticsVisibleItems(todayEntries),
+    [todayEntries],
+  );
+
+  const heroElapsedMs = useMemo(() => {
+    const now = Date.now();
+    const { start, end } = getPeriodBounds(new Date(), 'day');
+    const rangeStart = start.getTime();
+    const rangeEnd = end.getTime();
+
+    const todayCompletedMs = todayEntries.reduce((sum, entry) => {
+      if (entry.endedAt == null) return sum;
+      return (
+        sum +
+        analyticsVisibleDurationMs(
+          clipDurationMs(entry.startedAt, entry.endedAt, rangeStart, rangeEnd),
+          entry.tags,
+        )
+      );
+    }, 0);
+    const activeVisibleMs = sessions.map((session) => {
+      const sessionTags = tags.filter((tag) => session.tagIds.includes(tag.id));
+      return analyticsVisibleDurationMs(
+        clipDurationMs(session.startedAt, now, rangeStart, rangeEnd),
+        sessionTags,
+      );
+    });
+    const activeMs = activeVisibleMs.length === 0 ? 0 : Math.max(...activeVisibleMs);
+    return todayCompletedMs + activeMs;
+  }, [todayEntries, sessions, tags, tick]);
+
+  const isHeroRunning = useMemo(
+    () =>
+      sessions.some((session) => {
+        const sessionTags = tags.filter((tag) => session.tagIds.includes(tag.id));
+        return isAnalyticsVisibleItem({ tags: sessionTags });
+      }),
+    [sessions, tags],
+  );
 
   useEffect(() => {
     if (!user) return;
@@ -40,7 +88,7 @@ export function TrackPage() {
     for (const session of sessions) {
       if (session.geofenceId) ids.add(session.geofenceId);
     }
-    for (const entry of todayEntries) {
+    for (const entry of visibleTodayEntries) {
       if (entry.geofenceId) ids.add(entry.geofenceId);
     }
 
@@ -58,7 +106,7 @@ export function TrackPage() {
         setGeofenceNames(map);
       })
       .catch(console.error);
-  }, [user, sessions, todayEntries]);
+  }, [user, sessions, visibleTodayEntries]);
 
   if (!ready) {
     return <PageLoading />;
@@ -106,8 +154,8 @@ export function TrackPage() {
   const handleMerge = async (keepEntryId: string, deleteEntryId: string) => {
     if (!user) return;
 
-    const older = todayEntries.find((entry) => entry.id === keepEntryId);
-    const newer = todayEntries.find((entry) => entry.id === deleteEntryId);
+    const older = visibleTodayEntries.find((entry) => entry.id === keepEntryId);
+    const newer = visibleTodayEntries.find((entry) => entry.id === deleteEntryId);
     if (!older || !newer) return;
 
     try {
@@ -131,31 +179,30 @@ export function TrackPage() {
     <div>
       <PageHeader title="Track" />
 
+      <div className="mb-2 flex justify-center pt-1">
+        <TimerDisplay elapsedMs={heroElapsedMs} isRunning={isHeroRunning} />
+      </div>
+
       <div className="lg:grid lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)] lg:items-start lg:gap-6">
         <div>
           <ThemedSurface className="mb-6 p-4 lg:mb-4">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-2xl font-medium" style={{ color: colors.textMuted }}>
-                Start new session
+            <div className="mb-2 flex items-center justify-between">
+              <p
+                className="text-[13px] font-semibold uppercase tracking-wide"
+                style={{ color: colors.textMuted }}
+              >
+                Start session
               </p>
               <button
                 type="button"
                 onClick={() => setManualModalOpen(true)}
                 aria-label="Add past session"
-                className="rounded-full p-1 transition hover:opacity-70"
+                className="inline-flex shrink-0 items-center justify-center rounded-full transition hover:opacity-80"
               >
-                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <circle cx="12" cy="12" r="9" stroke={colors.primary} strokeWidth="1.5" />
-                  <path
-                    d="M12 8v8M8 12h8"
-                    stroke={colors.primary}
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
+                <AppIcon icon={addCircle} size={20} color={colors.primary} />
               </button>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <div className="min-w-0 flex-1">
                 <TagDropdown tags={tags} selectedId={selectedTagId} onSelect={setSelectedTagId} />
               </div>
@@ -164,11 +211,14 @@ export function TrackPage() {
             {error ? <p className="mt-3 text-sm text-rose-500">{error}</p> : null}
           </ThemedSurface>
 
+          <p
+            className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide"
+            style={{ color: colors.textMuted }}
+          >
+            Active ({sessions.length})
+          </p>
           {sessions.length > 0 ? (
             <section className="mb-4">
-              <p className="mb-2 text-sm font-medium" style={{ color: colors.textMuted }}>
-                Active ({sessions.length})
-              </p>
               <ActiveSessionsList
                 sessions={sessions}
                 tags={tags}
@@ -177,18 +227,23 @@ export function TrackPage() {
               />
             </section>
           ) : (
-            <p className="mb-4 text-center text-sm lg:mb-0" style={{ color: colors.textMuted }}>
-              No active sessions yet.
-            </p>
+            <ThemedSurface className="mb-4 px-4 py-5">
+              <p className="text-center text-[15px]" style={{ color: colors.textMuted }}>
+                No active sessions
+              </p>
+            </ThemedSurface>
           )}
         </div>
 
         <section className="lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto">
-          <p className="mb-2 text-sm font-medium lg:text-base" style={{ color: colors.textMuted }}>
-            Today ({todayEntries.length})
+          <p
+            className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide"
+            style={{ color: colors.textMuted }}
+          >
+            Today ({visibleTodayEntries.length})
           </p>
           <EntryList
-            entries={todayEntries}
+            entries={visibleTodayEntries}
             emptyMessage="No tracked time yet today."
             geofenceNames={geofenceNames}
             onMerge={handleMerge}

@@ -1,3 +1,6 @@
+import { createOutline, trashOutline } from 'ionicons/icons';
+
+import { AppIcon } from '@/components/ui/AppIcon';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { confirmDelete } from '@/lib/confirm';
@@ -11,42 +14,6 @@ interface TagsListProps {
   onEdit: (tag: Tag) => void;
   onDelete: (tag: Tag) => void;
   onToggleAnalytics: (tag: Tag, includeInAnalytics: boolean) => void;
-}
-
-function EditIcon({ color }: { color: string }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function DeleteIcon({ color }: { color: string }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M10 11v6M14 11v6" stroke={color} strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
 }
 
 export function TagsList({
@@ -102,15 +69,15 @@ export function TagsList({
               aria-label="Include in analytics"
               title={included ? 'Shown in analytics' : 'Hidden from analytics'}
               onClick={() => onToggleAnalytics(item.tag, !included)}
-              className="relative h-6 w-11 shrink-0 rounded-full border transition"
+              className="relative h-6 w-11 shrink-0 overflow-hidden rounded-full border transition"
               style={{
                 backgroundColor: included ? colors.primary : colors.secondaryBg,
                 borderColor: included ? colors.primary : colors.surfaceBorder,
               }}
             >
               <span
-                className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all"
-                style={{ left: included ? '26px' : '2px' }}
+                className="absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-white transition-all"
+                style={{ left: included ? 'calc(100% - 1rem - 2px)' : '2px' }}
               />
             </button>
             <button
@@ -120,7 +87,7 @@ export function TagsList({
               onClick={() => onEdit(item.tag)}
               className="shrink-0 rounded p-1.5 transition hover:opacity-80"
             >
-              <EditIcon color={colors.textMuted} />
+              <AppIcon icon={createOutline} size={20} color={colors.textMuted} />
             </button>
             <button
               type="button"
@@ -132,7 +99,7 @@ export function TagsList({
               }}
               className="shrink-0 rounded p-1.5 transition hover:opacity-80"
             >
-              <DeleteIcon color={colors.destructiveText} />
+              <AppIcon icon={trashOutline} size={20} color={colors.destructiveText} />
             </button>
           </div>
         );

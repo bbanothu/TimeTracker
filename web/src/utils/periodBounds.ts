@@ -28,6 +28,18 @@ export function getPeriodBounds(date: Date, period: PeriodType): { start: Date; 
   }
 }
 
+/** Overlap of [startMs, endMs] with [rangeStart, rangeEnd], in milliseconds. */
+export function clipDurationMs(
+  startMs: number,
+  endMs: number,
+  rangeStart: number,
+  rangeEnd: number,
+): number {
+  const clippedStart = Math.max(startMs, rangeStart);
+  const clippedEnd = Math.min(endMs, rangeEnd);
+  return Math.max(0, clippedEnd - clippedStart);
+}
+
 export function shiftPeriod(date: Date, period: PeriodType, delta: number): Date {
   switch (period) {
     case 'day':

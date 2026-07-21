@@ -14,39 +14,39 @@ Open `http://localhost:5173` (or the URL Vite prints). Run Supabase migrations f
 
 ## Environment
 
-| Variable | Description |
-|----------|-------------|
-| `VITE_SUPABASE_URL` | Supabase project URL |
+| Variable                 | Description                |
+| ------------------------ | -------------------------- |
+| `VITE_SUPABASE_URL`      | Supabase project URL       |
 | `VITE_SUPABASE_ANON_KEY` | Supabase anon (public) key |
 
 Use the same Supabase project as the mobile app so accounts and data stay in sync.
 
 ## Scripts
 
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Vite dev server with HMR |
-| `npm run build` | Typecheck + production build to `dist/` |
-| `npm run preview` | Serve `dist/` locally |
-| `npm run format` | Prettier |
-| `npm run docker` | Build app, build Docker image, push to registry |
-| `npm run build:docker` | Same as `docker` (alias) |
+| Script                 | Description                                     |
+| ---------------------- | ----------------------------------------------- |
+| `npm run dev`          | Vite dev server with HMR                        |
+| `npm run build`        | Typecheck + production build to `dist/`         |
+| `npm run preview`      | Serve `dist/` locally                           |
+| `npm run format`       | Prettier                                        |
+| `npm run docker`       | Build app, build Docker image, push to registry |
+| `npm run build:docker` | Same as `docker` (alias)                        |
 
 ## Routes
 
-| Path | Page |
-|------|------|
-| `/` | Track — timers, active sessions, today's entries |
-| `/tags` | Tag management |
-| `/map` | Saved places + **heatmap** (Places \| Heatmap toggle) |
-| `/stats` | Period stats and charts |
-| `/stats/progress` | Goal progress history |
-| `/goals` | Daily targets |
-| `/profile` | Account, theme, export, refresh |
-| `/profile/history` | Entry history with filters |
-| `/friends` | Friend requests |
-| `/login`, `/register` | Auth |
-| `/change-password`, `/privacy`, `/terms`, `/about`, `/contact` | Account and legal |
+| Path                                                           | Page                                                  |
+| -------------------------------------------------------------- | ----------------------------------------------------- |
+| `/`                                                            | Track — timers, active sessions, today's entries      |
+| `/tags`                                                        | Tag management                                        |
+| `/map`                                                         | Saved places + **heatmap** (Places \| Heatmap toggle) |
+| `/stats`                                                       | Period stats and charts                               |
+| `/stats/progress`                                              | Goal progress history                                 |
+| `/goals`                                                       | Daily targets                                         |
+| `/profile`                                                     | Account, theme, export, refresh                       |
+| `/profile/history`                                             | Entry history with filters                            |
+| `/friends`                                                     | Friend requests                                       |
+| `/login`, `/register`                                          | Auth                                                  |
+| `/change-password`, `/privacy`, `/terms`, `/about`, `/contact` | Account and legal                                     |
 
 Static HTML (no JS required) for store review:
 

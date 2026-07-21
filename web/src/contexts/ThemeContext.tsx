@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 
-import { darkColors, lightColors, type AppColors } from '@/theme/colors';
+import { darkColors, type AppColors } from '@/theme/colors';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -23,26 +23,23 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 const STORAGE_KEY = 'timetracker-theme';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [mode, setMode] = useState<ThemeMode>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === 'light' || stored === 'dark') return stored;
-    return 'dark';
-  });
+  // Light/dark toggle is temporarily disabled — always dark.
+  const [mode] = useState<ThemeMode>('dark');
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', mode === 'dark');
-    localStorage.setItem(STORAGE_KEY, mode);
-  }, [mode]);
+    document.documentElement.classList.add('dark');
+    localStorage.setItem(STORAGE_KEY, 'dark');
+  }, []);
 
   const toggle = useCallback(() => {
-    setMode((current) => (current === 'dark' ? 'light' : 'dark'));
+    // no-op while theme toggle is disabled
   }, []);
 
   const value = useMemo(
     () => ({
       mode,
-      isDark: mode === 'dark',
-      colors: mode === 'dark' ? darkColors : lightColors,
+      isDark: true,
+      colors: darkColors,
       toggle,
     }),
     [mode, toggle],

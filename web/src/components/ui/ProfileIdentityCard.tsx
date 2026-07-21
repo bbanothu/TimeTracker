@@ -1,6 +1,6 @@
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
-import { DarkModeToggle } from '@/components/ui/DarkModeToggle';
+// import { DarkModeToggle } from '@/components/ui/DarkModeToggle';
 import { useAppColors } from '@/contexts/ThemeContext';
 
 interface ProfileIdentityCardProps {
@@ -40,6 +40,7 @@ export function ProfileIdentityCard({
   disabled = false,
 }: ProfileIdentityCardProps) {
   const colors = useAppColors();
+  void showThemeToggle;
   const name = displayName(firstName, lastName);
 
   const inputStyle = {
@@ -67,7 +68,6 @@ export function ProfileIdentityCard({
             </p>
           ) : null}
         </div>
-        {showThemeToggle ? <DarkModeToggle /> : null}
       </div>
 
       <div className="grid grid-cols-2 gap-3">

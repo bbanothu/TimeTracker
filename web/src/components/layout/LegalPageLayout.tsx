@@ -21,11 +21,7 @@ export function LegalPageLayout({
 
   return (
     <div>
-      <PageHeader
-        title={title}
-        backLink={backLink ?? undefined}
-        showMobileActions={false}
-      />
+      <PageHeader title={title} backLink={backLink ?? undefined} showMobileActions={false} />
       <ThemedSurface className="p-5 lg:p-6">
         {updated ? (
           <p className="mb-5 text-sm" style={{ color: colors.textMuted }}>

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { checkmarkOutline } from 'ionicons/icons';
 
+import { AppIcon } from '@/components/ui/AppIcon';
 import { BottomSheetModal } from '@/components/ui/BottomSheetModal';
 import { LoadingIndicator } from '@/components/ui/LoadingIndicator';
 import { useAppColors } from '@/contexts/ThemeContext';
@@ -9,20 +11,6 @@ interface StopSessionDetailsModalProps {
   onClose: () => void;
   onSave: (details: string) => void | Promise<void>;
   saving?: boolean;
-}
-
-function SaveIcon({ color }: { color: string }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M20 6 9 17l-5-5"
-        stroke={color}
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
 }
 
 export function StopSessionDetailsModal({
@@ -53,7 +41,11 @@ export function StopSessionDetailsModal({
       title="Save"
       className="rounded-full p-1 transition hover:opacity-80 disabled:opacity-50"
     >
-      {saving ? <LoadingIndicator size={22} /> : <SaveIcon color={colors.primary} />}
+      {saving ? (
+        <LoadingIndicator size={22} />
+      ) : (
+        <AppIcon icon={checkmarkOutline} size={22} color={colors.primary} />
+      )}
     </button>
   );
 
