@@ -68,8 +68,11 @@ function RootNavigator() {
             >
               <Stack.Screen name="(auth)" options={{ title: '' }} />
               <Stack.Screen name="(tabs)" options={{ title: '' }} />
-              <Stack.Screen name="profile" options={getStackScreenOptions(colors, 'Account')} />
-              <Stack.Screen name="history" options={getStackScreenOptions(colors, 'History')} />
+              <Stack.Screen name="profile" options={{ title: 'Account' }} />
+              <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+              <Stack.Screen name="history" options={{ title: 'History' }} />
+              <Stack.Screen name="friends" options={{ title: 'Friends' }} />
+              <Stack.Screen name="change-password" options={{ title: 'Password' }} />
               <Stack.Screen name="about" options={getStackScreenOptions(colors, 'About')} />
               <Stack.Screen name="contact" options={getStackScreenOptions(colors, 'Contact')} />
               <Stack.Screen name="support" options={getStackScreenOptions(colors, 'Support')} />

@@ -53,21 +53,19 @@ export function PageHeader({
     <div className={`relative z-10 mb-4 p-4 lg:mb-6 lg:p-5 ${className}`}>
       {backLink ? (
         <>
-          <div
-            className={`grid grid-cols-[1fr_auto_1fr] items-center gap-2 ${mobileOnlyBack ? 'lg:hidden' : ''}`}
-          >
+          <div className={`flex items-center gap-1 ${mobileOnlyBack ? 'lg:hidden' : ''}`}>
             <button
               type="button"
               onClick={() => navigate(backLink.to)}
-              className="-ml-2 min-h-11 min-w-11 self-start justify-self-start rounded-lg px-2 py-2 text-left text-sm font-semibold transition-opacity hover:opacity-80"
-              style={{ color: colors.textMuted }}
+              className="-ml-2 min-h-11 min-w-11 shrink-0 rounded-lg px-2 py-2 text-left text-sm font-semibold transition-opacity hover:opacity-80"
+              style={{ color: colors.headerText }}
+              aria-label={backLink.label}
             >
               {backLink.label}
             </button>
-            <h1 className={`${titleClass} text-center`} style={{ color: colors.headerText }}>
+            <h1 className={`${titleClass} min-w-0 flex-1`} style={{ color: colors.headerText }}>
               {title}
             </h1>
-            <span aria-hidden="true" />
           </div>
           {mobileOnlyBack ? (
             <div className="hidden lg:block">

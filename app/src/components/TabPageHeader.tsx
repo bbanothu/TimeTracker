@@ -1,5 +1,7 @@
-import { useRoute } from '@react-navigation/native';
-import { Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
+import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ProfileButton } from '@/components/ProfileButton';
@@ -15,14 +17,26 @@ const TAB_TITLES: Record<string, string> = {
 
 interface TabPageHeaderProps {
   title?: string;
+  /** Account stack screens — chevron back instead of profile avatar. */
+  showBack?: boolean;
 }
 
 /** In-flow page title row (scrolls with content — not a pinned nav bar). */
-export function TabPageHeader({ title }: TabPageHeaderProps) {
+export function TabPageHeader({ title, showBack = false }: TabPageHeaderProps) {
   const colors = useAppColors();
   const insets = useSafeAreaInsets();
   const route = useRoute();
+  const router = useRouter();
+  const navigation = useNavigation();
   const label = title ?? TAB_TITLES[route.name] ?? '';
+
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/(tabs)');
+  };
 
   return (
     <View
@@ -33,6 +47,17 @@ export function TabPageHeader({ title }: TabPageHeaderProps) {
         backgroundColor: 'transparent',
       }}
     >
+      {showBack ? (
+        <Pressable
+          onPress={handleBack}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          className="-ml-2 mr-1 items-center justify-center p-1"
+        >
+          <Ionicons name="chevron-back" size={28} color={colors.headerText} />
+        </Pressable>
+      ) : null}
       <Text
         className="flex-1 text-[28px] font-bold"
         style={{ color: colors.headerText }}
@@ -40,7 +65,7 @@ export function TabPageHeader({ title }: TabPageHeaderProps) {
       >
         {label}
       </Text>
-      <ProfileButton />
+      {showBack ? null : <ProfileButton />}
     </View>
   );
 }

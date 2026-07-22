@@ -139,9 +139,11 @@ export default function HistoryScreen() {
       <TabScreenContainer>
         <TabScrollView
           className="flex-1"
-          contentContainerClassName="px-4 pb-8 pt-2"
+          contentContainerClassName="pb-8"
           cloudPull="none"
-          pageHeader={false}
+          pageHeader
+          pageTitle="History"
+          showBack
           onRefreshExtra={() => {
             loadPage(page);
           }}

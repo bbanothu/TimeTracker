@@ -1,15 +1,25 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Linking, Platform, ScrollView, Text } from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Linking,
+  Platform,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
+
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppBackground } from '@/components/AppBackground';
 import { DeleteAccountModal } from '@/components/DeleteAccountModal';
 import { ProfileFooter } from '@/components/ProfileFooter';
 import { ProfileIdentityCard } from '@/components/ProfileIdentityCard';
 import { ProfileLinkRows } from '@/components/ProfileLinkRows';
+import { TabPageHeader } from '@/components/TabPageHeader';
 import { useAuth } from '@/hooks/useAuth';
 import { useGeofenceMonitoring } from '@/hooks/useGeofenceMonitoring';
-import { useScreenScrollPadding } from '@/hooks/useScreenTopPadding';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
 import { deleteAccount } from '@/services/accountService';
 import { clearTrackedData, exportTrackedDataCsv } from '@/services/dataService';
@@ -43,7 +53,8 @@ function formatCalendarResetMessage(result: GoogleCalendarSyncResult): string {
 export default function ProfileScreen() {
   const router = useRouter();
   const { calendar } = useLocalSearchParams<{ calendar?: string }>();
-  const { paddingTop, paddingBottom } = useScreenScrollPadding({ topExtra: 8, bottomExtra: 32 });
+  const insets = useSafeAreaInsets();
+  const paddingBottom = insets.bottom + 32;
   const { user, signOut } = useAuth();
   const [exporting, setExporting] = useState(false);
   const [clearing, setClearing] = useState(false);
@@ -58,16 +69,7 @@ export default function ProfileScreen() {
   const [calendarSyncing, setCalendarSyncing] = useState(false);
   const [calendarResetting, setCalendarResetting] = useState(false);
   const [calendarDisconnecting, setCalendarDisconnecting] = useState(false);
-  const {
-    firstName,
-    lastName,
-    setFirstName,
-    setLastName,
-    loading: profileLoading,
-    saving: profileSaving,
-    error: profileError,
-    reload: reloadProfile,
-  } = useProfileName();
+  const { firstName, lastName, reload: reloadProfile } = useProfileName();
   const {
     status,
     enabledCount,
@@ -403,165 +405,156 @@ export default function ProfileScreen() {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1"
-        style={{ paddingTop }}
       >
         <ScrollView
-          className="flex-1 px-4"
+          className="flex-1"
           contentContainerStyle={{ paddingBottom }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <ProfileIdentityCard
-            email={user?.email ?? ''}
-            memberSince={memberSince}
-            userId={user?.id}
-            firstName={firstName}
-            lastName={lastName}
-            onFirstNameChange={setFirstName}
-            onLastNameChange={setLastName}
-            saving={profileSaving}
-            disabled={profileLoading}
-          />
+          <TabPageHeader title="Account" showBack />
+          <View className="px-4">
+            <ProfileIdentityCard
+              email={user?.email ?? ''}
+              memberSince={memberSince}
+              userId={user?.id}
+              firstName={firstName}
+              lastName={lastName}
+              onSettingsPress={() => router.push('/settings')}
+            />
 
-          {profileError ? <Text className="mb-3 text-sm text-rose-500">{profileError}</Text> : null}
-
-          <ProfileLinkRows
-            rows={[
-              {
-                id: 'friends',
-                label: 'Friends',
-                icon: 'friends',
-                badge: pendingFriendCount,
-                onPress: () => router.push('/friends'),
-              },
-              {
-                id: 'history',
-                label: 'History',
-                icon: 'history',
-                onPress: () => router.push('/history'),
-              },
-              {
-                id: 'password',
-                label: 'Password',
-                icon: 'password',
-                onPress: () => router.push('/change-password'),
-              },
-              {
-                id: 'autotracking',
-                label: 'Auto tracking',
-                icon: 'autotracking',
-                subtitle: autoTrackingSubtitle,
-                disabled: enabledCount === 0 || enabling,
-                loading: enabling,
-                toggle: {
-                  value: autoTrackingOn,
-                  onValueChange: (value) => {
-                    handleAutoTrackingToggle(value).catch(console.warn);
+            <ProfileLinkRows
+              rows={[
+                {
+                  id: 'friends',
+                  label: 'Friends',
+                  icon: 'friends',
+                  badge: pendingFriendCount,
+                  onPress: () => router.push('/friends'),
+                },
+                {
+                  id: 'history',
+                  label: 'History',
+                  icon: 'history',
+                  onPress: () => router.push('/history'),
+                },
+                {
+                  id: 'autotracking',
+                  label: 'Auto tracking',
+                  icon: 'autotracking',
+                  subtitle: autoTrackingSubtitle,
+                  disabled: enabledCount === 0 || enabling,
+                  loading: enabling,
+                  toggle: {
+                    value: autoTrackingOn,
+                    onValueChange: (value) => {
+                      handleAutoTrackingToggle(value).catch(console.warn);
+                    },
                   },
                 },
-              },
-            ]}
-          />
+              ]}
+            />
 
-          <ProfileLinkRows
-            rows={[
-              {
-                id: 'calendar',
-                label: calendarConnected ? 'Sync to Calendar' : 'Connect Google Calendar',
-                icon: 'calendar',
-                subtitle: calendarSubtitle,
-                onPress: calendarConnected ? handleSyncCalendar : handleConnectCalendar,
-                loading: calendarConnecting || calendarSyncing,
-                disabled: calendarBusy || syncing || exporting || clearing,
-                showChevron: false,
-              },
-              ...(calendarConnected
-                ? [
-                    {
-                      id: 'calendar-reset',
-                      label: 'Reset & re-sync calendar',
-                      icon: 'calendar' as const,
-                      subtitle: 'Delete TimeTracker events and re-create with tag colors',
-                      onPress: handleResetCalendar,
-                      loading: calendarResetting,
-                      disabled: calendarBusy || syncing || exporting || clearing,
-                      showChevron: false,
-                    },
-                    {
-                      id: 'calendar-disconnect',
-                      label: 'Disconnect Google Calendar',
-                      icon: 'calendar' as const,
-                      subtitle: 'Stop exporting sessions to Google',
-                      onPress: handleDisconnectCalendar,
-                      loading: calendarDisconnecting,
-                      disabled: calendarBusy || syncing || exporting || clearing,
-                      showChevron: false,
-                    },
-                  ]
-                : []),
-            ]}
-          />
+            <ProfileLinkRows
+              rows={[
+                {
+                  id: 'calendar',
+                  label: calendarConnected ? 'Sync to Calendar' : 'Connect Google Calendar',
+                  icon: 'calendar',
+                  subtitle: calendarSubtitle,
+                  onPress: calendarConnected ? handleSyncCalendar : handleConnectCalendar,
+                  loading: calendarConnecting || calendarSyncing,
+                  disabled: calendarBusy || syncing || exporting || clearing,
+                  showChevron: false,
+                },
+                ...(calendarConnected
+                  ? [
+                      {
+                        id: 'calendar-reset',
+                        label: 'Reset & re-sync calendar',
+                        icon: 'calendar' as const,
+                        subtitle: 'Delete TimeTracker events and re-create with tag colors',
+                        onPress: handleResetCalendar,
+                        loading: calendarResetting,
+                        disabled: calendarBusy || syncing || exporting || clearing,
+                        showChevron: false,
+                      },
+                      {
+                        id: 'calendar-disconnect',
+                        label: 'Disconnect Google Calendar',
+                        icon: 'calendar' as const,
+                        subtitle: 'Stop exporting sessions to Google',
+                        onPress: handleDisconnectCalendar,
+                        loading: calendarDisconnecting,
+                        disabled: calendarBusy || syncing || exporting || clearing,
+                        showChevron: false,
+                      },
+                    ]
+                  : []),
+              ]}
+            />
 
-          <ProfileLinkRows
-            rows={[
-              {
-                id: 'sync',
-                label: 'Upload to cloud',
-                icon: 'sync',
-                subtitle: lastSyncedLabel,
-                onPress: handleSync,
-                loading: syncing,
-                disabled: accountBusy,
-                showChevron: false,
-              },
-              {
-                id: 'export',
-                label: 'Export CSV',
-                icon: 'export',
-                onPress: handleExportCsv,
-                loading: exporting,
-                disabled: accountBusy,
-                showChevron: false,
-              },
-              {
-                id: 'clear',
-                label: 'Clear all data',
-                icon: 'clear',
-                variant: 'destructive',
-                onPress: handleClearAllData,
-                loading: clearing,
-                disabled: accountBusy,
-                showChevron: false,
-              },
-              {
-                id: 'delete-account',
-                label: 'Delete account',
-                icon: 'deleteAccount',
-                variant: 'destructive',
-                subtitle: 'Permanently remove your account and all data',
-                onPress: () => setDeleteAccountOpen(true),
-                loading: deletingAccount,
-                disabled: accountBusy,
-                showChevron: false,
-              },
-            ]}
-          />
+            <ProfileLinkRows
+              rows={[
+                {
+                  id: 'sync',
+                  label: 'Upload to cloud',
+                  icon: 'sync',
+                  subtitle: lastSyncedLabel,
+                  onPress: handleSync,
+                  loading: syncing,
+                  disabled: accountBusy,
+                  showChevron: false,
+                },
+                {
+                  id: 'export',
+                  label: 'Export CSV',
+                  icon: 'export',
+                  onPress: handleExportCsv,
+                  loading: exporting,
+                  disabled: accountBusy,
+                  showChevron: false,
+                },
+                {
+                  id: 'clear',
+                  label: 'Clear all data',
+                  icon: 'clear',
+                  variant: 'destructive',
+                  onPress: handleClearAllData,
+                  loading: clearing,
+                  disabled: accountBusy,
+                  showChevron: false,
+                },
+                {
+                  id: 'delete-account',
+                  label: 'Delete account',
+                  icon: 'deleteAccount',
+                  variant: 'destructive',
+                  subtitle: 'Permanently remove your account and all data',
+                  onPress: () => setDeleteAccountOpen(true),
+                  loading: deletingAccount,
+                  disabled: accountBusy,
+                  showChevron: false,
+                },
+              ]}
+            />
 
-          <ProfileLinkRows
-            rows={[
-              {
-                id: 'signout',
-                label: 'Sign out',
-                icon: 'signout',
-                variant: 'destructive',
-                onPress: handleLogout,
-                disabled: deletingAccount,
-                showChevron: false,
-              },
-            ]}
-          />
+            <ProfileLinkRows
+              rows={[
+                {
+                  id: 'signout',
+                  label: 'Sign out',
+                  icon: 'signout',
+                  variant: 'destructive',
+                  onPress: handleLogout,
+                  disabled: deletingAccount,
+                  showChevron: false,
+                },
+              ]}
+            />
 
-          <ProfileFooter />
+            <ProfileFooter />
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
 

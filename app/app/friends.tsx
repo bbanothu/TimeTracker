@@ -1,6 +1,6 @@
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -15,10 +15,9 @@ import {
 import { ActionButton } from '@/components/ActionButton';
 import { AppBackground } from '@/components/AppBackground';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { TabPageHeader } from '@/components/TabPageHeader';
 import { ThemedSurface } from '@/components/ThemedSurface';
 import { useAppColors } from '@/hooks/useAppColors';
-import { useScreenTopPadding } from '@/hooks/useScreenTopPadding';
-import { getStackScreenOptions } from '@/navigation/headerOptions';
 import {
   fetchFriendships,
   friendLabel,
@@ -29,20 +28,12 @@ import {
 import type { Friendship } from '@/types';
 
 export default function FriendsScreen() {
-  const navigation = useNavigation();
-  const topPadding = useScreenTopPadding(8);
   const colors = useAppColors();
   const [friendships, setFriendships] = useState<Friendship[]>([]);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
   const [sending, setSending] = useState(false);
   const [actingId, setActingId] = useState<string | null>(null);
-
-  useLayoutEffect(() => {
-    navigation.setOptions(
-      getStackScreenOptions(colors, 'Friends')({ navigation: navigation as never }),
-    );
-  }, [colors, navigation]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -145,79 +136,122 @@ export default function FriendsScreen() {
         className="flex-1"
       >
         <ScrollView
-          className="flex-1 px-4 pb-8"
-          style={{ paddingTop: topPadding }}
+          className="flex-1"
+          contentContainerStyle={{ paddingBottom: 32 }}
           keyboardShouldPersistTaps="handled"
         >
-          <ThemedSurface className="mb-4 p-4">
-            <Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>
-              Add friend
-            </Text>
-            <Text className="mb-4 text-sm" style={{ color: colors.textMuted }}>
-              Enter the email address of someone who already has an account.
-            </Text>
-            <TextInput
-              value={email}
-              onChangeText={setEmail}
-              placeholder="friend@example.com"
-              placeholderTextColor={colors.inputPlaceholder}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              className="mb-3 rounded-xl border px-4 py-3 text-base"
-              style={inputStyle}
-            />
-            <ActionButton
-              label="Send request"
-              onPress={handleSend}
-              loading={sending}
-              disabled={sending || !email.trim()}
-            />
-          </ThemedSurface>
+          <TabPageHeader title="Friends" showBack />
+          <View className="px-4">
+            <ThemedSurface className="mb-4 p-4">
+              <Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>
+                Add friend
+              </Text>
+              <Text className="mb-4 text-sm" style={{ color: colors.textMuted }}>
+                Enter the email address of someone who already has an account.
+              </Text>
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder="friend@example.com"
+                placeholderTextColor={colors.inputPlaceholder}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                className="mb-3 rounded-xl border px-4 py-3 text-base"
+                style={inputStyle}
+              />
+              <ActionButton
+                label="Send request"
+                onPress={handleSend}
+                loading={sending}
+                disabled={sending || !email.trim()}
+              />
+            </ThemedSurface>
 
-          {loading ? (
-            <LoadingIndicator size="medium" className="self-center py-8" />
-          ) : (
-            <>
-              {incomingRequests.length > 0 ? (
-                <ThemedSurface className="mb-4 overflow-hidden">
-                  <Text
-                    className="mb-3 px-3 pt-4 text-base font-semibold"
-                    style={{ color: colors.text }}
-                  >
-                    Requests
-                  </Text>
-                  {incomingRequests.map((friendship, index) => (
-                    <View
-                      key={friendship.id}
-                      className={`flex-row items-center gap-3 border-t px-3 py-3${
-                        index === incomingRequests.length - 1 ? ' rounded-b-xl' : ''
-                      }`}
-                      style={{ borderColor: colors.glassBorder }}
+            {loading ? (
+              <LoadingIndicator size="medium" className="self-center py-8" />
+            ) : (
+              <>
+                {incomingRequests.length > 0 ? (
+                  <ThemedSurface className="mb-4 overflow-hidden">
+                    <Text
+                      className="mb-3 px-3 pt-4 text-base font-semibold"
+                      style={{ color: colors.text }}
                     >
-                      <Text
-                        className="min-w-0 flex-1 text-sm"
-                        style={{ color: colors.text }}
-                        numberOfLines={1}
+                      Requests
+                    </Text>
+                    {incomingRequests.map((friendship, index) => (
+                      <View
+                        key={friendship.id}
+                        className={`flex-row items-center gap-3 border-t px-3 py-3${
+                          index === incomingRequests.length - 1 ? ' rounded-b-xl' : ''
+                        }`}
+                        style={{ borderColor: colors.glassBorder }}
                       >
-                        {friendLabel(friendship.otherUser)}
-                      </Text>
-                      <View className="flex-row gap-2">
-                        <Pressable
-                          onPress={() => handleRespond(friendship.id, true)}
-                          disabled={actingId !== null}
-                          accessibilityLabel="Accept friend request"
-                          className="rounded-full p-2"
-                          style={{
-                            backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                            opacity: actingId !== null ? 0.5 : 1,
-                          }}
+                        <Text
+                          className="min-w-0 flex-1 text-sm"
+                          style={{ color: colors.text }}
+                          numberOfLines={1}
                         >
-                          <Ionicons name="checkmark" size={20} color={colors.primaryBright} />
-                        </Pressable>
+                          {friendLabel(friendship.otherUser)}
+                        </Text>
+                        <View className="flex-row gap-2">
+                          <Pressable
+                            onPress={() => handleRespond(friendship.id, true)}
+                            disabled={actingId !== null}
+                            accessibilityLabel="Accept friend request"
+                            className="rounded-full p-2"
+                            style={{
+                              backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                              opacity: actingId !== null ? 0.5 : 1,
+                            }}
+                          >
+                            <Ionicons name="checkmark" size={20} color={colors.primaryBright} />
+                          </Pressable>
+                          <Pressable
+                            onPress={() => handleRespond(friendship.id, false)}
+                            disabled={actingId !== null}
+                            accessibilityLabel="Decline friend request"
+                            className="rounded-full p-2"
+                            style={{
+                              backgroundColor: colors.destructiveBg,
+                              opacity: actingId !== null ? 0.5 : 1,
+                            }}
+                          >
+                            <Ionicons name="close" size={20} color={colors.destructive} />
+                          </Pressable>
+                        </View>
+                      </View>
+                    ))}
+                  </ThemedSurface>
+                ) : null}
+
+                {outgoingRequests.length > 0 ? (
+                  <ThemedSurface className="mb-4 overflow-hidden">
+                    <Text
+                      className="mb-3 px-3 pt-4 text-base font-semibold"
+                      style={{ color: colors.text }}
+                    >
+                      Sent requests
+                    </Text>
+                    {outgoingRequests.map((friendship, index) => (
+                      <View
+                        key={friendship.id}
+                        className={`flex-row items-center gap-3 border-t px-3 py-3${
+                          index === outgoingRequests.length - 1 ? ' rounded-b-xl' : ''
+                        }`}
+                        style={{ borderColor: colors.glassBorder }}
+                      >
+                        <Text
+                          className="min-w-0 flex-1 text-sm"
+                          style={{ color: colors.text }}
+                          numberOfLines={1}
+                        >
+                          {friendLabel(friendship.otherUser)}
+                        </Text>
                         <Pressable
-                          onPress={() => handleRespond(friendship.id, false)}
+                          onPress={() => handleCancel(friendship.id)}
                           disabled={actingId !== null}
-                          accessibilityLabel="Decline friend request"
+                          accessibilityLabel="Cancel friend request"
                           className="rounded-full p-2"
                           style={{
                             backgroundColor: colors.destructiveBg,
@@ -227,96 +261,56 @@ export default function FriendsScreen() {
                           <Ionicons name="close" size={20} color={colors.destructive} />
                         </Pressable>
                       </View>
-                    </View>
-                  ))}
-                </ThemedSurface>
-              ) : null}
+                    ))}
+                  </ThemedSurface>
+                ) : null}
 
-              {outgoingRequests.length > 0 ? (
                 <ThemedSurface className="mb-4 overflow-hidden">
                   <Text
                     className="mb-3 px-3 pt-4 text-base font-semibold"
                     style={{ color: colors.text }}
                   >
-                    Sent requests
+                    Friends
                   </Text>
-                  {outgoingRequests.map((friendship, index) => (
-                    <View
-                      key={friendship.id}
-                      className={`flex-row items-center gap-3 border-t px-3 py-3${
-                        index === outgoingRequests.length - 1 ? ' rounded-b-xl' : ''
-                      }`}
-                      style={{ borderColor: colors.glassBorder }}
-                    >
-                      <Text
-                        className="min-w-0 flex-1 text-sm"
-                        style={{ color: colors.text }}
-                        numberOfLines={1}
+                  {accepted.length === 0 ? (
+                    <Text className="px-3 pb-4 text-sm" style={{ color: colors.textMuted }}>
+                      No friends yet. Send a request by email to get started.
+                    </Text>
+                  ) : (
+                    accepted.map((friendship, index) => (
+                      <View
+                        key={friendship.id}
+                        className={`flex-row items-center gap-3 border-t px-3 py-3${
+                          index === accepted.length - 1 ? ' rounded-b-xl' : ''
+                        }`}
+                        style={{ borderColor: colors.glassBorder }}
                       >
-                        {friendLabel(friendship.otherUser)}
-                      </Text>
-                      <Pressable
-                        onPress={() => handleCancel(friendship.id)}
-                        disabled={actingId !== null}
-                        accessibilityLabel="Cancel friend request"
-                        className="rounded-full p-2"
-                        style={{
-                          backgroundColor: colors.destructiveBg,
-                          opacity: actingId !== null ? 0.5 : 1,
-                        }}
-                      >
-                        <Ionicons name="close" size={20} color={colors.destructive} />
-                      </Pressable>
-                    </View>
-                  ))}
+                        <Text
+                          className="min-w-0 flex-1 text-sm"
+                          style={{ color: colors.text }}
+                          numberOfLines={1}
+                        >
+                          {friendLabel(friendship.otherUser)}
+                        </Text>
+                        <Pressable
+                          onPress={() => confirmRemove(friendship.id)}
+                          disabled={actingId !== null}
+                          accessibilityLabel="Remove friend"
+                          className="rounded-full p-2"
+                          style={{
+                            backgroundColor: colors.destructiveBg,
+                            opacity: actingId !== null ? 0.5 : 1,
+                          }}
+                        >
+                          <Ionicons name="close" size={20} color={colors.destructive} />
+                        </Pressable>
+                      </View>
+                    ))
+                  )}
                 </ThemedSurface>
-              ) : null}
-
-              <ThemedSurface className="mb-4 overflow-hidden">
-                <Text
-                  className="mb-3 px-3 pt-4 text-base font-semibold"
-                  style={{ color: colors.text }}
-                >
-                  Friends
-                </Text>
-                {accepted.length === 0 ? (
-                  <Text className="px-3 pb-4 text-sm" style={{ color: colors.textMuted }}>
-                    No friends yet. Send a request by email to get started.
-                  </Text>
-                ) : (
-                  accepted.map((friendship, index) => (
-                    <View
-                      key={friendship.id}
-                      className={`flex-row items-center gap-3 border-t px-3 py-3${
-                        index === accepted.length - 1 ? ' rounded-b-xl' : ''
-                      }`}
-                      style={{ borderColor: colors.glassBorder }}
-                    >
-                      <Text
-                        className="min-w-0 flex-1 text-sm"
-                        style={{ color: colors.text }}
-                        numberOfLines={1}
-                      >
-                        {friendLabel(friendship.otherUser)}
-                      </Text>
-                      <Pressable
-                        onPress={() => confirmRemove(friendship.id)}
-                        disabled={actingId !== null}
-                        accessibilityLabel="Remove friend"
-                        className="rounded-full p-2"
-                        style={{
-                          backgroundColor: colors.destructiveBg,
-                          opacity: actingId !== null ? 0.5 : 1,
-                        }}
-                      >
-                        <Ionicons name="close" size={20} color={colors.destructive} />
-                      </Pressable>
-                    </View>
-                  ))
-                )}
-              </ThemedSurface>
-            </>
-          )}
+              </>
+            )}
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </AppBackground>

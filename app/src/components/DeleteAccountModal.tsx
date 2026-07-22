@@ -84,12 +84,7 @@ export function DeleteAccountModal({ visible, onClose, onConfirm }: DeleteAccoun
           loading={deleting}
           disabled={deleting || password.trim().length === 0}
         />
-        <ActionButton
-          label="Cancel"
-          variant="secondary"
-          onPress={onClose}
-          disabled={deleting}
-        />
+        <ActionButton label="Cancel" variant="secondary" onPress={onClose} disabled={deleting} />
       </View>
     </BottomSheetModal>
   );

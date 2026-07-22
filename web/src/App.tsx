@@ -4,7 +4,6 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { useHashRouter } from '@/lib/isElectron';
 import { AboutPage } from '@/pages/AboutPage';
-import { ChangePasswordPage } from '@/pages/ChangePasswordPage';
 import { ContactPage } from '@/pages/ContactPage';
 import { FriendsPage } from '@/pages/FriendsPage';
 import { GoalProgressPage } from '@/pages/GoalProgressPage';
@@ -15,6 +14,7 @@ import { MapPage } from '@/pages/MapPage';
 import { PrivacyPage } from '@/pages/PrivacyPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { RegisterPage } from '@/pages/RegisterPage';
+import { SettingsPage } from '@/pages/SettingsPage';
 import { StatsPage } from '@/pages/StatsPage';
 import { TagsPage } from '@/pages/TagsPage';
 import { TermsPage } from '@/pages/TermsPage';
@@ -74,7 +74,8 @@ function AppRoutes() {
         <Route path="profile/privacy" element={<PrivacyPage />} />
         <Route path="profile/terms" element={<TermsPage />} />
         <Route path="profile/friends" element={<FriendsPage />} />
-        <Route path="profile/password" element={<ChangePasswordPage />} />
+        <Route path="profile/settings" element={<SettingsPage />} />
+        <Route path="profile/password" element={<Navigate to="/profile/settings" replace />} />
         <Route path="profile/history" element={<HistoryPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

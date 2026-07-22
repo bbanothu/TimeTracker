@@ -71,11 +71,6 @@ export function ProfilePage() {
   const {
     firstName,
     lastName,
-    setFirstName,
-    setLastName,
-    loading: profileLoading,
-    saving: profileSaving,
-    error: profileError,
     reload: reloadProfile,
   } = useProfileName();
 
@@ -327,13 +322,9 @@ export function ProfilePage() {
           memberSince={memberSince}
           firstName={firstName}
           lastName={lastName}
-          onFirstNameChange={setFirstName}
-          onLastNameChange={setLastName}
-          saving={profileSaving}
-          disabled={profileLoading}
+          onSettingsClick={() => navigate('/profile/settings')}
         />
 
-        {profileError ? <p className="mb-3 text-sm text-rose-500">{profileError}</p> : null}
         {message ? <p className="mb-3 text-sm text-emerald-600">{message}</p> : null}
         {error ? <p className="mb-3 text-sm text-rose-500">{error}</p> : null}
 
@@ -351,12 +342,6 @@ export function ProfilePage() {
               label: 'History',
               icon: 'history',
               onClick: () => navigate('/profile/history'),
-            },
-            {
-              id: 'password',
-              label: 'Password',
-              icon: 'password',
-              onClick: () => navigate('/profile/password'),
             },
           ]}
         />

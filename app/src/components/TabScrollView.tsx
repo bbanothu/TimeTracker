@@ -13,6 +13,8 @@ interface TabScrollViewProps extends ScrollViewProps {
   /** In-flow title + profile (scrolls with page). Default true. */
   pageHeader?: boolean;
   pageTitle?: string;
+  /** Use the Account-stack header (back chevron, no profile avatar). */
+  showBack?: boolean;
   /** Horizontal content inset under the page header. Default matches pageHeader. */
   contentPad?: boolean;
 }
@@ -23,6 +25,7 @@ export const TabScrollView = forwardRef<ScrollView, TabScrollViewProps>(function
     cloudPull = 'full',
     pageHeader = true,
     pageTitle,
+    showBack = false,
     contentPad,
     children,
     contentContainerStyle,
@@ -42,7 +45,7 @@ export const TabScrollView = forwardRef<ScrollView, TabScrollViewProps>(function
       contentContainerStyle={[{ paddingBottom: bottomClearance }, contentContainerStyle]}
       refreshControl={<RefreshControl {...refreshControlProps} />}
     >
-      {pageHeader ? <TabPageHeader title={pageTitle} /> : null}
+      {pageHeader ? <TabPageHeader title={pageTitle} showBack={showBack} /> : null}
       {padContent ? <View style={{ paddingHorizontal: 16 }}>{children}</View> : children}
     </ScrollView>
   );
