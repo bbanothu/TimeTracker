@@ -17,6 +17,8 @@ export type WatchRequest = {
   tagId?: string;
   sessionId?: string;
   durationMinutes?: number;
+  startedAt?: number;
+  endedAt?: number;
   enabled?: boolean;
 };
 

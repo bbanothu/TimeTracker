@@ -3,7 +3,7 @@
     "name": "Time_Trackers",
     "slug": "TimeTracker",
     "owner": "bbanothu",
-    "version": "1.5.0",
+    "version": "1.6.0",
     "scheme": "timetracker",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

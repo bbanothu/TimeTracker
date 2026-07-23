@@ -220,6 +220,30 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
         void startAlarm([request.tagId], Date.now() + minutes * 60_000);
         return;
       }
+      if (action === 'logSession' && request.tagId) {
+        let startedAt: number | undefined;
+        let endedAt: number | undefined;
+        if (request.startedAt != null && request.endedAt != null) {
+          startedAt = Number(request.startedAt);
+          endedAt = Number(request.endedAt);
+        } else if (request.durationMinutes) {
+          const minutes = Math.max(1, Math.round(Number(request.durationMinutes)));
+          endedAt = Date.now();
+          startedAt = endedAt - minutes * 60_000;
+        }
+        if (
+          startedAt == null ||
+          endedAt == null ||
+          !Number.isFinite(startedAt) ||
+          !Number.isFinite(endedAt) ||
+          endedAt <= startedAt
+        ) {
+          console.warn('[WatchBridge] logSession invalid range', request);
+          return;
+        }
+        addManualEntry([request.tagId], startedAt, endedAt);
+        return;
+      }
       if (action === 'stop' && request.sessionId) {
         stop(request.sessionId);
         return;
@@ -265,7 +289,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription?.remove();
-  }, [ready, startManual, startAlarm, stop, signOut]);
+  }, [ready, startManual, startAlarm, stop, signOut, addManualEntry]);
 
   const value = useMemo(
     () => ({
