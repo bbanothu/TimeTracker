@@ -3,8 +3,8 @@ import { play, stop } from 'ionicons/icons';
 import { AppIcon } from '@/components/ui/AppIcon';
 import { useAppColors } from '@/contexts/ThemeContext';
 
-const CONTROL_SIZE = 20;
-const CONTROL_ICON_SIZE = 12;
+const CONTROL_SIZE = 28;
+const CONTROL_ICON_SIZE = 14;
 
 interface StartSessionButtonProps {
   onClick: () => void;

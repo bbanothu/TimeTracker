@@ -4,7 +4,7 @@ function storageKey(userId: string): string {
   return `timetracker-tag-analytics-${userId}`;
 }
 
-export function loadTagAnalyticsPrefs(userId: string): Record<string, boolean> {
+function loadTagAnalyticsPrefs(userId: string): Record<string, boolean> {
   try {
     const raw = localStorage.getItem(storageKey(userId));
     if (!raw) return {};

@@ -14,9 +14,7 @@ import {
 import type { ActiveSession, EntrySource, Geofence, Tag, TagDailyGoal, TimeEntry } from '@/types';
 import type { MergedEntryFields } from '@/utils/entryMerge';
 import { buildAggregatedExportCsv } from '@/utils/aggregatedExportCsv';
-
-const SESSION_KEY = 'timetracker-active-sessions';
-const LEGACY_SESSION_KEY = 'timetracker-active-session';
+import { attachAlarmsToSessions, pruneSessionAlarms } from '@/services/sessionAlarmStore';
 
 type TagRow = {
   id: string;
@@ -120,6 +118,7 @@ function mapActiveSession(entry: TimeEntry): ActiveSession {
     startedAt: entry.startedAt,
     source: entry.source,
     geofenceId: entry.geofenceId,
+    alarmAt: null,
     tagIds: entry.tags.map((tag) => tag.id),
   };
 }
@@ -566,7 +565,9 @@ export async function fetchActiveSessions(userId: string): Promise<ActiveSession
     .order('started_at', { ascending: true });
 
   if (error) throw error;
-  return (data ?? []).map((row) => mapActiveSession(mapEntry(row as unknown as EntryRow)));
+  const sessions = (data ?? []).map((row) => mapActiveSession(mapEntry(row as unknown as EntryRow)));
+  pruneSessionAlarms(sessions.map((session) => session.id));
+  return attachAlarmsToSessions(sessions);
 }
 
 export async function startActiveEntry(
@@ -749,10 +750,18 @@ export async function mergeTimeEntries(
     tagIds,
     details: fields.details,
   });
-  await updateTimeEntryStopDetails(userId, keepEntryId, {
-    stopLatitude: fields.stopLatitude,
-    stopLongitude: fields.stopLongitude,
-  });
+  const { error: locationError } = await supabase
+    .from('time_entries')
+    .update({
+      source: fields.source,
+      geofence_id: fields.geofenceId,
+      stop_latitude: fields.stopLatitude,
+      stop_longitude: fields.stopLongitude,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', keepEntryId)
+    .eq('user_id', userId);
+  if (locationError) throw locationError;
   await deleteTimeEntry(userId, deleteEntryId);
 }
 
@@ -929,21 +938,6 @@ export async function deleteGeofence(userId: string, id: string): Promise<void> 
 
   const { error } = await supabase.from('geofences').delete().eq('id', id).eq('user_id', userId);
   if (error) throw error;
-}
-
-export function loadActiveSessions(): ActiveSession[] {
-  // Legacy local-only sessions; cloud-backed active entries replaced this.
-  try {
-    sessionStorage.removeItem(SESSION_KEY);
-    sessionStorage.removeItem(LEGACY_SESSION_KEY);
-  } catch {
-    // ignore
-  }
-  return [];
-}
-
-export function saveActiveSessions(_sessions: ActiveSession[]): void {
-  // No-op: active sessions live in Supabase as time_entries with ended_at IS NULL.
 }
 
 export function exportEntriesCsv(entries: TimeEntry[], tags: Tag[], personName: string): string {

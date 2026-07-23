@@ -13,9 +13,7 @@ export const GOOGLE_EVENT_COLORS = [
   { id: '11', name: 'Tomato', hex: '#dc2127' },
 ] as const;
 
-export type GoogleEventColor = (typeof GOOGLE_EVENT_COLORS)[number];
-
-export const TAG_COLOR_OPTIONS = GOOGLE_EVENT_COLORS.map((color) => color.hex);
+type GoogleEventColor = (typeof GOOGLE_EVENT_COLORS)[number];
 
 export const DEFAULT_TAG_COLORS = {
   work: '#51b749',
@@ -57,16 +55,4 @@ export function nearestGoogleColorHex(hex: string): string {
     }
   }
   return best.hex;
-}
-
-export function googleColorIdForHex(hex: string): string {
-  const snapped = nearestGoogleColorHex(hex);
-  const match = GOOGLE_EVENT_COLORS.find((color) => color.hex === snapped);
-  return match?.id ?? '8';
-}
-
-export function googleColorNameForHex(hex: string): string {
-  const snapped = nearestGoogleColorHex(hex);
-  const match = GOOGLE_EVENT_COLORS.find((color) => color.hex === snapped);
-  return match?.name ?? 'Graphite';
 }

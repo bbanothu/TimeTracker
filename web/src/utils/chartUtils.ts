@@ -1,18 +1,7 @@
 import type { StatsSummary } from '@/types';
-import { formatDurationLong, formatTagName } from '@/utils/formatDuration';
 
-export function toChartMinutes(durationMs: number): number {
+function toChartMinutes(durationMs: number): number {
   return Math.max(0, Math.round(durationMs / 60000));
-}
-
-/** Chart Y-axis ticks are in minutes — show as 45m, 1h 30m, etc. */
-export function formatChartYLabel(label: string): string {
-  const minutes = Number(label);
-  if (!Number.isFinite(minutes)) return label;
-
-  const safe = Math.max(0, Math.round(minutes));
-  if (safe === 0) return '0';
-  return formatDurationLong(safe * 60000);
 }
 
 export function chartYAxisTicks(maxMs: number, sections = 4): number[] {
@@ -26,23 +15,6 @@ export function hasTagData(summary: StatsSummary): boolean {
 
 export function hasBucketData(summary: StatsSummary): boolean {
   return summary.buckets.some((bucket) => bucket.durationMs > 0);
-}
-
-export function buildTagBarData(summary: StatsSummary) {
-  return summary.byTag.map((item) => ({
-    value: Math.max(1, toChartMinutes(item.durationMs)),
-    label: formatTagName(item.tag.name),
-    frontColor: item.tag.color,
-  }));
-}
-
-export function buildBucketLineData(summary: StatsSummary) {
-  return summary.buckets.map((bucket) => ({
-    value: toChartMinutes(bucket.durationMs),
-    label: bucket.label,
-    durationMs: bucket.durationMs,
-    dataPointText: formatDurationLong(bucket.durationMs),
-  }));
 }
 
 export function buildPieData(summary: StatsSummary) {

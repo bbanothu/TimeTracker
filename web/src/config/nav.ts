@@ -5,5 +5,3 @@ export const mainNavTabs = [
   { to: '/stats', label: 'Stats', icon: 'stats' },
   { to: '/goals', label: 'Goals', icon: 'goals' },
 ] as const;
-
-export const accountNavItem = { to: '/profile', label: 'Account', icon: 'account' } as const;

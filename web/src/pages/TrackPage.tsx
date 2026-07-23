@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { addCircle } from 'ionicons/icons';
+import { alarmOutline } from 'ionicons/icons';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageLoading } from '@/components/ui/PageLoading';
@@ -7,6 +7,7 @@ import { AddManualSessionModal } from '@/components/ui/AddManualSessionModal';
 import { ActiveSessionsList } from '@/components/ui/ActiveSessionsList';
 import { AppIcon } from '@/components/ui/AppIcon';
 import { EntryList } from '@/components/ui/EntryList';
+import { StartAlarmModal } from '@/components/ui/StartAlarmModal';
 import { StartSessionButton } from '@/components/ui/SessionControlButtons';
 import { TagDropdown } from '@/components/ui/TagDropdown';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
@@ -30,11 +31,22 @@ import {
 export function TrackPage() {
   const colors = useAppColors();
   const { user } = useAuth();
-  const { ready, sessions, todayEntries, tick, startManual, stop, addManualEntry, refresh } =
-    useTimer();
+  const {
+    ready,
+    sessions,
+    todayEntries,
+    tick,
+    startManual,
+    startAlarm,
+    extendAlarm,
+    stop,
+    addManualEntry,
+    refresh,
+  } = useTimer();
   const { tags } = useTags();
   const { selectedTagId, setSelectedTagId } = useSelectedTag(tags);
   const [manualModalOpen, setManualModalOpen] = useState(false);
+  const [alarmModalOpen, setAlarmModalOpen] = useState(false);
   const [stopDetailsEntryId, setStopDetailsEntryId] = useState<string | null>(null);
   const [savingStopDetails, setSavingStopDetails] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -125,6 +137,20 @@ export function TrackPage() {
     }
   };
 
+  const handleStartAlarm = async (tagIds: string[], alarmAt: number) => {
+    setError(null);
+    await startAlarm(tagIds, alarmAt);
+  };
+
+  const handleExtendAlarm = async (sessionId: string, extraMs: number) => {
+    try {
+      setError(null);
+      await extendAlarm(sessionId, extraMs);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to extend alarm');
+    }
+  };
+
   const handleStop = async (sessionId: string) => {
     try {
       const entryId = await stop(sessionId);
@@ -186,27 +212,44 @@ export function TrackPage() {
       <div className="lg:grid lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)] lg:items-start lg:gap-6">
         <div>
           <ThemedSurface className="mb-6 p-4 lg:mb-4">
-            <div className="mb-2 flex items-center justify-between">
-              <p
-                className="text-[13px] font-semibold uppercase tracking-wide"
-                style={{ color: colors.textMuted }}
-              >
-                Start session
-              </p>
-              <button
-                type="button"
-                onClick={() => setManualModalOpen(true)}
-                aria-label="Add past session"
-                className="inline-flex shrink-0 items-center justify-center rounded-full transition hover:opacity-80"
-              >
-                <AppIcon icon={addCircle} size={20} color={colors.primary} />
-              </button>
-            </div>
+            <p
+              className="mb-2 text-[13px] font-semibold uppercase tracking-wide"
+              style={{ color: colors.textMuted }}
+            >
+              Start session
+            </p>
             <div className="flex items-center gap-3">
               <div className="min-w-0 flex-1">
                 <TagDropdown tags={tags} selectedId={selectedTagId} onSelect={setSelectedTagId} />
               </div>
               <StartSessionButton onClick={handleStart} disabled={!selectedTagId} />
+            </div>
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setAlarmModalOpen(true)}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl border py-3 text-[15px] font-semibold transition hover:opacity-80"
+                style={{
+                  borderColor: colors.glassBorder,
+                  backgroundColor: colors.glass,
+                  color: colors.textOnBg,
+                }}
+              >
+                <AppIcon icon={alarmOutline} size={18} color={colors.textOnBg} />
+                Start alarm
+              </button>
+              <button
+                type="button"
+                onClick={() => setManualModalOpen(true)}
+                className="flex flex-1 items-center justify-center rounded-xl border py-3 text-[15px] font-semibold transition hover:opacity-80"
+                style={{
+                  borderColor: colors.glassBorder,
+                  backgroundColor: colors.glass,
+                  color: colors.textOnBg,
+                }}
+              >
+                Log session
+              </button>
             </div>
             {error ? <p className="mt-3 text-sm text-rose-500">{error}</p> : null}
           </ThemedSurface>
@@ -223,7 +266,9 @@ export function TrackPage() {
                 sessions={sessions}
                 tags={tags}
                 geofenceNames={geofenceNames}
+                tick={tick}
                 onStop={handleStop}
+                onExtendAlarm={handleExtendAlarm}
               />
             </section>
           ) : (
@@ -256,6 +301,14 @@ export function TrackPage() {
         tags={tags}
         onClose={() => setManualModalOpen(false)}
         onSave={addManualEntry}
+      />
+
+      <StartAlarmModal
+        visible={alarmModalOpen}
+        tags={tags}
+        initialTagId={selectedTagId}
+        onClose={() => setAlarmModalOpen(false)}
+        onStart={handleStartAlarm}
       />
 
       <StopSessionDetailsModal

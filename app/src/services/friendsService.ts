@@ -83,6 +83,7 @@ function mapEntry(row: EntryRow): TimeEntry {
     stopLatitude: row.stop_latitude ?? null,
     stopLongitude: row.stop_longitude ?? null,
     details: row.details?.trim() ? row.details.trim() : null,
+    alarmAt: null,
     tags,
   };
 }

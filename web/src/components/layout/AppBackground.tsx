@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
 
-import { useTheme } from '@/contexts/ThemeContext';
+import { useAppColors } from '@/contexts/ThemeContext';
 
 export function AppBackground({ children }: { children: ReactNode }) {
-  const { colors, isDark } = useTheme();
+  const colors = useAppColors();
 
   return (
     <div className="relative h-dvh overflow-hidden" style={{ backgroundColor: colors.pageBg }}>
@@ -12,20 +12,16 @@ export function AppBackground({ children }: { children: ReactNode }) {
         alt=""
         className="pointer-events-none absolute inset-0 h-full w-full object-cover"
       />
-      {isDark ? (
-        <>
-          <div
-            className="pointer-events-none absolute inset-0 backdrop-blur-xl"
-            style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}
-          />
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{
-              backgroundImage: `linear-gradient(180deg, ${colors.backgroundGradient[0]}, ${colors.backgroundGradient[1]}, ${colors.backgroundGradient[2]})`,
-            }}
-          />
-        </>
-      ) : null}
+      <div
+        className="pointer-events-none absolute inset-0 backdrop-blur-xl"
+        style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}
+      />
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage: `linear-gradient(180deg, ${colors.backgroundGradient[0]}, ${colors.backgroundGradient[1]}, ${colors.backgroundGradient[2]})`,
+        }}
+      />
       <div className="relative z-10 flex h-full w-full flex-col">{children}</div>
     </div>
   );

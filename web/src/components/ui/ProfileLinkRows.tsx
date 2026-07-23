@@ -3,7 +3,6 @@ import {
   chevronForward,
   cloudUpload,
   download,
-  lockClosed,
   logOut,
   people,
   personRemove,
@@ -16,10 +15,9 @@ import { LoadingIndicator } from '@/components/ui/LoadingIndicator';
 import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAppColors } from '@/contexts/ThemeContext';
 
-export type ProfileLinkIcon =
+type ProfileLinkIcon =
   | 'friends'
   | 'history'
-  | 'password'
   | 'calendar'
   | 'sync'
   | 'export'
@@ -27,7 +25,7 @@ export type ProfileLinkIcon =
   | 'deleteAccount'
   | 'signout';
 
-export interface ProfileLinkRow {
+interface ProfileLinkRow {
   id: string;
   label: string;
   onClick: () => void;
@@ -43,7 +41,6 @@ export interface ProfileLinkRow {
 const ICONS: Record<ProfileLinkIcon, string> = {
   friends: people,
   history: time,
-  password: lockClosed,
   calendar: calendar,
   sync: cloudUpload,
   export: download,
@@ -55,7 +52,6 @@ const ICONS: Record<ProfileLinkIcon, string> = {
 const ICON_COLORS: Record<ProfileLinkIcon, string> = {
   friends: '#007AFF',
   history: '#5856D6',
-  password: '#8E8E93',
   calendar: '#FF9500',
   sync: '#32ADE6',
   export: '#AF52DE',

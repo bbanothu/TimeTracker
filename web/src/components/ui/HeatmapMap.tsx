@@ -2,7 +2,6 @@ import { useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
 
-import { DEFAULT_CENTER } from '@/components/ui/GeofenceMap';
 import { createHeatLayer } from '@/lib/paddedHeatLayer';
 import type { HeatmapPoint } from '@/utils/heatmapPoints';
 
@@ -118,5 +117,3 @@ export function HeatmapMap({ points, center, className = '' }: HeatmapMapProps) 
     </div>
   );
 }
-
-export { DEFAULT_CENTER };

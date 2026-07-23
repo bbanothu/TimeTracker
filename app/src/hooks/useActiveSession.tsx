@@ -9,12 +9,20 @@ import {
   reconcileUnknownSession,
   suppressUnknownAutoTracking,
 } from '@/services/geofenceService';
-import { dismissGeofenceNotification } from '@/services/notificationService';
+import {
+  cancelSessionAlarmNotification,
+  dismissGeofenceNotification,
+  rescheduleActiveSessionAlarms,
+  scheduleSessionAlarmNotification,
+} from '@/services/notificationService';
 import { pushChangesInBackground } from '@/services/syncScheduler';
 import { startDailyGoalScoreScheduler } from '@/services/dailyGoalScoreService';
 import { timerService } from '@/services/timerService';
+import { addWatchRequestListener, isWatchBridgeSupported } from '../../modules/watch-bridge';
+import { pushWatchState } from '@/services/watchBridgeService';
 import type { ActiveSession, TimeEntry } from '@/types';
 import { GeofenceMonitoringProvider } from '@/hooks/useGeofenceMonitoring';
+import { formatTagName } from '@/utils/formatDuration';
 
 interface TimerContextValue {
   ready: boolean;
@@ -24,11 +32,17 @@ interface TimerContextValue {
   tick: number;
   refresh: () => void;
   startManual: (tagIds: string[]) => void;
+  startAlarm: (tagIds: string[], alarmAt: number) => Promise<void>;
+  extendAlarm: (sessionId: string, extraMs: number) => Promise<void>;
   stop: (sessionId: string) => void;
   addManualEntry: (tagIds: string[], startedAt: number, endedAt: number) => void;
 }
 
 const TimerContext = createContext<TimerContextValue | null>(null);
+
+function tagLabelForSession(session: ActiveSession): string {
+  return session.tags.map((tag) => formatTagName(tag.name)).join(', ') || 'Session';
+}
 
 export function TimerProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -40,15 +54,18 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
 
   const refresh = useCallback(() => {
     if (!user || !isDatabaseReady()) return;
-    setSessions(timerService.getActiveSessions());
+    const nextSessions = timerService.getActiveSessions();
+    setSessions(nextSessions);
     setTodayEntries(timerService.getTodayEntries());
     setEntriesRevision((value) => value + 1);
     reconcileUnknownSession().catch(console.warn);
+    pushWatchState(true, nextSessions);
   }, [user]);
 
   useEffect(() => {
     if (!user) {
       setReady(false);
+      pushWatchState(false, []);
       return;
     }
 
@@ -86,6 +103,11 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
   }, [ready, user?.id]);
 
   useEffect(() => {
+    if (!ready) return;
+    rescheduleActiveSessionAlarms().catch(console.warn);
+  }, [ready]);
+
+  useEffect(() => {
     if (sessions.length === 0) return;
     const interval = setInterval(() => setTick((value) => value + 1), 1000);
     return () => clearInterval(interval);
@@ -104,12 +126,47 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     [refresh, user],
   );
 
+  const startAlarm = useCallback(
+    async (tagIds: string[], alarmAt: number) => {
+      // Cancel notifications for any previous alarm sessions before starting.
+      for (const session of timerService.getActiveSessions()) {
+        if (session.alarmAt != null) {
+          await cancelSessionAlarmNotification(session.id);
+        }
+      }
+
+      const session = timerService.startAlarm(tagIds, alarmAt);
+      await scheduleSessionAlarmNotification(session.id, alarmAt, tagLabelForSession(session));
+      refresh();
+      notifyDataRefresh();
+      ensureUnknownLocationSession(false).catch(console.warn);
+      if (user) {
+        pushChangesInBackground(user.id);
+      }
+    },
+    [refresh, user],
+  );
+
+  const extendAlarm = useCallback(
+    async (sessionId: string, extraMs: number) => {
+      const alarmAt = Date.now() + extraMs;
+      const session = timerService.extendAlarm(sessionId, alarmAt);
+      await scheduleSessionAlarmNotification(sessionId, alarmAt, tagLabelForSession(session));
+      refresh();
+      notifyDataRefresh();
+    },
+    [refresh],
+  );
+
   const stop = useCallback(
     (sessionId: string) => {
       const session = timerService.getActiveSessions().find((item) => item.id === sessionId);
       const stoppingUnknown = session ? isActiveUnknownSession(session) : false;
       if (stoppingUnknown) {
         suppressUnknownAutoTracking();
+      }
+      if (session?.alarmAt != null) {
+        cancelSessionAlarmNotification(sessionId).catch(console.warn);
       }
       timerService.stop(sessionId);
       refresh();
@@ -138,6 +195,28 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     [refresh, user],
   );
 
+  useEffect(() => {
+    if (!ready || !isWatchBridgeSupported()) return;
+
+    const subscription = addWatchRequestListener((request) => {
+      const action = request.action;
+      if (action === 'start' && request.tagId) {
+        startManual([request.tagId]);
+        return;
+      }
+      if (action === 'startAlarm' && request.tagId && request.durationMinutes) {
+        const minutes = Math.max(1, Math.round(Number(request.durationMinutes)));
+        void startAlarm([request.tagId], Date.now() + minutes * 60_000);
+        return;
+      }
+      if (action === 'stop' && request.sessionId) {
+        stop(request.sessionId);
+      }
+    });
+
+    return () => subscription?.remove();
+  }, [ready, startManual, startAlarm, stop]);
+
   const value = useMemo(
     () => ({
       ready,
@@ -147,6 +226,8 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
       tick,
       refresh,
       startManual,
+      startAlarm,
+      extendAlarm,
       stop,
       addManualEntry,
     }),
@@ -158,6 +239,8 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
       tick,
       refresh,
       startManual,
+      startAlarm,
+      extendAlarm,
       stop,
       addManualEntry,
     ],

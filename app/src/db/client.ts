@@ -243,6 +243,15 @@ function migrateToV9(database: SQLite.SQLiteDatabase): void {
   database.execSync('ALTER TABLE time_entries_v9 RENAME TO time_entries');
 }
 
+function migrateToV10(database: SQLite.SQLiteDatabase): void {
+  const hasAlarmAt = database.getFirstSync<{ name: string }>(
+    "SELECT name FROM pragma_table_info('time_entries') WHERE name = 'alarm_at'",
+  );
+  if (hasAlarmAt) return;
+
+  database.execSync('ALTER TABLE time_entries ADD COLUMN alarm_at INTEGER');
+}
+
 function validateSiblingName(
   userId: string,
   name: string,
@@ -300,12 +309,13 @@ function entryToActiveSession(entry: TimeEntry): ActiveSession {
     startedAt: entry.startedAt,
     source: entry.source,
     geofenceId: entry.geofenceId,
+    alarmAt: entry.alarmAt,
     tags: entry.tags,
   };
 }
 
 const ENTRY_COLUMNS =
-  'id, started_at, ended_at, source, geofence_id, stop_latitude, stop_longitude, details';
+  'id, started_at, ended_at, source, geofence_id, stop_latitude, stop_longitude, details, alarm_at';
 
 type EntryRow = {
   id: string;
@@ -316,6 +326,7 @@ type EntryRow = {
   stop_latitude: number | null;
   stop_longitude: number | null;
   details: string | null;
+  alarm_at: number | null;
 };
 
 function normalizeEntryDetails(details: string | null | undefined): string | null {
@@ -333,6 +344,7 @@ function mapEntryRow(row: EntryRow): TimeEntry {
     stopLatitude: row.stop_latitude ?? null,
     stopLongitude: row.stop_longitude ?? null,
     details: normalizeEntryDetails(row.details),
+    alarmAt: row.alarm_at ?? null,
     tags: loadTagsForEntry(row.id),
   };
 }
@@ -549,6 +561,7 @@ export function initDatabase(userId: string): void {
     migrateToV7(database);
     migrateToV8(database);
     migrateToV9(database);
+    migrateToV10(database);
     database.execSync(TAGS_V3_INDEX_SQL);
 
     const versionRow = database.getFirstSync<{ value: string }>(
@@ -594,6 +607,9 @@ export function initDatabase(userId: string): void {
         }
         if (storedVersion < 9) {
           migrateToV9(database);
+        }
+        if (storedVersion < 10) {
+          migrateToV10(database);
         }
         database.runSync('UPDATE meta SET value = ? WHERE key = ?', [
           String(SCHEMA_VERSION),
@@ -1099,6 +1115,7 @@ export function startSession(
   tagIds: string[],
   source: EntrySource,
   geofenceId: string | null = null,
+  alarmAt: number | null = null,
 ): ActiveSession {
   const userId = requireUserId();
   const database = getDb();
@@ -1114,6 +1131,18 @@ export function startSession(
     .filter((tag): tag is Tag => tag !== undefined);
   if (tags.length === 0) throw new Error('Select at least one tag');
 
+  if (alarmAt != null) {
+    if (alarmAt <= Date.now() + 5_000) {
+      throw new Error('Alarm must be at least a few seconds in the future');
+    }
+    // One alarm at a time: drop alarm from any other active session.
+    for (const session of getActiveSessions()) {
+      if (session.alarmAt != null) {
+        clearSessionAlarmAt(session.id);
+      }
+    }
+  }
+
   const ts = nowMs();
   const entry: TimeEntry = {
     id: createId(),
@@ -1124,13 +1153,14 @@ export function startSession(
     stopLatitude: null,
     stopLongitude: null,
     details: null,
+    alarmAt,
     tags,
   };
 
   database.runSync(
-    `INSERT INTO time_entries (id, user_id, started_at, ended_at, source, geofence_id, stop_latitude, stop_longitude, details, updated_at)
-     VALUES (?, ?, ?, NULL, ?, ?, NULL, NULL, NULL, ?)`,
-    [entry.id, userId, entry.startedAt, entry.source, entry.geofenceId, ts],
+    `INSERT INTO time_entries (id, user_id, started_at, ended_at, source, geofence_id, stop_latitude, stop_longitude, details, alarm_at, updated_at)
+     VALUES (?, ?, ?, NULL, ?, ?, NULL, NULL, NULL, ?, ?)`,
+    [entry.id, userId, entry.startedAt, entry.source, entry.geofenceId, entry.alarmAt, ts],
   );
 
   for (const tag of tags) {
@@ -1163,6 +1193,41 @@ export function startSession(
   return entryToActiveSession(entry);
 }
 
+export function setSessionAlarmAt(sessionId: string, alarmAt: number): ActiveSession {
+  if (alarmAt <= Date.now() + 5_000) {
+    throw new Error('Alarm must be at least a few seconds in the future');
+  }
+
+  const session = getActiveSessionById(sessionId);
+  if (!session) throw new Error('Session not found');
+
+  for (const other of getActiveSessions()) {
+    if (other.id !== sessionId && other.alarmAt != null) {
+      clearSessionAlarmAt(other.id);
+    }
+  }
+
+  const userId = requireUserId();
+  const ts = nowMs();
+  getDb().runSync(
+    `UPDATE time_entries SET alarm_at = ?, updated_at = ? WHERE id = ? AND user_id = ? AND ended_at IS NULL`,
+    [alarmAt, ts, sessionId, userId],
+  );
+
+  const updated = getActiveSessionById(sessionId);
+  if (!updated) throw new Error('Failed to set alarm');
+  return updated;
+}
+
+export function clearSessionAlarmAt(sessionId: string): void {
+  const userId = requireUserId();
+  const ts = nowMs();
+  getDb().runSync(
+    `UPDATE time_entries SET alarm_at = NULL, updated_at = ? WHERE id = ? AND user_id = ? AND ended_at IS NULL`,
+    [ts, sessionId, userId],
+  );
+}
+
 export interface StopSessionOptions {
   endedAt?: number;
   stopLatitude?: number | null;
@@ -1184,7 +1249,7 @@ export function stopSession(sessionId: string, options: StopSessionOptions = {})
 
   database.runSync(
     `UPDATE time_entries
-     SET ended_at = ?, stop_latitude = ?, stop_longitude = ?, details = ?, updated_at = ?
+     SET ended_at = ?, stop_latitude = ?, stop_longitude = ?, details = ?, alarm_at = NULL, updated_at = ?
      WHERE id = ? AND user_id = ? AND ended_at IS NULL`,
     [endedAt, stopLatitude, stopLongitude, details, ts, sessionId, userId],
   );
@@ -1237,6 +1302,7 @@ export function createManualEntry(tagIds: string[], startedAt: number, endedAt: 
     stopLatitude: null,
     stopLongitude: null,
     details: null,
+    alarmAt: null,
     tags,
   };
 
@@ -1396,6 +1462,7 @@ export function updateEntry(
     stopLatitude: existing.stop_latitude ?? null,
     stopLongitude: existing.stop_longitude ?? null,
     details: nextDetails,
+    alarmAt: existing.alarm_at ?? null,
     tags,
   };
 
@@ -1506,6 +1573,7 @@ function mapEntryRows(rows: EntryRow[]): TimeEntry[] {
     stopLatitude: row.stop_latitude ?? null,
     stopLongitude: row.stop_longitude ?? null,
     details: normalizeEntryDetails(row.details),
+    alarmAt: row.alarm_at ?? null,
     tags: tagsByEntry.get(row.id) ?? [],
   }));
 }
@@ -1610,10 +1678,42 @@ export function mergeEntries(
 
   const tagIds = kept.tags.map((tag) => tag.id);
   updateEntry(keepEntryId, tagIds, fields.startedAt, fields.endedAt, fields.details);
-  updateEntryStopDetails(keepEntryId, {
-    stopLatitude: fields.stopLatitude,
-    stopLongitude: fields.stopLongitude,
-  });
+
+  const userId = requireUserId();
+  const ts = nowMs();
+  getDb().runSync(
+    `UPDATE time_entries
+     SET source = ?, geofence_id = ?, stop_latitude = ?, stop_longitude = ?, updated_at = ?
+     WHERE id = ? AND user_id = ?`,
+    [
+      fields.source,
+      fields.geofenceId,
+      fields.stopLatitude,
+      fields.stopLongitude,
+      ts,
+      keepEntryId,
+      userId,
+    ],
+  );
+  enqueueSync(
+    'entry',
+    keepEntryId,
+    'upsert',
+    buildEntrySyncPayload({
+      id: keepEntryId,
+      userId,
+      startedAt: fields.startedAt,
+      endedAt: fields.endedAt,
+      source: fields.source,
+      geofenceId: fields.geofenceId,
+      stopLatitude: fields.stopLatitude,
+      stopLongitude: fields.stopLongitude,
+      details: fields.details,
+      tagIds,
+      updatedAtIso: new Date(ts).toISOString(),
+    }),
+  );
+
   deleteEntry(deleteEntryId);
 
   const merged = getTimeEntryById(keepEntryId);

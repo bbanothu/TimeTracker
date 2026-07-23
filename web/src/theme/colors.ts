@@ -1,7 +1,5 @@
 import { DEFAULT_TAG_COLORS } from '@/constants/googleCalendarColors';
 
-export { GOOGLE_EVENT_COLORS, TAG_COLOR_OPTIONS } from '@/constants/googleCalendarColors';
-
 export interface AppColors {
   pageBg: string;
   primary: string;
@@ -53,55 +51,6 @@ export interface AppColors {
 const ACCENT = '#FF9F0A';
 const ACCENT_BRIGHT = '#FFB340';
 const SECONDARY = '#8E8E93';
-
-/** Frosted light — glassy washes over the photo, black text */
-export const lightColors: AppColors = {
-  pageBg: '#F2F2F7',
-  primary: ACCENT,
-  primaryBright: ACCENT_BRIGHT,
-  textOnPrimary: '#FFFFFF',
-  destructive: '#FF3B30',
-  destructiveText: '#FF3B30',
-  destructiveBg: 'rgba(255, 59, 48, 0.12)',
-  destructiveBorder: 'rgba(255, 59, 48, 0.28)',
-  surface: 'rgba(255, 255, 255, 0.28)',
-  surfaceSolid: 'rgba(255, 255, 255, 0.45)',
-  surfaceBorder: 'rgba(255, 255, 255, 0.55)',
-  glass: 'rgba(255, 255, 255, 0.18)',
-  glassBorder: 'rgba(255, 255, 255, 0.65)',
-  separator: 'rgba(60, 60, 67, 0.16)',
-  text: '#000000',
-  textSecondary: '#000000',
-  textMuted: '#000000',
-  textDisabled: '#000000',
-  textOnBg: '#000000',
-  tabActive: ACCENT,
-  tabInactive: '#000000',
-  tabBarBg: 'rgba(255, 255, 255, 0.28)',
-  tabBarBorder: 'rgba(255, 255, 255, 0.55)',
-  headerText: '#000000',
-  inputBg: 'rgba(255, 255, 255, 0.32)',
-  inputBgSolid: 'rgba(255, 255, 255, 0.4)',
-  inputBorder: 'rgba(255, 255, 255, 0.5)',
-  inputPlaceholder: '#000000',
-  selectedBg: 'rgba(255, 159, 10, 0.22)',
-  selectedBgSolid: 'rgba(255, 232, 194, 0.7)',
-  selectedText: '#000000',
-  secondaryBg: 'rgba(255, 255, 255, 0.22)',
-  secondaryBgSolid: 'rgba(255, 255, 255, 0.35)',
-  secondaryText: '#000000',
-  chartPrimary: ACCENT,
-  authGradient: [ACCENT_BRIGHT, ACCENT, '#E68600'],
-  backgroundGradient: ['transparent', 'transparent', 'transparent'],
-  stop: '#FF3B30',
-  disabled: '#C7C7CC',
-  spinnerOnPrimary: '#FFFFFF',
-  overlay: 'rgba(0, 0, 0, 0.4)',
-  authText: '#000000',
-  authTextSecondary: '#000000',
-  authTextMuted: '#000000',
-  authPlaceholder: '#000000',
-};
 
 /** OLED dark — translucent white glass over photo */
 export const darkColors: AppColors = {

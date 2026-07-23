@@ -8,7 +8,6 @@ import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageLoading } from '@/components/ui/PageLoading';
 import { GOOGLE_EVENT_COLORS } from '@/constants/googleCalendarColors';
-import { filterDisplayTags } from '@/constants/defaultPlace';
 import { useAppColors } from '@/contexts/ThemeContext';
 import { useTags } from '@/contexts/TagsContext';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
@@ -30,11 +29,10 @@ export function TagsPage() {
   const [showDescription, setShowDescription] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const displayTags = useMemo(() => filterDisplayTags(tags), [tags]);
-  const flatTags = useFlatTagsByUsage(displayTags);
+  const flatTags = useFlatTagsByUsage(tags);
   const parentOptions = useMemo(
-    () => getEligibleParents(editingTag?.id ?? null, displayTags),
-    [editingTag, displayTags],
+    () => getEligibleParents(editingTag?.id ?? null, tags),
+    [editingTag, tags],
   );
 
   const formTitle = parentPickerOpen ? 'Select parent' : editingTag ? 'Edit tag' : 'New tag';

@@ -30,6 +30,8 @@ export interface TimeEntry {
   stopLatitude: number | null;
   stopLongitude: number | null;
   details: string | null;
+  /** Local-only planned alarm time for active sessions; cleared when stopped. */
+  alarmAt: number | null;
   tags: Tag[];
 }
 
@@ -38,6 +40,7 @@ export interface ActiveSession {
   startedAt: number;
   source: EntrySource;
   geofenceId: string | null;
+  alarmAt: number | null;
   tags: Tag[];
 }
 

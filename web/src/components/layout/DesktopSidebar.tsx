@@ -2,7 +2,6 @@ import { NavLink } from 'react-router-dom';
 
 import { AccountNavLink } from '@/components/layout/AccountNavLink';
 import { NavIcon, type NavIconName } from '@/components/layout/NavIcon';
-// import { DarkModeToggle } from '@/components/ui/DarkModeToggle';
 import { mainNavTabs } from '@/config/nav';
 import { useAppColors } from '@/contexts/ThemeContext';
 
@@ -86,7 +85,6 @@ export function DesktopSidebar() {
         <div className="min-w-0 flex-1">
           <AccountNavLink />
         </div>
-        {/* <DarkModeToggle size={40} /> */}
       </div>
     </aside>
   );

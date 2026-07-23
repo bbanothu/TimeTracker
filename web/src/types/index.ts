@@ -38,6 +38,7 @@ export interface ActiveSession {
   startedAt: number;
   source: EntrySource;
   geofenceId: string | null;
+  alarmAt: number | null;
   tagIds: string[];
 }
 
@@ -70,7 +71,7 @@ export interface Friendship {
 
 export type PeriodType = 'day' | 'week' | 'month';
 
-export type StatsVisualization = 'overview' | 'bars' | 'list' | 'stacked' | 'history' | 'trend';
+export type StatsVisualization = 'overview' | 'list' | 'stacked' | 'history' | 'trend';
 
 export interface TagDuration {
   tag: Tag;

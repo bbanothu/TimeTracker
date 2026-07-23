@@ -4,6 +4,7 @@ import {
   getActiveSessionByGeofenceId,
   getActiveSessions,
   getTodayEntries,
+  setSessionAlarmAt,
   startSession,
   stopSession,
   type StopSessionOptions,
@@ -21,6 +22,17 @@ export const timerService = {
       throw new Error('Select at least one tag');
     }
     return startSession(tagIds, 'manual');
+  },
+
+  startAlarm(tagIds: string[], alarmAt: number): ActiveSession {
+    if (tagIds.length === 0) {
+      throw new Error('Select at least one tag');
+    }
+    return startSession(tagIds, 'manual', null, alarmAt);
+  },
+
+  extendAlarm(sessionId: string, alarmAt: number): ActiveSession {
+    return setSessionAlarmAt(sessionId, alarmAt);
   },
 
   startGeofence(tagId: string, geofenceId: string): ActiveSession {

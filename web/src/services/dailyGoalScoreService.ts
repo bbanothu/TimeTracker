@@ -30,7 +30,7 @@ export async function fetchDailyGoalScores(userId: string): Promise<DailyGoalSco
   return (data ?? []).map(mapScore);
 }
 
-export async function upsertDailyGoalScore(
+async function upsertDailyGoalScore(
   userId: string,
   dateKey: string,
   scorePercent: number,

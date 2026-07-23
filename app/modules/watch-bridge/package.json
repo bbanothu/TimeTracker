@@ -1,0 +1,7 @@
+{
+  "name": "watch-bridge",
+  "version": "1.0.0",
+  "description": "WatchConnectivity bridge for TimeTracker Watch",
+  "main": "index.ts",
+  "license": "UNLICENSED"
+}

@@ -62,6 +62,7 @@ export function computeCategoryDurationsToday(
       stopLatitude: null,
       stopLongitude: null,
       details: null,
+      alarmAt: null,
       tags: resolveSessionTags(activeSession, tags),
     });
   }

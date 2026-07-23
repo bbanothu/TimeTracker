@@ -8,7 +8,6 @@ import { ProfileIdentityCard } from '@/components/ui/ProfileIdentityCard';
 import { ProfileLinkRows } from '@/components/ui/ProfileLinkRows';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRefresh } from '@/contexts/RefreshContext';
-// import { useAppColors } from '@/contexts/ThemeContext';
 import { notifyDataRefresh } from '@/lib/dataRefresh';
 import { deleteAccount } from '@/services/accountService';
 import {
@@ -48,7 +47,6 @@ function formatCalendarResetMessage(result: GoogleCalendarSyncResult): string {
 }
 
 export function ProfilePage() {
-  // const colors = useAppColors();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
