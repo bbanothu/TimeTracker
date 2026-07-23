@@ -166,9 +166,7 @@ export function SettingsPage() {
             label="Update password"
             type="submit"
             loading={savingPassword}
-            disabled={
-              savingPassword || !currentPassword || !newPassword || !confirmPassword
-            }
+            disabled={savingPassword || !currentPassword || !newPassword || !confirmPassword}
             className="w-full"
           />
         </form>

@@ -16,14 +16,7 @@ import { ThemedSurface } from '@/components/ui/ThemedSurface';
 import { useAppColors } from '@/contexts/ThemeContext';
 
 type ProfileLinkIcon =
-  | 'friends'
-  | 'history'
-  | 'calendar'
-  | 'sync'
-  | 'export'
-  | 'clear'
-  | 'deleteAccount'
-  | 'signout';
+  'friends' | 'history' | 'calendar' | 'sync' | 'export' | 'clear' | 'deleteAccount' | 'signout';
 
 interface ProfileLinkRow {
   id: string;

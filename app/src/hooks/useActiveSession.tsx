@@ -4,11 +4,15 @@ import { useAuth } from '@/hooks/useAuth';
 import { notifyDataRefresh, subscribeDataRefresh } from '@/lib/dataRefresh';
 import { initializeAppData, isDatabaseReady } from '@/services/appInitService';
 import {
+  disableBackgroundGeofencing,
   ensureUnknownLocationSession,
   isActiveUnknownSession,
   reconcileUnknownSession,
+  requestBackgroundPermissions,
   suppressUnknownAutoTracking,
+  syncGeofencingTask,
 } from '@/services/geofenceService';
+import { syncGoogleCalendar } from '@/services/googleCalendarService';
 import {
   cancelSessionAlarmNotification,
   dismissGeofenceNotification,
@@ -19,7 +23,12 @@ import { pushChangesInBackground } from '@/services/syncScheduler';
 import { startDailyGoalScoreScheduler } from '@/services/dailyGoalScoreService';
 import { timerService } from '@/services/timerService';
 import { addWatchRequestListener, isWatchBridgeSupported } from '../../modules/watch-bridge';
-import { pushWatchState } from '@/services/watchBridgeService';
+import {
+  pushWatchState,
+  refreshWatchUserProfile,
+  clearWatchUserProfile,
+  refreshWatchAccountAndPush,
+} from '@/services/watchBridgeService';
 import type { ActiveSession, TimeEntry } from '@/types';
 import { GeofenceMonitoringProvider } from '@/hooks/useGeofenceMonitoring';
 import { formatTagName } from '@/utils/formatDuration';
@@ -45,7 +54,7 @@ function tagLabelForSession(session: ActiveSession): string {
 }
 
 export function TimerProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [ready, setReady] = useState(false);
   const [sessions, setSessions] = useState<ActiveSession[]>([]);
   const [todayEntries, setTodayEntries] = useState<TimeEntry[]>([]);
@@ -65,6 +74,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user) {
       setReady(false);
+      clearWatchUserProfile();
       pushWatchState(false, []);
       return;
     }
@@ -74,6 +84,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       try {
         await initializeAppData(user.id);
+        await refreshWatchUserProfile(user.id);
         if (!cancelled) {
           setReady(true);
           refresh();
@@ -211,11 +222,50 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
       }
       if (action === 'stop' && request.sessionId) {
         stop(request.sessionId);
+        return;
+      }
+      if (action === 'syncCalendar') {
+        void (async () => {
+          try {
+            await syncGoogleCalendar();
+          } catch (error) {
+            console.warn('[WatchBridge] syncCalendar failed', error);
+          }
+          await refreshWatchAccountAndPush(timerService.getActiveSessions());
+        })();
+        return;
+      }
+      if (action === 'setAutoTracking') {
+        void (async () => {
+          try {
+            if (request.enabled) {
+              const granted = await requestBackgroundPermissions();
+              if (granted) {
+                await syncGeofencingTask();
+              }
+            } else {
+              await disableBackgroundGeofencing();
+            }
+          } catch (error) {
+            console.warn('[WatchBridge] setAutoTracking failed', error);
+          }
+          await refreshWatchAccountAndPush(timerService.getActiveSessions());
+        })();
+        return;
+      }
+      if (action === 'signOut') {
+        void signOut().catch((error) => {
+          console.warn('[WatchBridge] signOut failed', error);
+        });
+        return;
+      }
+      if (action === 'refreshAccount') {
+        void refreshWatchAccountAndPush(timerService.getActiveSessions());
       }
     });
 
     return () => subscription?.remove();
-  }, [ready, startManual, startAlarm, stop]);
+  }, [ready, startManual, startAlarm, stop, signOut]);
 
   const value = useMemo(
     () => ({

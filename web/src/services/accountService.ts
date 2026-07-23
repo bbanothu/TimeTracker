@@ -32,8 +32,6 @@ export async function deleteAccount(password: string): Promise<void> {
 
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(
-      typeof payload.error === 'string' ? payload.error : 'Could not delete account',
-    );
+    throw new Error(typeof payload.error === 'string' ? payload.error : 'Could not delete account');
   }
 }

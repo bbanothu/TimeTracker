@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 import WatchConnectivity
 
 public final class WatchConnectivityManager: NSObject, WCSessionDelegate {
@@ -53,17 +54,47 @@ public final class WatchConnectivityManager: NSObject, WCSessionDelegate {
   }
 
   public func setState(_ state: [String: Any]) {
-    let safe = Self.propertyListSafe(state) as? [String: Any] ?? [
+    var safe = Self.propertyListSafe(state) as? [String: Any] ?? [
       "ready": false,
       "sessions": [],
       "tags": [],
     ]
+    safe = Self.compressUserPhoto(in: safe)
     latestState = safe
+    let photoLen = ((safe["user"] as? [String: Any])?["photoBase64"] as? String)?.count ?? 0
     NSLog(
-      "[WatchBridge] setState ready=\(safe["ready"] ?? "?") tags=\((safe["tags"] as? [Any])?.count ?? -1) sessions=\((safe["sessions"] as? [Any])?.count ?? -1)"
+      "[WatchBridge] setState ready=\(safe["ready"] ?? "?") tags=\((safe["tags"] as? [Any])?.count ?? -1) sessions=\((safe["sessions"] as? [Any])?.count ?? -1) photoChars=\(photoLen)"
     )
     start()
     pushLatestState()
+  }
+
+  /// Downscale avatar so applicationContext stays under WC size limits.
+  private static func compressUserPhoto(in state: [String: Any]) -> [String: Any] {
+    guard var user = state["user"] as? [String: Any],
+          let b64 = user["photoBase64"] as? String,
+          !b64.isEmpty,
+          let data = Data(base64Encoded: b64),
+          let image = UIImage(data: data)
+    else {
+      return state
+    }
+
+    let maxSide: CGFloat = 72
+    let scale = min(1, maxSide / max(image.size.width, image.size.height, 1))
+    let size = CGSize(width: max(1, image.size.width * scale), height: max(1, image.size.height * scale))
+    let renderer = UIGraphicsImageRenderer(size: size)
+    let thumb = renderer.image { _ in
+      image.draw(in: CGRect(origin: .zero, size: size))
+    }
+    guard let jpeg = thumb.jpegData(compressionQuality: 0.55) else {
+      return state
+    }
+
+    var next = state
+    user["photoBase64"] = jpeg.base64EncodedString()
+    next["user"] = user
+    return next
   }
 
   private func pushLatestState() {

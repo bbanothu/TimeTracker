@@ -19,10 +19,7 @@ import {
   fetchEntries,
   startActiveEntry,
 } from '@/services/data';
-import {
-  clearSessionAlarmAt,
-  setSessionAlarmAt,
-} from '@/services/sessionAlarmStore';
+import { clearSessionAlarmAt, setSessionAlarmAt } from '@/services/sessionAlarmStore';
 import {
   cancelWebSessionAlarm,
   rescheduleWebSessionAlarms,

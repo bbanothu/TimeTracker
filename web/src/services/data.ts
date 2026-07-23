@@ -565,7 +565,9 @@ export async function fetchActiveSessions(userId: string): Promise<ActiveSession
     .order('started_at', { ascending: true });
 
   if (error) throw error;
-  const sessions = (data ?? []).map((row) => mapActiveSession(mapEntry(row as unknown as EntryRow)));
+  const sessions = (data ?? []).map((row) =>
+    mapActiveSession(mapEntry(row as unknown as EntryRow)),
+  );
   pruneSessionAlarms(sessions.map((session) => session.id));
   return attachAlarmsToSessions(sessions);
 }

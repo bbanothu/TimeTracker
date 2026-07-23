@@ -17,6 +17,7 @@ export type WatchRequest = {
   tagId?: string;
   sessionId?: string;
   durationMinutes?: number;
+  enabled?: boolean;
 };
 
 let cached: WatchBridgeNativeModule | null | undefined;

@@ -66,11 +66,7 @@ export function ProfilePage() {
   const [calendarSyncing, setCalendarSyncing] = useState(false);
   const [calendarResetting, setCalendarResetting] = useState(false);
   const [calendarDisconnecting, setCalendarDisconnecting] = useState(false);
-  const {
-    firstName,
-    lastName,
-    reload: reloadProfile,
-  } = useProfileName();
+  const { firstName, lastName, reload: reloadProfile } = useProfileName();
 
   const loadPendingCount = useCallback(() => {
     fetchIncomingPendingCount().then(setPendingFriendCount).catch(console.error);

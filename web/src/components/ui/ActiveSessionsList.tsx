@@ -102,7 +102,11 @@ export function ActiveSessionsList({
                   type="button"
                   onClick={() => onExtendAlarm(session.id, 15 * 60_000)}
                   className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition hover:opacity-80"
-                  style={{ borderColor: colors.glassBorder, backgroundColor: colors.glass, color: colors.text }}
+                  style={{
+                    borderColor: colors.glassBorder,
+                    backgroundColor: colors.glass,
+                    color: colors.text,
+                  }}
                 >
                   <AppIcon icon={alarmOutline} size={14} color={colors.text} />
                   +15 min
@@ -111,7 +115,11 @@ export function ActiveSessionsList({
                   type="button"
                   onClick={() => onExtendAlarm(session.id, 30 * 60_000)}
                   className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition hover:opacity-80"
-                  style={{ borderColor: colors.glassBorder, backgroundColor: colors.glass, color: colors.text }}
+                  style={{
+                    borderColor: colors.glassBorder,
+                    backgroundColor: colors.glass,
+                    color: colors.text,
+                  }}
                 >
                   <AppIcon icon={alarmOutline} size={14} color={colors.text} />
                   +30 min
