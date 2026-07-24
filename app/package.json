@@ -1,6 +1,6 @@
 {
   "name": "timetracker",
-  "version": "1.6.0",
+  "version": "1.8.0",
   "main": "expo-router/entry",
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -63,6 +63,7 @@
     "build:all": "npm run bump:minor && eas build --profile production --platform all",
     "release:android": "npm run bump:minor && eas build --profile production --platform android --auto-submit",
     "release:ios": "npm run bump:minor && eas build --profile production --platform ios --auto-submit",
+    "release:ios:watch": "npm run bump:minor && eas build --profile production-watch --platform ios --auto-submit",
     "publish:android": "eas submit --profile production --platform android --latest",
     "publish:ios": "eas submit --profile production --platform ios --latest",
     "publish:all": "eas submit --profile production --platform all --latest"

@@ -16,6 +16,12 @@
     },
     "production": {
       "autoIncrement": true
+    },
+    "production-watch": {
+      "extends": "production",
+      "ios": {
+        "credentialsSource": "local"
+      }
     }
   },
   "submit": {
@@ -28,6 +34,9 @@
         "releaseStatus": "completed",
         "serviceAccountKeyPath": "./google-play-service-account.json"
       }
+    },
+    "production-watch": {
+      "extends": "production"
     }
   }
 }
